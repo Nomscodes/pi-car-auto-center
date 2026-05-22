@@ -53,22 +53,25 @@ O sistema visa substituir o controle manual atual, que não registra adequadamen
 ## 🏗️ Arquitetura
 
 ```
-av-car-auto-center/
-├── src/
+pi-car-auto-center/
+├── src/br/com/picarauto/
 │   ├── model/          # Entidades e regras de domínio
 │   ├── dao/            # Acesso ao banco de dados (DAO Pattern)
 │   ├── service/        # Lógica de negócio
 │   ├── view/           # Telas Java Swing
-│   └── controller/     # Controladores (MVC)
+│   ├── controller/     # Controladores (MVC)
+│   └── util/           # Utilitários (conexão, helpers)
 ├── database/
 │   └── schema.sql      # Script de criação do banco
 ├── docs/
-│   ├── ERS.pdf         # Especificação de Requisitos do Sistema
-│   ├── DER.png         # Diagrama Entidade-Relacionamento
-│   ├── casos-de-uso/   # Diagramas UML
-│   └── atas/           # Atas de reunião
+│   ├── atas/           # Atas de reunião
+│   ├── ers/            # Especificação de Requisitos do Sistema
+│   └── diagramas/      # DER, Casos de Uso, Diagrama de Classes
+├── lib/                # Dependências externas (.jar)
 ├── .github/
-│   └── CONTRIBUTING.md
+│   └── pull_request_template.md
+├── .gitignore
+├── CONTRIBUTING.md
 └── README.md
 ```
 
@@ -82,6 +85,7 @@ av-car-auto-center/
 | Java Swing | Interface gráfica desktop |
 | SQLite | Banco de dados local |
 | JDBC | Conexão Java ↔ Banco |
+| NetBeans IDE | Ambiente de desenvolvimento |
 
 ---
 
@@ -91,16 +95,81 @@ av-car-auto-center/
 
 ```bash
 # Clone o repositório
-git clone https://github.com/Nomscodes/av-car-auto-center.git
+git clone https://github.com/Nomscodes/pi-car-auto-center.git
 
 # Acesse o diretório
-cd av-car-auto-center
+cd pi-car-auto-center
 
 # Compile o projeto
 javac -cp "lib/*" -d out src/**/*.java
 
 # Execute
-java -cp "out:lib/*" Main
+java -cp "out:lib/*" br.com.picarauto.Main
+```
+
+---
+
+## 📝 Regras de Commit
+
+> ⚠️ **Regra principal: um commit = um escopo. Nunca misture escopos em um único commit.**
+
+Seguimos o padrão **Conventional Commits**. Todo commit deve ter a estrutura:
+
+```
+<tipo>(<escopo>): descrição curta em português
+```
+
+### Tipos
+
+| Tipo | Quando usar |
+|------|-------------|
+| `feat` | Nova funcionalidade |
+| `fix` | Correção de bug |
+| `docs` | Alteração em documentação |
+| `refactor` | Refatoração sem nova funcionalidade |
+| `test` | Adição ou ajuste de testes |
+| `chore` | Configuração, build, dependências |
+| `style` | Formatação sem mudança de lógica |
+
+### Escopos válidos
+
+| Escopo | O que cobre |
+|--------|-------------|
+| `cliente` | Tudo relacionado ao cadastro de clientes |
+| `veiculo` | Cadastro e histórico de veículos |
+| `os` | Ordem de Serviço e seu ciclo de vida |
+| `peca` | Cadastro e rastreabilidade de peças |
+| `fornecedor` | Cadastro de fornecedores |
+| `colaborador` | Cadastro de colaboradores e funções |
+| `parceiro` | Empresas terceirizadas |
+| `garantia` | Controle de garantias de peças e serviços |
+| `pagamento` | Registro e controle de pagamentos |
+| `db` | Schema, migrations, banco de dados |
+| `ui` | Componentes visuais sem escopo específico |
+| `util` | Classes utilitárias (conexão, helpers) |
+| `config` | Arquivos de configuração do projeto |
+
+### Exemplos corretos ✅
+
+```bash
+git commit -m "feat(cliente): adiciona cadastro de pessoa jurídica"
+git commit -m "fix(os): corrige transição de status para Finalizada"
+git commit -m "refactor(db): separa criação de tabelas em métodos distintos"
+git commit -m "docs: adiciona ata de reunião de 01/06/2026"
+git commit -m "chore(config): adiciona sqlite-jdbc ao lib"
+```
+
+### Exemplos incorretos ❌
+
+```bash
+# ❌ Mistura dois escopos no mesmo commit
+git commit -m "feat: cadastro de cliente e veículo"
+
+# ❌ Sem escopo e descrição vaga
+git commit -m "ajustes"
+
+# ❌ Em inglês (este projeto usa português)
+git commit -m "feat(client): add new form"
 ```
 
 ---
