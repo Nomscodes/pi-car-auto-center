@@ -206,7 +206,7 @@ git commit -m "feat(client): add new form"
 |------|--------|
 | Caio Nunes de Abreu | [@Caio4breu](https://github.com/Caio4breu) |
 | Cassiano Nunes de Abreu | [@Nomscodes](https://github.com/Nomscodes) |
-| Gabriel Naoki Uto Turigoe | — |
+| Gabriel Naoki Uto Turigoe | [@GabrielNaokiUT](https://github.com/GabrielNaokiUT)) | 
 | Wyllian Mariano | — |
 
 ---
