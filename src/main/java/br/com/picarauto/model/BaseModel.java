@@ -1,24 +1,25 @@
 package br.com.picarauto.model;
 
-/**
- * Classe base para todas as entidades do sistema.
- * Contém o identificador único comum a todos os modelos.
- */
+import java.util.Date;
+
 public abstract class BaseModel {
+    private Integer id;
+    private Date dataHoraCriacao;
+    private boolean ativo;
 
-    private int id;
-
-    public BaseModel() {}
-
-    public BaseModel(int id) {
-        this.id = id;
+    public void onCreate() {
+        if (this.dataHoraCriacao == null) {
+            this.dataHoraCriacao = new Date();
+        }
+        this.ativo = true;
     }
 
-    public int getId() {
-        return id;
-    }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    public Date getDataHoraCriacao() { return dataHoraCriacao; }
+    public void setDataHoraCriacao(Date dataHoraCriacao) { this.dataHoraCriacao = dataHoraCriacao; }
+
+    public boolean isAtivo() { return ativo; }
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
 }
