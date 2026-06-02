@@ -8,7 +8,6 @@ import java.sql.SQLException;
  * Utilitário de conexão com o banco de dados SQLite.
  */
 public class ConexaoBanco {
-
     private static final String URL = "jdbc:sqlite:database/picarauto.db";
 
     public static Connection conectar() {
@@ -18,5 +17,9 @@ public class ConexaoBanco {
             System.err.println("Erro ao conectar ao banco: " + e.getMessage());
             return null;
         }
+    }
+    
+    public static Connection getConexao() {
+        return conectar();
     }
 }
