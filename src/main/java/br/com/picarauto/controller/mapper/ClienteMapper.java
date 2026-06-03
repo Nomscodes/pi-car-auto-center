@@ -11,15 +11,11 @@ public class ClienteMapper extends GenericMapper<ClienteModel, ClienteDTO> imple
         ClienteDTO dto = new ClienteDTO();
         dto.setId(entity.getId());
         dto.setAtivo(entity.isAtivo());
-        dto.setNome(entity.getNome());
-        dto.setCpf(entity.getCpf());
-        dto.setEmail(entity.getEmail());
+        dto.setNomeCompleto(entity.getNomeCompleto());
         dto.setTelefone(entity.getTelefone());
+        dto.setEmail(entity.getEmail());
         dto.setEndereco(entity.getEndereco());
-        dto.setBairro(entity.getBairro());
-        dto.setCidade(entity.getCidade());
-        dto.setEstado(entity.getEstado());
-        dto.setCep(entity.getCep());
+        dto.setDataCadastro(entity.getDataCadastro());
         return dto;
     }
 
@@ -29,15 +25,11 @@ public class ClienteMapper extends GenericMapper<ClienteModel, ClienteDTO> imple
         ClienteModel entity = new ClienteModel();
         entity.setId(dto.getId());
         entity.setAtivo(dto.isAtivo());
-        entity.setNome(dto.getNome());
-        entity.setCpf(dto.getCpf());
-        entity.setEmail(dto.getEmail());
+        entity.setNomeCompleto(dto.getNomeCompleto());
         entity.setTelefone(dto.getTelefone());
+        entity.setEmail(dto.getEmail());
         entity.setEndereco(dto.getEndereco());
-        entity.setBairro(dto.getBairro());
-        entity.setCidade(dto.getCidade());
-        entity.setEstado(dto.getEstado());
-        entity.setCep(dto.getCep());
+        entity.setDataCadastro(dto.getDataCadastro());
         return entity;
     }
 }
