@@ -197,6 +197,8 @@ CREATE TABLE fornecedor (
     idFornecedor   SERIAL,
     nomeFornecedor VARCHAR(200) NOT NULL,
     telefone       VARCHAR(20)  NOT NULL UNIQUE,
+    cnpj           VARCHAR(14)  UNIQUE,
+    email          VARCHAR(150),
     PRIMARY KEY (idFornecedor)
 );
 
