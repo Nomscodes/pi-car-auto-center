@@ -1,0 +1,31 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package br.com.picarauto.model.dto;
+
+/**
+ *
+ * @author Gabriel
+ */
+public class ModeloDTO extends BaseDTO{
+
+    private String nomeModelo;
+    private Integer anoModelo;
+
+    public String getNomeModelo() {
+        return nomeModelo;
+    }
+
+    public void setNomeModelo(String nomeModelo) {
+        this.nomeModelo = nomeModelo;
+    }
+
+    public Integer getAnoModelo() {
+        return anoModelo;
+    }
+
+    public void setAnoModelo(Integer anoModelo) {
+        this.anoModelo = anoModelo;
+    }
+}
