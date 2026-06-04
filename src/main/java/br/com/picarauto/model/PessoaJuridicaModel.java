@@ -1,5 +1,9 @@
 package br.com.picarauto.model;
 
+/**
+ *
+ * @author Caio4breu
+ */
 import java.util.Date;
 
 public class PessoaJuridicaModel extends ClienteModel {
