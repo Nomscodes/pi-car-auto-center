@@ -1,18 +1,15 @@
-package br.com.picarauto.model.dto;
+package br.com.picarauto.model;
 
 /**
  *
  * @author Caio4breu
  */
-import java.util.Date;
-
-public class ClienteDTO extends BaseDTO {
+public abstract class PessoaModel extends BaseModel {
 
     private String nomeCompleto;
     private String telefone;
     private String email;
     private String endereco;
-    private Date dataCadastro;
 
     public String getNomeCompleto() { return nomeCompleto; }
     public void setNomeCompleto(String nomeCompleto) { this.nomeCompleto = nomeCompleto; }
@@ -25,7 +22,4 @@ public class ClienteDTO extends BaseDTO {
 
     public String getEndereco() { return endereco; }
     public void setEndereco(String endereco) { this.endereco = endereco; }
-
-    public Date getDataCadastro() { return dataCadastro; }
-    public void setDataCadastro(Date dataCadastro) { this.dataCadastro = dataCadastro; }
 }
