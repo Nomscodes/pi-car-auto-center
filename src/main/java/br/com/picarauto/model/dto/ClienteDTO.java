@@ -1,5 +1,9 @@
 package br.com.picarauto.model.dto;
 
+/**
+ *
+ * @author Caio4breu
+ */
 import java.util.Date;
 
 public class ClienteDTO extends BaseDTO {

@@ -1,5 +1,9 @@
 package br.com.picarauto.model;
 
+/**
+ *
+ * @author Caio4breu
+ */
 public abstract class PessoaModel extends BaseModel {
 
     private String nomeCompleto;
