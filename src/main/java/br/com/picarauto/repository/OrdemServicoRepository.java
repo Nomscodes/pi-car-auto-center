@@ -12,6 +12,7 @@ import br.com.picarauto.model.VeiculoModel;
 import br.com.picarauto.model.exception.BusinessException;
 import br.com.picarauto.util.ConexaoBanco;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,14 +33,14 @@ public class OrdemServicoRepository implements IOrdemServicoRepository {
         os.setValorOutros(rs.getBigDecimal("valor_outros"));
         os.setDesconto(rs.getBigDecimal("desconto"));
 
-        Timestamp dataAbertura = rs.getTimestamp("data_abertura");
-        if (dataAbertura != null) os.setDataAbertura(new java.util.Date(dataAbertura.getTime()));
+        String dataAbertura = rs.getString("data_abertura");
+        if (dataAbertura != null) os.setDataAbertura(LocalDate.parse(dataAbertura));
 
-        Timestamp dataConclusao = rs.getTimestamp("data_conclusao");
-        if (dataConclusao != null) os.setDataConclusao(new java.util.Date(dataConclusao.getTime()));
+        String dataConclusao = rs.getString("data_conclusao");
+        if (dataConclusao != null) os.setDataConclusao(LocalDate.parse(dataConclusao));
 
-        Timestamp dataEntrada = rs.getTimestamp("data_entrada");
-        if (dataEntrada != null) os.setDataEntrada(new java.util.Date(dataEntrada.getTime()));
+        String dataEntrada = rs.getString("data_entrada");
+        if (dataEntrada != null) os.setDataEntrada(LocalDate.parse(dataEntrada));
 
         int clienteId = rs.getInt("cliente_id");
         if (!rs.wasNull()) { ClienteModel c = new ClienteModel(); c.setId(clienteId); os.setCliente(c); }
@@ -103,8 +104,8 @@ public class OrdemServicoRepository implements IOrdemServicoRepository {
                 ps.setLong(1, os.getNumero());
                 ps.setString(2, os.getDescricaoProblema());
                 ps.setString(3, os.getStatusOrdemServico().name());
-                ps.setTimestamp(4, os.getDataAbertura() != null ? new Timestamp(os.getDataAbertura().getTime()) : null);
-                ps.setTimestamp(5, os.getDataEntrada() != null ? new Timestamp(os.getDataEntrada().getTime()) : null);
+                ps.setString(4, os.getDataAbertura() != null ? os.getDataAbertura().toString() : null);
+                ps.setString(5, os.getDataEntrada() != null ? os.getDataEntrada().toString() : null);
                 ps.setObject(6, os.getCliente() != null ? os.getCliente().getId() : null);
                 ps.setObject(7, os.getVeiculo() != null ? os.getVeiculo().getId() : null);
                 ps.setObject(8, os.getMecanicoResponsavel() != null ? os.getMecanicoResponsavel().getId() : null);
@@ -134,9 +135,9 @@ public class OrdemServicoRepository implements IOrdemServicoRepository {
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, os.getDescricaoProblema());
                 ps.setString(2, os.getStatusOrdemServico().name());
-                ps.setTimestamp(3, os.getDataAbertura() != null ? new Timestamp(os.getDataAbertura().getTime()) : null);
-                ps.setTimestamp(4, os.getDataConclusao() != null ? new Timestamp(os.getDataConclusao().getTime()) : null);
-                ps.setTimestamp(5, os.getDataEntrada() != null ? new Timestamp(os.getDataEntrada().getTime()) : null);
+                ps.setString(3, os.getDataAbertura() != null ? os.getDataAbertura().toString() : null);
+                ps.setString(4, os.getDataConclusao() != null ? os.getDataConclusao().toString() : null);
+                ps.setString(5, os.getDataEntrada() != null ? os.getDataEntrada().toString() : null);
                 ps.setObject(6, os.getCliente() != null ? os.getCliente().getId() : null);
                 ps.setObject(7, os.getVeiculo() != null ? os.getVeiculo().getId() : null);
                 ps.setObject(8, os.getMecanicoResponsavel() != null ? os.getMecanicoResponsavel().getId() : null);
