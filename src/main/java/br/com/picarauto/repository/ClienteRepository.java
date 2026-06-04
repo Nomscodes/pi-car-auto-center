@@ -1,5 +1,9 @@
 package br.com.picarauto.repository;
 
+/**
+ *
+ * @author Caio4breu
+ */
 import br.com.picarauto.model.ClienteModel;
 import br.com.picarauto.model.exception.BusinessException;
 import br.com.picarauto.util.ConexaoBanco;
