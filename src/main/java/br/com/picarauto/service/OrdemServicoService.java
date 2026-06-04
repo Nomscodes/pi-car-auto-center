@@ -2,6 +2,7 @@ package br.com.picarauto.service;
 
 import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.repository.IOrdemServicoRepository;
+import br.com.picarauto.util.FilaOS;
 import br.com.picarauto.validation.IOrdemServicoValidation;
 import java.time.LocalDate;
 
@@ -11,6 +12,7 @@ public class OrdemServicoService extends GenericService<OrdemServicoModel, IOrde
     public OrdemServicoService(IOrdemServicoRepository repository, IOrdemServicoValidation validation) {
         super(repository, validation);
     }
+    private final FilaOS filaEspera = new FilaOS();
 
     @Override
     protected void beforeInsert(OrdemServicoModel entity) {
@@ -19,5 +21,6 @@ public class OrdemServicoService extends GenericService<OrdemServicoModel, IOrde
             entity.setDataAbertura(LocalDate.now());
         if (entity.getDataEntrada() == null)
             entity.setDataEntrada(LocalDate.now());
+        filaEspera.enfileirar(entity);
     }
 }
