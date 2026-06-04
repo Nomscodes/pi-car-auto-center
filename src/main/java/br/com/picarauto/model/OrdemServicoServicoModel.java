@@ -3,7 +3,7 @@ package br.com.picarauto.model;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class OrdemServicoServicoModel {
+public class OrdemServicoServicoModel extends BaseModel implements IItemServicoOS {
     private Integer id;
     private ServicoModel servico;
     private MecanicoModel mecanicoExecutor;
@@ -26,4 +26,8 @@ public class OrdemServicoServicoModel {
     public void setHorarioInicio(Date horarioInicio) { this.horarioInicio = horarioInicio; }
     public Date getHorarioFim() { return horarioFim; }
     public void setHorarioFim(Date horarioFim) { this.horarioFim = horarioFim; }
+    @Override
+    public String getDescricao() {
+        return servico != null ? servico.getNome() : "";
+    }
 }
