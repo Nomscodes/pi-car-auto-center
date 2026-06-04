@@ -1,5 +1,9 @@
 package br.com.picarauto.repository;
 
+/**
+ *
+ * @author Caio4breu
+ */
 import br.com.picarauto.model.ClienteModel;
 import br.com.picarauto.model.exception.BusinessException;
 import br.com.picarauto.util.ConexaoBanco;
@@ -11,23 +15,25 @@ public class ClienteRepository implements IClienteRepository {
 
     private ClienteModel mapRow(ResultSet rs) throws SQLException {
         ClienteModel c = new ClienteModel();
-        c.setId(rs.getInt("id"));
-        c.setAtivo(rs.getBoolean("ativo"));
-        c.setNome(rs.getString("nome"));
-        c.setCpf(rs.getString("cpf"));
-        c.setEmail(rs.getString("email"));
+        c.setId(rs.getInt("idCliente"));
+        c.setAtivo(true);
+        c.setNomeCompleto(rs.getString("nomeCompleto"));
         c.setTelefone(rs.getString("telefone"));
+        c.setEmail(rs.getString("email"));
         c.setEndereco(rs.getString("endereco"));
-        c.setBairro(rs.getString("bairro"));
-        c.setCidade(rs.getString("cidade"));
-        c.setEstado(rs.getString("estado"));
-        c.setCep(rs.getString("cep"));
+        c.setDataCadastro(rs.getDate("dataCadastro"));
         return c;
     }
 
     @Override
     public ClienteModel findByIdAndAtivoTrue(Integer id) {
-        String sql = "SELECT * FROM cliente WHERE id = ? AND ativo = 1";
+        String sql = """
+                SELECT cl.idCliente, cl.dataCadastro,
+                       pe.nomeCompleto, pe.telefone, pe.email, pe.endereco
+                FROM cliente cl
+                JOIN pessoa pe ON pe.idPessoa = cl.idPessoa
+                WHERE cl.idCliente = ?
+                """;
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -41,7 +47,12 @@ public class ClienteRepository implements IClienteRepository {
 
     @Override
     public List<ClienteModel> findAllByAtivoTrue() {
-        String sql = "SELECT * FROM cliente WHERE ativo = 1";
+        String sql = """
+                SELECT cl.idCliente, cl.dataCadastro,
+                       pe.nomeCompleto, pe.telefone, pe.email, pe.endereco
+                FROM cliente cl
+                JOIN pessoa pe ON pe.idPessoa = cl.idPessoa
+                """;
         List<ClienteModel> list = new ArrayList<>();
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -55,56 +66,60 @@ public class ClienteRepository implements IClienteRepository {
 
     @Override
     public ClienteModel save(ClienteModel c) {
-        if (c.getId() == null) {
-            String sql = "INSERT INTO cliente (nome, cpf, email, telefone, endereco, bairro, cidade, estado, cep, ativo, data_hora_criacao) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
-            try (Connection conn = ConexaoBanco.getConexao();
-                 PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setString(1, c.getNome());
-                ps.setString(2, c.getCpf());
-                ps.setString(3, c.getEmail());
-                ps.setString(4, c.getTelefone());
-                ps.setString(5, c.getEndereco());
-                ps.setString(6, c.getBairro());
-                ps.setString(7, c.getCidade());
-                ps.setString(8, c.getEstado());
-                ps.setString(9, c.getCep());
-                ps.setBoolean(10, c.isAtivo());
-                ps.setTimestamp(11, new Timestamp(c.getDataHoraCriacao().getTime()));
-                ps.executeUpdate();
-                ResultSet keys = ps.getGeneratedKeys();
-                if (keys.next()) c.setId(keys.getInt(1));
-                return c;
-            } catch (SQLException e) {
-                BusinessException.handleSQLException(e, "cliente");
-                return null;
+        Connection conn = ConexaoBanco.getConexao();
+        try {
+            conn.setAutoCommit(false);
+
+            if (c.getId() == null) {
+                String sqlPessoa = "INSERT INTO pessoa (nomeCompleto, telefone, email, endereco) VALUES (?,?,?,?)";
+                int idPessoa;
+                try (PreparedStatement ps = conn.prepareStatement(sqlPessoa, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, c.getNomeCompleto());
+                    ps.setString(2, c.getTelefone());
+                    ps.setString(3, c.getEmail());
+                    ps.setString(4, c.getEndereco());
+                    ps.executeUpdate();
+                    idPessoa = ps.getGeneratedKeys().getInt(1);
+                }
+
+                String sqlCliente = "INSERT INTO cliente (dataCadastro, idPessoa) VALUES (?,?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlCliente, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setDate(1, new java.sql.Date(c.getDataCadastro().getTime()));
+                    ps.setInt(2, idPessoa);
+                    ps.executeUpdate();
+                    c.setId(ps.getGeneratedKeys().getInt(1));
+                }
+
+            } else {
+                String sqlPessoa = """
+                        UPDATE pessoa SET nomeCompleto=?, telefone=?, email=?, endereco=?
+                        WHERE idPessoa = (SELECT idPessoa FROM cliente WHERE idCliente = ?)
+                        """;
+                try (PreparedStatement ps = conn.prepareStatement(sqlPessoa)) {
+                    ps.setString(1, c.getNomeCompleto());
+                    ps.setString(2, c.getTelefone());
+                    ps.setString(3, c.getEmail());
+                    ps.setString(4, c.getEndereco());
+                    ps.setInt(5, c.getId());
+                    ps.executeUpdate();
+                }
             }
-        } else {
-            String sql = "UPDATE cliente SET nome=?, cpf=?, email=?, telefone=?, endereco=?, bairro=?, cidade=?, estado=?, cep=?, ativo=? WHERE id=?";
-            try (Connection conn = ConexaoBanco.getConexao();
-                 PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, c.getNome());
-                ps.setString(2, c.getCpf());
-                ps.setString(3, c.getEmail());
-                ps.setString(4, c.getTelefone());
-                ps.setString(5, c.getEndereco());
-                ps.setString(6, c.getBairro());
-                ps.setString(7, c.getCidade());
-                ps.setString(8, c.getEstado());
-                ps.setString(9, c.getCep());
-                ps.setBoolean(10, c.isAtivo());
-                ps.setInt(11, c.getId());
-                ps.executeUpdate();
-                return c;
-            } catch (SQLException e) {
-                BusinessException.handleSQLException(e, "cliente");
-                return null;
-            }
+
+            conn.commit();
+            return c;
+
+        } catch (SQLException e) {
+            try { conn.rollback(); } catch (SQLException ignored) {}
+            BusinessException.handleSQLException(e, "cliente");
+            return null;
+        } finally {
+            try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
         }
     }
 
     @Override
     public boolean existsById(Integer id) {
-        String sql = "SELECT 1 FROM cliente WHERE id = ?";
+        String sql = "SELECT 1 FROM cliente WHERE idCliente = ?";
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -116,7 +131,7 @@ public class ClienteRepository implements IClienteRepository {
 
     @Override
     public boolean existsByCpf(String cpf) {
-        String sql = "SELECT 1 FROM cliente WHERE cpf = ? AND ativo = 1";
+        String sql = "SELECT 1 FROM pessoaFisica WHERE cpf = ?";
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, cpf);

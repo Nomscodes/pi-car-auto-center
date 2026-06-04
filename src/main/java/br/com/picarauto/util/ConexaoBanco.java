@@ -14,18 +14,23 @@ import java.sql.SQLException;
  * @author Cassiano
  */
 public class ConexaoBanco {
-    private static final String URL = "jdbc:sqlite:database/picarauto.db";
 
-    public static Connection conectar() {
+    private static final String URL     = "jdbc:postgresql://localhost:5432/pi_car_auto_center";
+    private static final String USUARIO = "postgres";
+    private static final String SENHA   = "postgres";
+
+    private static Connection instancia = null;
+
+    private ConexaoBanco() {}
+
+    public static Connection getConexao() {
         try {
-            return DriverManager.getConnection(URL);
+            if (instancia == null || instancia.isClosed()) {
+                instancia = DriverManager.getConnection(URL, USUARIO, SENHA);
+            }
         } catch (SQLException e) {
             System.err.println("Erro ao conectar ao banco: " + e.getMessage());
-            return null;
         }
-    }
-    
-    public static Connection getConexao() {
-        return conectar();
+        return instancia;
     }
 }
