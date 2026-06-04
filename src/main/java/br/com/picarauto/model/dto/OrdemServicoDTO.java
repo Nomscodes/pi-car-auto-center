@@ -4,16 +4,16 @@ import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.model.OrdemServicoPecaModel;
 import br.com.picarauto.model.OrdemServicoServicoModel;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 public class OrdemServicoDTO extends BaseDTO {
     private Long numero;
     private String descricaoProblema;
     private OrdemServicoModel.StatusOrdemServico statusOrdemServico;
-    private Date dataAbertura;
-    private Date dataConclusao;
-    private Date dataEntrada;
+    private LocalDate dataAbertura;
+    private LocalDate dataConclusao;
+    private LocalDate dataEntrada;
     private BigDecimal valorMaoDeObra;
     private BigDecimal valorPecas;
     private BigDecimal valorDeslocamento;
@@ -35,12 +35,12 @@ public class OrdemServicoDTO extends BaseDTO {
     public void setDescricaoProblema(String descricaoProblema) { this.descricaoProblema = descricaoProblema; }
     public OrdemServicoModel.StatusOrdemServico getStatusOrdemServico() { return statusOrdemServico; }
     public void setStatusOrdemServico(OrdemServicoModel.StatusOrdemServico statusOrdemServico) { this.statusOrdemServico = statusOrdemServico; }
-    public Date getDataAbertura() { return dataAbertura; }
-    public void setDataAbertura(Date dataAbertura) { this.dataAbertura = dataAbertura; }
-    public Date getDataConclusao() { return dataConclusao; }
-    public void setDataConclusao(Date dataConclusao) { this.dataConclusao = dataConclusao; }
-    public Date getDataEntrada() { return dataEntrada; }
-    public void setDataEntrada(Date dataEntrada) { this.dataEntrada = dataEntrada; }
+    public LocalDate getDataAbertura() { return dataAbertura; }
+    public void setDataAbertura(LocalDate dataAbertura) { this.dataAbertura = dataAbertura; }
+    public LocalDate getDataConclusao() { return dataConclusao; }
+    public void setDataConclusao(LocalDate dataConclusao) { this.dataConclusao = dataConclusao; }
+    public LocalDate getDataEntrada() { return dataEntrada; }
+    public void setDataEntrada(LocalDate dataEntrada) { this.dataEntrada = dataEntrada; }
     public BigDecimal getValorMaoDeObra() { return valorMaoDeObra; }
     public void setValorMaoDeObra(BigDecimal valorMaoDeObra) { this.valorMaoDeObra = valorMaoDeObra; }
     public BigDecimal getValorPecas() { return valorPecas; }
