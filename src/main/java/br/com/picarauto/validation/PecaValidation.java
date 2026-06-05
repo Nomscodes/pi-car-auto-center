@@ -4,8 +4,11 @@ import br.com.picarauto.model.PecaModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IPecaRepository;
-import java.math.BigDecimal;
 
+/**
+ *
+ * @author Caio4breu
+ */
 public class PecaValidation extends GenericValidation<PecaModel, IPecaRepository>
         implements IPecaValidation {
 
@@ -17,31 +20,50 @@ public class PecaValidation extends GenericValidation<PecaModel, IPecaRepository
     public void validateFields(PecaModel entity) {
         super.validateFields(entity);
 
-        if (entity.getNome() == null || entity.getNome().isBlank())
-            throw new FieldValidationException("nome",
-                    "O nome da peça é de preenchimento obrigatório.");
+        if (entity.getCodigoNacional() == null)
+            throw new FieldValidationException("codigoNacional",
+                    "O código nacional é de preenchimento obrigatório.");
 
-        if (entity.getQuantidade() == null)
-            throw new FieldValidationException("quantidade",
-                    "A quantidade da peça é de preenchimento obrigatório.");
+        if (entity.getModelo() == null || entity.getModelo().isBlank())
+            throw new FieldValidationException("modelo",
+                    "O modelo da peça é de preenchimento obrigatório.");
 
-        if (entity.getQuantidade() < 0)
-            throw new FieldValidationException("quantidade",
-                    "A quantidade não pode ser negativa.");
+        if (entity.getMarca() == null || entity.getMarca().isBlank())
+            throw new FieldValidationException("marca",
+                    "A marca da peça é de preenchimento obrigatório.");
 
-        if (entity.getValorUnitario() == null)
-            throw new FieldValidationException("valorUnitario",
-                    "O valor unitário da peça é de preenchimento obrigatório.");
+        if (entity.getAnoVeiculo() == null || entity.getAnoVeiculo() < 1900)
+            throw new FieldValidationException("anoVeiculo",
+                    "O ano do veículo é inválido (mínimo 1900).");
 
-        if (entity.getValorUnitario().compareTo(BigDecimal.ZERO) < 0)
-            throw new FieldValidationException("valorUnitario",
-                    "O valor unitário não pode ser negativo.");
+        if (entity.getAnoModelo() == null || entity.getAnoModelo() < 1900)
+            throw new FieldValidationException("anoModelo",
+                    "O ano do modelo é inválido (mínimo 1900).");
+
+        if (entity.getPrecoUnitario() <= 0)
+            throw new FieldValidationException("precoUnitario",
+                    "O preço unitário deve ser maior que zero.");
+
+        if (entity.getGarantia() == null || entity.getGarantia() < 0)
+            throw new FieldValidationException("garantia",
+                    "A garantia não pode ser negativa.");
+
+        if (entity.getIdFornecedor() == null)
+            throw new FieldValidationException("idFornecedor",
+                    "O fornecedor é de preenchimento obrigatório.");
     }
 
     @Override
     public void validateInsert(PecaModel entity) {
-        if (repository.existsByNome(entity.getNome()))
-            throw new RuleValidationException("Nome Duplicado",
-                    "Já existe uma peça cadastrada com esse nome.");
+        if (repository.existsByCodigoNacional(entity.getCodigoNacional()))
+            throw new RuleValidationException("Código Duplicado",
+                    "Já existe uma peça cadastrada com esse código nacional.");
+    }
+
+    @Override
+    public void validateUpdate(PecaModel entity) {
+        if (!repository.existsByCodigoNacional(entity.getCodigoNacional()))
+            throw new RuleValidationException("Peça não encontrada",
+                    "Nenhuma peça encontrada com o código nacional informado.");
     }
 }
