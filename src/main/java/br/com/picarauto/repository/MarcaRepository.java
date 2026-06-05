@@ -15,23 +15,23 @@ import java.util.List;
  *
  * @author Gabriel
  */
-
 public class MarcaRepository implements IMarcaRepository {
-    
-    //Mapeamento ResultSet → MarcaModel 
 
+//Mapeamento ResultSet → MarcaModel 
     private MarcaModel mapRow(ResultSet rs) throws SQLException {
         MarcaModel m = new MarcaModel();
-        m.setId(rs.getInt("id"));
-        m.setAtivo(rs.getBoolean("ativo"));
+        // CORREÇÃO: Nome da coluna no banco é idMarca
+        m.setId(rs.getInt("idMarca"));
         m.setNome(rs.getString("nome"));
+        // Removido o m.setAtivo() pois a coluna não existe no banco
         return m;
     }
 
-    //Consultas genéricas 
+    //Consultas genéricas
     @Override
     public MarcaModel findByIdAndAtivoTrue(Integer id) {
-        String sql = "SELECT * FROM marca WHERE id = ? AND ativo = 1";
+        // CORREÇÃO: Usando idMarca e removido o "AND ativo = 1"
+        String sql = "SELECT * FROM marca WHERE idMarca = ?";
         try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -46,7 +46,8 @@ public class MarcaRepository implements IMarcaRepository {
 
     @Override
     public List<MarcaModel> findAllByAtivoTrue() {
-        String sql = "SELECT * FROM marca WHERE ativo = 1";
+        // CORREÇÃO: Removido o "WHERE ativo = 1"
+        String sql = "SELECT * FROM marca";
         List<MarcaModel> list = new ArrayList<>();
         try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -62,11 +63,9 @@ public class MarcaRepository implements IMarcaRepository {
     @Override
     public MarcaModel save(MarcaModel m) {
         if (m.getId() == null) {
-            String sql = "INSERT INTO marca (nome, ativo, data_hora_criacao) VALUES (?, ?, ?)";
+            String sql = "INSERT INTO marca (nome) VALUES (?)";
             try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, m.getNome());
-                ps.setBoolean(2, m.isAtivo());
-                ps.setTimestamp(3, new Timestamp(m.getDataHoraCriacao().getTime()));
                 ps.executeUpdate();
                 ResultSet keys = ps.getGeneratedKeys();
                 if (keys.next()) {
@@ -78,11 +77,10 @@ public class MarcaRepository implements IMarcaRepository {
                 return null;
             }
         } else {
-            String sql = "UPDATE marca SET nome = ?, ativo = ? WHERE id = ?";
+            String sql = "UPDATE marca SET nome = ? WHERE idMarca = ?";
             try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, m.getNome());
-                ps.setBoolean(2, m.isAtivo());
-                ps.setInt(3, m.getId());
+                ps.setInt(2, m.getId());
                 ps.executeUpdate();
                 return m;
             } catch (SQLException e) {
@@ -95,7 +93,7 @@ public class MarcaRepository implements IMarcaRepository {
     //Verificações de existência 
     @Override
     public boolean existsById(Integer id) {
-        String sql = "SELECT 1 FROM marca WHERE id = ?";
+        String sql = "SELECT 1 FROM marca WHERE idMarca = ?";
         try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             return ps.executeQuery().next();
@@ -106,7 +104,7 @@ public class MarcaRepository implements IMarcaRepository {
 
     @Override
     public boolean existsByNome(String nome) {
-        String sql = "SELECT 1 FROM marca WHERE nome = ? AND ativo = 1";
+        String sql = "SELECT 1 FROM marca WHERE nome = ?";
         try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nome);
             return ps.executeQuery().next();

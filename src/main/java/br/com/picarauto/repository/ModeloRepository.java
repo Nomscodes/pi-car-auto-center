@@ -15,23 +15,26 @@ import java.util.List;
  *
  * @author Gabriel
  */
-public class ModeloRepository implements IModeloRepository{
+public class ModeloRepository implements IModeloRepository {
 
-    //Mapeamento ResultSet → ModeloModel
+    //Mapeamento ResultSet → ModeloModel 
     private ModeloModel mapRow(ResultSet rs) throws SQLException {
         ModeloModel m = new ModeloModel();
-        m.setId(rs.getInt("id"));
-        m.setAtivo(rs.getBoolean("ativo"));
-        m.setNomeModelo(rs.getString("nome_modelo"));
-        m.setAnoModelo(rs.getInt("ano_modelo"));
-        m.setIdMarca(rs.getInt("idMarca"));
+        m.setId(rs.getInt("idModelo"));
+        m.setNomeModelo(rs.getString("nomeModelo"));
+
+        Date dataSql = rs.getDate("anoModelo");
+        if (dataSql != null) {
+            m.setAnoModelo(dataSql.toLocalDate());
+        }
+
         return m;
     }
 
     //Consultas genéricas
     @Override
     public ModeloModel findByIdAndAtivoTrue(Integer id) {
-        String sql = "SELECT * FROM modelo WHERE id = ? AND ativo = 1";
+        String sql = "SELECT * FROM modelo WHERE idModelo = ?";
         try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -46,7 +49,7 @@ public class ModeloRepository implements IModeloRepository{
 
     @Override
     public List<ModeloModel> findAllByAtivoTrue() {
-        String sql = "SELECT * FROM modelo WHERE ativo = 1";
+        String sql = "SELECT * FROM modelo";
         List<ModeloModel> list = new ArrayList<>();
         try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -62,13 +65,17 @@ public class ModeloRepository implements IModeloRepository{
     @Override
     public ModeloModel save(ModeloModel m) {
         if (m.getId() == null) {
-            String sql = "INSERT INTO modelo (nome_modelo, ano_modelo, ativo, data_hora_criacao) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO modelo (nomeModelo, anoModelo) VALUES (?, ?)";
             try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
                 ps.setString(1, m.getNomeModelo());
-                ps.setInt(2, m.getAnoModelo());
-                ps.setInt(3, m.getIdMarca());
-                ps.setBoolean(4, m.isAtivo());
-                ps.setTimestamp(5, new Timestamp(m.getDataHoraCriacao().getTime()));
+
+                if (m.getAnoModelo() != null) {
+                    ps.setDate(2, Date.valueOf(m.getAnoModelo()));
+                } else {
+                    ps.setNull(2, Types.DATE);
+                }
+
                 ps.executeUpdate();
                 ResultSet keys = ps.getGeneratedKeys();
                 if (keys.next()) {
@@ -80,13 +87,18 @@ public class ModeloRepository implements IModeloRepository{
                 return null;
             }
         } else {
-            String sql = "UPDATE modelo SET nome_modelo = ?, ano_modelo = ?, ativo = ? WHERE id = ?";
+            String sql = "UPDATE modelo SET nomeModelo = ?, anoModelo = ? WHERE idModelo = ?";
             try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
                 ps.setString(1, m.getNomeModelo());
-                ps.setInt(2, m.getAnoModelo());
-                ps.setInt(3, m.getIdMarca());
-                ps.setBoolean(4, m.isAtivo());
-                ps.setInt(5, m.getId());
+
+                if (m.getAnoModelo() != null) {
+                    ps.setDate(2, Date.valueOf(m.getAnoModelo()));
+                } else {
+                    ps.setNull(2, Types.DATE);
+                }
+
+                ps.setInt(3, m.getId());
                 ps.executeUpdate();
                 return m;
             } catch (SQLException e) {
@@ -96,10 +108,10 @@ public class ModeloRepository implements IModeloRepository{
         }
     }
 
-    //Verificações de existência
+    //Verificações de existência 
     @Override
     public boolean existsById(Integer id) {
-        String sql = "SELECT 1 FROM modelo WHERE id = ?";
+        String sql = "SELECT 1 FROM modelo WHERE idModelo = ?";
         try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             return ps.executeQuery().next();
@@ -110,7 +122,7 @@ public class ModeloRepository implements IModeloRepository{
 
     @Override
     public boolean existsByNomeModelo(String nomeModelo) {
-        String sql = "SELECT 1 FROM modelo WHERE nome_modelo = ? AND ativo = 1";
+        String sql = "SELECT 1 FROM modelo WHERE nomeModelo = ?";
         try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nomeModelo);
             return ps.executeQuery().next();
