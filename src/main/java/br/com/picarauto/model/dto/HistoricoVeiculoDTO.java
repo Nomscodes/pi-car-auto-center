@@ -12,17 +12,17 @@ import java.util.Date;
  */
 public class HistoricoVeiculoDTO extends BaseDTO {
 
-    private Integer idCliente;
+    private Integer idPessoa;
     private Integer idVeiculo;
     private Date dataInicio;
     private Date dataFim;
 
-    public Integer getIdCliente() {
-        return idCliente;
+    public Integer getIdPessoa() {
+        return idPessoa;
     }
 
-    public void setIdCliente(Integer idCliente) {
-        this.idCliente = idCliente;
+    public void setIdPessoa(Integer idPessoa) {
+        this.idPessoa = idPessoa;
     }
 
     public Integer getIdVeiculo() {
