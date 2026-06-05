@@ -12,6 +12,7 @@ public class ModeloDTO extends BaseDTO{
 
     private String nomeModelo;
     private Integer anoModelo;
+    private Integer idMarca;
 
     public String getNomeModelo() {
         return nomeModelo;
@@ -27,5 +28,13 @@ public class ModeloDTO extends BaseDTO{
 
     public void setAnoModelo(Integer anoModelo) {
         this.anoModelo = anoModelo;
+    }
+
+    public Integer getIdMarca() {
+        return idMarca;
+    }
+
+    public void setIdMarca(Integer idMarca) {
+        this.idMarca = idMarca;
     }
 }
