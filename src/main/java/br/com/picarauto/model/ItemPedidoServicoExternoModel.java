@@ -15,12 +15,15 @@ public class ItemPedidoServicoExternoModel extends BaseModel implements IItemSer
     private String observacoes;
     private Integer idServicoExterno;
 
+    // Campo em memória — não é coluna do banco
+    // Populado pelo service antes de usar na view ou no decorator
+    private Integer idOS;
+
     @Override
     public Integer getId() { return super.getId(); }
 
     @Override
     public String getDescricao() { return observacoes; }
-
     public Double getValorItem() { return valorItem; }
     public void setValorItem(Double valorItem) { this.valorItem = valorItem; }
     public Integer getGarantia() { return garantia; }
@@ -29,4 +32,6 @@ public class ItemPedidoServicoExternoModel extends BaseModel implements IItemSer
     public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
     public Integer getIdServicoExterno() { return idServicoExterno; }
     public void setIdServicoExterno(Integer idServicoExterno) { this.idServicoExterno = idServicoExterno; }
+    public Integer getIdOS() { return idOS; }
+    public void setIdOS(Integer idOS) { this.idOS = idOS; }
 }
