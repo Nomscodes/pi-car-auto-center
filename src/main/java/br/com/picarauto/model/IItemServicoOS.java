@@ -1,7 +1,5 @@
 package br.com.picarauto.model;
 
-import java.math.BigDecimal;
-
 /**
  * Interface base para itens de serviço de uma Ordem de Serviço.
  *
@@ -13,8 +11,6 @@ import java.math.BigDecimal;
  * @author Caio4breu
  */
 public interface IItemServicoOS {
-
     Integer getId();
-    BigDecimal getValorCobrado();
     String getDescricao();
 }
