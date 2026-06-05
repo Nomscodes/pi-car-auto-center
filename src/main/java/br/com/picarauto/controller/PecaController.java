@@ -1,22 +1,19 @@
 package br.com.picarauto.controller;
 
-import br.com.picarauto.controller.mapper.IPecaMapper;
-import br.com.picarauto.model.PecaModel;
-import br.com.picarauto.model.dto.PecaDTO;
-import br.com.picarauto.service.IPecaService;
-
 /**
- *
+ * 
  * @author Caio4breu
  */
-public class PecaController extends GenericController<PecaModel, PecaDTO, IPecaService, IPecaMapper> {
+import br.com.picarauto.model.PecaModel;
+import br.com.picarauto.service.IPecaService;
 
-    public PecaController(IPecaService service, IPecaMapper mapper) {
-        super(service, mapper);
+public class PecaController extends GenericController<PecaModel, IPecaService> {
+    public PecaController(IPecaService service) {
+        super(service);
     }
 
-    public PecaDTO findByCodigoNacional(Integer codigoNacional) {
-        PecaModel peca = service.findByCodigoNacional(codigoNacional);
-        return mapper.toDto(peca);
+    /** Busca peça pelo código nacional — operação específica deste domínio. */
+    public PecaModel findByCodigoNacional(Integer codigoNacional) {
+        return service.findByCodigoNacional(codigoNacional);
     }
 }
