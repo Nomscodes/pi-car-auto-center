@@ -1,9 +1,5 @@
 package br.com.picarauto.repository;
 
-/**
- *
- * @author Caio4breu
- */
 import br.com.picarauto.model.PessoaJuridicaModel;
 import br.com.picarauto.model.exception.BusinessException;
 import br.com.picarauto.util.ConexaoBanco;
@@ -11,6 +7,10 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ * @author Caio4breu
+ */
 public class PessoaJuridicaRepository implements IPessoaJuridicaRepository {
 
     private PessoaJuridicaModel mapRow(ResultSet rs) throws SQLException {
