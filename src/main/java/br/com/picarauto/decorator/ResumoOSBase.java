@@ -23,21 +23,13 @@ public class ResumoOSBase implements IResumoOS {
     public String gerar() {
         StringBuilder sb = new StringBuilder();
         sb.append("========== ORDEM DE SERVIÇO ==========\n");
-        sb.append("OS Nº: ").append(os.getNumero()).append("\n");
-        sb.append("Status: ").append(os.getStatusOrdemServico()).append("\n");
-
-        if (os.getCliente() != null) {
-            sb.append("Cliente: ").append(os.getCliente().getNomeCompleto()).append("\n");
-        }
-        if (os.getVeiculo() != null) {
-            sb.append("Veículo: ").append(os.getVeiculo().getPlaca()).append("\n");
-        }
-        if (os.getDataAbertura() != null) {
+        sb.append("Status: ").append(os.getStatus()).append("\n");
+        sb.append("Veículo (ID): ").append(os.getIdVeiculo()).append("\n");
+        if (os.getDataAbertura() != null)
             sb.append("Abertura: ").append(os.getDataAbertura()).append("\n");
-        }
-
-        sb.append("Problema: ").append(os.getDescricaoProblema()).append("\n");
-        sb.append("Total: R$ ").append(os.calcularTotal()).append("\n");
+        if (os.getObservacoes() != null)
+            sb.append("Observações: ").append(os.getObservacoes()).append("\n");
+        sb.append("Total: R$ ").append(os.getValorTotal()).append("\n");
         return sb.toString();
     }
 }

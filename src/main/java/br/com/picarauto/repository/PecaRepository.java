@@ -7,33 +7,46 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ * @author Caio4breu
+ */
 public class PecaRepository implements IPecaRepository {
-
-    // ─── Mapeamento ResultSet → PecaModel ────────────────────────────────────
 
     private PecaModel mapRow(ResultSet rs) throws SQLException {
         PecaModel p = new PecaModel();
-        p.setId(rs.getInt("id"));
+        p.setCodigoNacional(rs.getInt("codigoNacional"));
         p.setAtivo(rs.getBoolean("ativo"));
-        p.setNome(rs.getString("nome"));
-        p.setQuantidade(rs.getInt("quantidade"));
-        p.setValorUnitario(rs.getBigDecimal("valor_unitario"));
-
-        Timestamp dataHoraCriacao = rs.getTimestamp("data_hora_criacao");
-        if (dataHoraCriacao != null) {
-            p.setDataHoraCriacao(new java.util.Date(dataHoraCriacao.getTime()));
-        }
+        p.setModelo(rs.getString("modelo"));
+        p.setMarca(rs.getString("marca"));
+        p.setAnoVeiculo(rs.getInt("anoVeiculo"));
+        p.setAnoModelo(rs.getInt("anoModelo"));
+        p.setPrecoUnitario(rs.getDouble("precoUnitario"));
+        p.setGarantia(rs.getInt("garantia"));
+        p.setIdFornecedor(rs.getInt("idFornecedor"));
         return p;
     }
 
-    // ─── Consultas genéricas ──────────────────────────────────────────────────
+    // ─── IGenericRepository — métodos por id herdado (não usados pela lógica de negócio) ───
 
     @Override
     public PecaModel findByIdAndAtivoTrue(Integer id) {
-        String sql = "SELECT * FROM peca WHERE id = ? AND ativo = 1";
+        throw new UnsupportedOperationException("Peça usa codigoNacional como chave. Use findByCodigoNacional().");
+    }
+
+    @Override
+    public boolean existsById(Integer id) {
+        throw new UnsupportedOperationException("Peça usa codigoNacional como chave. Use existsByCodigoNacional().");
+    }
+
+    // ─── Consultas por codigoNacional ─────────────────────────────────────────
+
+    @Override
+    public PecaModel findByCodigoNacional(Integer codigoNacional) {
+        String sql = "SELECT * FROM peca WHERE codigoNacional = ?";
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
+            ps.setInt(1, codigoNacional);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return mapRow(rs);
             return null;
@@ -44,7 +57,7 @@ public class PecaRepository implements IPecaRepository {
 
     @Override
     public List<PecaModel> findAllByAtivoTrue() {
-        String sql = "SELECT * FROM peca WHERE ativo = 1 ORDER BY nome ASC";
+        String sql = "SELECT * FROM peca ORDER BY codigoNacional ASC";
         List<PecaModel> list = new ArrayList<>();
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -56,38 +69,42 @@ public class PecaRepository implements IPecaRepository {
         }
     }
 
-    // ─── Persistência (INSERT / UPDATE) ──────────────────────────────────────
+    // ─── Persistência ─────────────────────────────────────────────────────────
 
     @Override
     public PecaModel save(PecaModel p) {
-        if (p.getId() == null) {
-            String sql = "INSERT INTO peca (nome, quantidade, valor_unitario, ativo, data_hora_criacao) "
-                       + "VALUES (?, ?, ?, ?, ?)";
+        if (!existsByCodigoNacional(p.getCodigoNacional())) {
+            String sql = "INSERT INTO peca (codigoNacional, modelo, marca, anoVeiculo, anoModelo, precoUnitario, garantia, idFornecedor) "
+                       + "VALUES (?,?,?,?,?,?,?,?)";
             try (Connection conn = ConexaoBanco.getConexao();
-                 PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setString(1, p.getNome());
-                ps.setInt(2, p.getQuantidade());
-                ps.setBigDecimal(3, p.getValorUnitario());
-                ps.setBoolean(4, p.isAtivo());
-                ps.setTimestamp(5, new Timestamp(p.getDataHoraCriacao().getTime()));
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, p.getCodigoNacional());
+                ps.setString(2, p.getModelo());
+                ps.setString(3, p.getMarca());
+                ps.setInt(4, p.getAnoVeiculo());
+                ps.setInt(5, p.getAnoModelo());
+                ps.setDouble(6, p.getPrecoUnitario());
+                ps.setInt(7, p.getGarantia());
+                ps.setInt(8, p.getIdFornecedor());
                 ps.executeUpdate();
-                ResultSet keys = ps.getGeneratedKeys();
-                if (keys.next()) p.setId(keys.getInt(1));
                 return p;
             } catch (SQLException e) {
                 BusinessException.handleSQLException(e, "peça");
                 return null;
             }
         } else {
-            String sql = "UPDATE peca SET nome = ?, quantidade = ?, valor_unitario = ?, ativo = ? "
-                       + "WHERE id = ?";
+            String sql = "UPDATE peca SET modelo=?, marca=?, anoVeiculo=?, anoModelo=?, precoUnitario=?, garantia=?, idFornecedor=? "
+                       + "WHERE codigoNacional=?";
             try (Connection conn = ConexaoBanco.getConexao();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, p.getNome());
-                ps.setInt(2, p.getQuantidade());
-                ps.setBigDecimal(3, p.getValorUnitario());
-                ps.setBoolean(4, p.isAtivo());
-                ps.setInt(5, p.getId());
+                ps.setString(1, p.getModelo());
+                ps.setString(2, p.getMarca());
+                ps.setInt(3, p.getAnoVeiculo());
+                ps.setInt(4, p.getAnoModelo());
+                ps.setDouble(5, p.getPrecoUnitario());
+                ps.setInt(6, p.getGarantia());
+                ps.setInt(7, p.getIdFornecedor());
+                ps.setInt(8, p.getCodigoNacional());
                 ps.executeUpdate();
                 return p;
             } catch (SQLException e) {
@@ -97,29 +114,15 @@ public class PecaRepository implements IPecaRepository {
         }
     }
 
-    // ─── Verificações de existência ───────────────────────────────────────────
-
     @Override
-    public boolean existsById(Integer id) {
-        String sql = "SELECT 1 FROM peca WHERE id = ?";
+    public boolean existsByCodigoNacional(Integer codigoNacional) {
+        String sql = "SELECT 1 FROM peca WHERE codigoNacional = ?";
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
+            ps.setInt(1, codigoNacional);
             return ps.executeQuery().next();
         } catch (SQLException e) {
-            throw new BusinessException("Erro ao verificar peça por ID.", e);
-        }
-    }
-
-    @Override
-    public boolean existsByNome(String nome) {
-        String sql = "SELECT 1 FROM peca WHERE nome = ? AND ativo = 1";
-        try (Connection conn = ConexaoBanco.getConexao();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, nome);
-            return ps.executeQuery().next();
-        } catch (SQLException e) {
-            throw new BusinessException("Erro ao verificar nome da peça.", e);
+            throw new BusinessException("Erro ao verificar código nacional.", e);
         }
     }
 }
