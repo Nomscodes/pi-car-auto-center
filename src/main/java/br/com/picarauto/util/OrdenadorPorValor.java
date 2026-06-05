@@ -1,7 +1,6 @@
 package br.com.picarauto.util;
 
 import br.com.picarauto.model.OrdemServicoModel;
-import java.math.BigDecimal;
 
 /**
  * Ordena as OS pelo valor total calculado, do menor para o maior.
@@ -20,8 +19,6 @@ public class OrdenadorPorValor extends OrdenadorOS {
      */
     @Override
     protected int comparar(OrdemServicoModel a, OrdemServicoModel b) {
-        BigDecimal valorA = a.calcularTotal() != null ? a.calcularTotal() : BigDecimal.ZERO;
-        BigDecimal valorB = b.calcularTotal() != null ? b.calcularTotal() : BigDecimal.ZERO;
-        return valorA.compareTo(valorB);
+        return Double.compare(a.getValorTotal(), b.getValorTotal());
     }
 }
