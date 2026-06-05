@@ -12,24 +12,24 @@ import java.time.LocalDate;
  */
 public class ServicoDoColaboradorModel extends BaseModel {
 
-    private ColaboradorModel colaborador;
-    private ServicoInternoModel servicoInterno;
+    private Integer idColaborador;    
+    private Integer idServicoInterno; 
     private LocalDate dataServico;
 
-    public ColaboradorModel getColaborador() {
-        return colaborador;
+    public Integer getIdColaborador() {
+        return idColaborador;
     }
 
-    public void setColaborador(ColaboradorModel colaborador) {
-        this.colaborador = colaborador;
+    public void setIdColaborador(Integer idColaborador) {
+        this.idColaborador = idColaborador;
     }
 
-    public ServicoInternoModel getServicoInterno() {
-        return servicoInterno;
+    public Integer getIdServicoInterno() {
+        return idServicoInterno;
     }
 
-    public void setServicoInterno(ServicoInternoModel servicoInterno) {
-        this.servicoInterno = servicoInterno;
+    public void setIdServicoInterno(Integer idServicoInterno) {
+        this.idServicoInterno = idServicoInterno;
     }
 
     public LocalDate getDataServico() {
