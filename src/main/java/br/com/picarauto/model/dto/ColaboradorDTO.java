@@ -10,7 +10,7 @@ import java.time.LocalDate;
  *
  * @author Gabriel
  */
-public class ColaboradorDTO {
+public class ColaboradorDTO extends BaseDTO{
     
     private String nomeCompleto;
     private String telefone;
