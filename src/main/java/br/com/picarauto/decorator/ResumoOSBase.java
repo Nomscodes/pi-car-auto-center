@@ -27,7 +27,7 @@ public class ResumoOSBase implements IResumoOS {
         sb.append("Status: ").append(os.getStatusOrdemServico()).append("\n");
 
         if (os.getCliente() != null) {
-            sb.append("Cliente: ").append(os.getCliente().getNome()).append("\n");
+            sb.append("Cliente: ").append(os.getCliente().getNomeCompleto()).append("\n");
         }
         if (os.getVeiculo() != null) {
             sb.append("Veículo: ").append(os.getVeiculo().getPlaca()).append("\n");
