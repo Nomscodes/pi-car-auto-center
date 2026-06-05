@@ -1,6 +1,5 @@
 package br.com.picarauto.controller;
 
-import br.com.picarauto.controller.mapper.IGenericMapper;
 import br.com.picarauto.model.BaseModel;
 import br.com.picarauto.model.dto.BaseDTO;
 import br.com.picarauto.repository.IGenericRepository;
@@ -10,54 +9,46 @@ import java.util.List;
 
 /**
  * Controller genérico adaptado para desktop (sem Spring, sem HTTP).
- * Faz a ponte entre a tela Swing e o service, convertendo entidades em DTOs.
- * Cada domínio cria seu próprio controller estendendo esta classe.
+ * Faz a ponte entre a tela Swing e o service.
+ * A conversão para DTO é responsabilidade da view, que conhece o contexto da tela.
  *
  * E: Entity (BaseModel)
- * D: DTO    (BaseDTO)
  * S: Service especializado
- * M: Mapper especializado
+ * @Author Caio4breu
  */
 public abstract class GenericController<
         E extends BaseModel,
-        D extends BaseDTO,
-        S extends IGenericService<E, ? extends IGenericRepository<E>, ? extends IGenericValidation<E, ? extends IGenericRepository<E>>>,
-        M extends IGenericMapper<E, D>>
-        implements IGenericController<E, D, S, M> {
+        S extends IGenericService<E, ? extends IGenericRepository<E>, ? extends IGenericValidation<E, ? extends IGenericRepository<E>>>>
+        implements IGenericController<E, S> {
 
     protected final S service;
-    protected final M mapper;
 
-    public GenericController(S service, M mapper) {
+    public GenericController(S service) {
         this.service = service;
-        this.mapper  = mapper;
     }
 
-    /** Busca um registro ativo pelo ID e retorna como DTO. */
+    /** Busca um registro ativo pelo ID. */
     @Override
-    public D findById(Integer id) {
-        E entity = service.findByIdActive(id);
-        return mapper.toDto(entity);
+    public E findById(Integer id) {
+        return service.findByIdActive(id);
     }
 
-    /** Retorna todos os registros ativos como lista de DTOs. */
+    /** Retorna todos os registros ativos. */
     @Override
-    public List<D> findAll() {
-        return mapper.toDtoList(service.findAllActive());
+    public List<E> findAll() {
+        return service.findAllActive();
     }
 
-    /** Valida, persiste e retorna o DTO do registro inserido. */
+    /** Valida e persiste o registro. */
     @Override
-    public D insert(E entity) {
-        E saved = service.insert(entity);
-        return mapper.toDto(saved);
+    public E insert(E entity) {
+        return service.insert(entity);
     }
 
-    /** Valida, atualiza e retorna o DTO do registro alterado. */
+    /** Valida e atualiza o registro. */
     @Override
-    public D update(E entity) {
-        E updated = service.update(entity);
-        return mapper.toDto(updated);
+    public E update(E entity) {
+        return service.update(entity);
     }
 
     /** Realiza soft delete (ativo = false) pelo ID. */
