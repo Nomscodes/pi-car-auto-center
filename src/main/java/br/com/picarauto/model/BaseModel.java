@@ -2,6 +2,10 @@ package br.com.picarauto.model;
 
 import java.util.Date;
 
+/**
+ * 
+ * @author Caio4breu
+ */
 public abstract class BaseModel {
     private Integer id;
     private Date dataHoraCriacao;
