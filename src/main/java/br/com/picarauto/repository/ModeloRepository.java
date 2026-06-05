@@ -24,6 +24,7 @@ public class ModeloRepository implements IModeloRepository{
         m.setAtivo(rs.getBoolean("ativo"));
         m.setNomeModelo(rs.getString("nome_modelo"));
         m.setAnoModelo(rs.getInt("ano_modelo"));
+        m.setIdMarca(rs.getInt("idMarca"));
         return m;
     }
 
@@ -65,8 +66,9 @@ public class ModeloRepository implements IModeloRepository{
             try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, m.getNomeModelo());
                 ps.setInt(2, m.getAnoModelo());
-                ps.setBoolean(3, m.isAtivo());
-                ps.setTimestamp(4, new Timestamp(m.getDataHoraCriacao().getTime()));
+                ps.setInt(3, m.getIdMarca());
+                ps.setBoolean(4, m.isAtivo());
+                ps.setTimestamp(5, new Timestamp(m.getDataHoraCriacao().getTime()));
                 ps.executeUpdate();
                 ResultSet keys = ps.getGeneratedKeys();
                 if (keys.next()) {
@@ -82,8 +84,9 @@ public class ModeloRepository implements IModeloRepository{
             try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, m.getNomeModelo());
                 ps.setInt(2, m.getAnoModelo());
-                ps.setBoolean(3, m.isAtivo());
-                ps.setInt(4, m.getId());
+                ps.setInt(3, m.getIdMarca());
+                ps.setBoolean(4, m.isAtivo());
+                ps.setInt(5, m.getId());
                 ps.executeUpdate();
                 return m;
             } catch (SQLException e) {
