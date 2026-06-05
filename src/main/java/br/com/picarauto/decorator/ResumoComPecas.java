@@ -1,7 +1,6 @@
 package br.com.picarauto.decorator;
 
 import br.com.picarauto.model.OrdemServicoModel;
-import br.com.picarauto.model.OrdemServicoPecaModel;
 
 /**
  * Decorator concreto: acrescenta a seção de peças aplicadas ao resumo da OS.
