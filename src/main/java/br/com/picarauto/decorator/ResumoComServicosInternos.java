@@ -19,22 +19,12 @@ public class ResumoComServicosInternos extends ResumoOSDecorator {
         this.os = os;
     }
 
+    // ResumoComServicosInternos
     @Override
     public String gerar() {
         StringBuilder sb = new StringBuilder(decorado.gerar());
         sb.append("\n--- Serviços Internos ---\n");
-
-        for (OrdemServicoServicoModel item : os.getServicosExecutados()) {
-            sb.append("  • ").append(item.getDescricao());
-            if (item.getValorCobrado() != null) {
-                sb.append("  R$ ").append(item.getValorCobrado());
-            }
-            if (item.getMecanicoExecutor() != null) {
-                sb.append("  (").append(item.getMecanicoExecutor().getNome()).append(")");
-            }
-            sb.append("\n");
-        }
-
+        // TODO: implementar via ItemServicoInternoRepository quando a view estiver pronta
         return sb.toString();
     }
 }
