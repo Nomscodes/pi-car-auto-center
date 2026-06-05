@@ -15,11 +15,11 @@ public class FornecedorDTO extends BaseDTO {
     private String telefone;
     private String email;
 
-    public String getnomeFornecedor() {
+    public String getNomeFornecedor() {
         return nomeFornecedor;
     }
 
-    public void setnomeFornecedor(String nomeFornecedor) {
+    public void setNomeFornecedor(String nomeFornecedor) {
         this.nomeFornecedor = nomeFornecedor;
     }
 
