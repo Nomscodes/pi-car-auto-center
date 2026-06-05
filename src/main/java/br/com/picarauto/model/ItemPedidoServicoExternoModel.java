@@ -1,7 +1,5 @@
 package br.com.picarauto.model;
 
-import java.math.BigDecimal;
-
 /**
  * Representa a execução de um serviço externo (terceirizado) vinculado a uma OS.
  *
@@ -10,28 +8,25 @@ import java.math.BigDecimal;
  *
  * @author Caio4breu
  */
-public class ItemPedidoServicoExternoModel implements IItemServicoOS {
+public class ItemPedidoServicoExternoModel extends BaseModel implements IItemServicoOS {
 
-    private Integer id;
-    private String descricao;
-    private BigDecimal valorCobrado;
+    private Double valorItem;
     private Integer garantia;
     private String observacoes;
+    private Integer idServicoExterno;
 
     @Override
-    public Integer getId() { return id; }
+    public Integer getId() { return super.getId(); }
 
     @Override
-    public BigDecimal getValorCobrado() { return valorCobrado; }
+    public String getDescricao() { return observacoes; }
 
-    @Override
-    public String getDescricao() { return descricao; }
-
-    public void setId(Integer id) { this.id = id; }
-    public void setDescricao(String descricao) { this.descricao = descricao; }
-    public void setValorCobrado(BigDecimal valorCobrado) { this.valorCobrado = valorCobrado; }
+    public Double getValorItem() { return valorItem; }
+    public void setValorItem(Double valorItem) { this.valorItem = valorItem; }
     public Integer getGarantia() { return garantia; }
     public void setGarantia(Integer garantia) { this.garantia = garantia; }
     public String getObservacoes() { return observacoes; }
     public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
+    public Integer getIdServicoExterno() { return idServicoExterno; }
+    public void setIdServicoExterno(Integer idServicoExterno) { this.idServicoExterno = idServicoExterno; }
 }
