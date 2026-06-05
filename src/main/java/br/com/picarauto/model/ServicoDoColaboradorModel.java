@@ -13,7 +13,7 @@ import java.time.LocalDate;
 public class ServicoDoColaboradorModel extends BaseModel {
 
     private ColaboradorModel colaborador;
-    private ServicoModel servicoInterno;
+    private ServicoInternoModel servicoInterno;
     private LocalDate dataServico;
 
     public ColaboradorModel getColaborador() {
@@ -24,11 +24,11 @@ public class ServicoDoColaboradorModel extends BaseModel {
         this.colaborador = colaborador;
     }
 
-    public ServicoModel getServicoInterno() {
+    public ServicoInternoModel getServicoInterno() {
         return servicoInterno;
     }
 
-    public void setServicoInterno(ServicoModel servicoInterno) {
+    public void setServicoInterno(ServicoInternoModel servicoInterno) {
         this.servicoInterno = servicoInterno;
     }
 
