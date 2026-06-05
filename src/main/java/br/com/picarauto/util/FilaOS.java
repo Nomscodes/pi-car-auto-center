@@ -102,10 +102,10 @@ public class FilaOS implements Iterable<OrdemServicoModel> {
         }
     }
     
-    // Busca por número da OS — retorna null se não encontrar
-    public OrdemServicoModel buscarPorNumero(Long numero) {
+    // Busca por ID da OS — retorna null se não encontrar
+    public OrdemServicoModel buscarPorId(Integer id) {
         for (OrdemServicoModel os : this) {
-            if (os.getNumero() != null && os.getNumero().equals(numero)) {
+            if (os.getId() != null && os.getId().equals(id)) {
                 return os;
             }
         }
@@ -118,23 +118,22 @@ public class FilaOS implements Iterable<OrdemServicoModel> {
         if (placa == null || placa.isBlank()) return resultado;
         String placaNormalizada = placa.trim().toUpperCase();
         for (OrdemServicoModel os : this) {
-            if (os.getVeiculo() != null
-                    && os.getVeiculo().getPlaca() != null
-                    && os.getVeiculo().getPlaca().toUpperCase().contains(placaNormalizada)) {
+            if (os.getPlacaVeiculo() != null
+                    && os.getPlacaVeiculo().toUpperCase().contains(placaNormalizada)) {
                 resultado.add(os);
             }
         }
         return resultado;
     }
+
     // Busca por nome do cliente — busca parcial, case-insensitive
     public java.util.List<OrdemServicoModel> buscarPorNomeCliente(String nomeCliente) {
         java.util.List<OrdemServicoModel> resultado = new java.util.ArrayList<>();
         if (nomeCliente == null || nomeCliente.isBlank()) return resultado;
         String nomeLower = nomeCliente.trim().toLowerCase();
         for (OrdemServicoModel os : this) {
-            if (os.getCliente() != null
-                    && os.getCliente().getNomeCompleto() != null
-                    && os.getCliente().getNomeCompleto().toLowerCase().contains(nomeLower)) {
+            if (os.getNomeCliente() != null
+                    && os.getNomeCliente().toLowerCase().contains(nomeLower)) {
                 resultado.add(os);
             }
         }

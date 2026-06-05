@@ -1,14 +1,14 @@
 package br.com.picarauto.factory;
 
 import br.com.picarauto.model.IItemServicoOS;
-import br.com.picarauto.model.OrdemServicoServicoModel;
+import br.com.picarauto.model.ItemServicoInternoModel;
 
 /**
  * Fábrica concreta que cria itens de serviço interno para uma OS.
  *
  * Padrão de Projeto: Factory Method
- * Implementação de {@link ServicoItemFactory} responsável por instanciar
- * {@link OrdemServicoServicoModel} — serviços executados pelos próprios
+ * Implementação de {@link IServicoItemFactory} responsável por instanciar
+ * {@link ItemServicoInternoModel} — serviços executados pelos próprios
  * colaboradores da oficina.
  *
  * @author Caio4breu
@@ -17,8 +17,6 @@ public class ServicoInternoFactory implements IServicoItemFactory {
 
     @Override
     public IItemServicoOS criar() {
-        // Cria um item de serviço interno com valores padrão.
-        // O controller é responsável por preencher os dados após a criação.
-        return new OrdemServicoServicoModel();
+        return new ItemServicoInternoModel();
     }
 }

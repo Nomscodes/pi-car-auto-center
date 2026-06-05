@@ -1,6 +1,9 @@
 package br.com.picarauto.repository;
 
-import br.com.picarauto.model.ClienteModel;
+/**
+ *
+ * @author Caio4breu
+ */
 import br.com.picarauto.model.VeiculoModel;
 import br.com.picarauto.model.exception.BusinessException;
 import br.com.picarauto.util.ConexaoBanco;
@@ -12,26 +15,19 @@ public class VeiculoRepository implements IVeiculoRepository {
 
     private VeiculoModel mapRow(ResultSet rs) throws SQLException {
         VeiculoModel v = new VeiculoModel();
-        v.setId(rs.getInt("id"));
-        v.setAtivo(rs.getBoolean("ativo"));
+        v.setId(rs.getInt("idVeiculo"));
+        v.setAtivo(true); // veiculo não tem coluna ativo no schema; sempre ativo quando presente
         v.setPlaca(rs.getString("placa"));
-        v.setMarca(rs.getString("marca"));
-        v.setModelo(rs.getString("modelo"));
-        v.setAnoFabricacao(rs.getInt("ano_fabricacao"));
         v.setCor(rs.getString("cor"));
-        v.setQuilometragem(rs.getInt("quilometragem"));
-        int clienteId = rs.getInt("cliente_id");
-        if (!rs.wasNull()) {
-            ClienteModel cliente = new ClienteModel();
-            cliente.setId(clienteId);
-            v.setCliente(cliente);
-        }
+        v.setChassi(rs.getString("chassi"));
+        v.setIdModelo(rs.getInt("idModelo"));
+        v.setIdCliente(rs.getInt("idCliente"));
         return v;
     }
 
     @Override
     public VeiculoModel findByIdAndAtivoTrue(Integer id) {
-        String sql = "SELECT * FROM veiculo WHERE id = ? AND ativo = 1";
+        String sql = "SELECT * FROM veiculo WHERE idVeiculo = ?";
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -45,7 +41,7 @@ public class VeiculoRepository implements IVeiculoRepository {
 
     @Override
     public List<VeiculoModel> findAllByAtivoTrue() {
-        String sql = "SELECT * FROM veiculo WHERE ativo = 1";
+        String sql = "SELECT * FROM veiculo ORDER BY idVeiculo ASC";
         List<VeiculoModel> list = new ArrayList<>();
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -60,18 +56,14 @@ public class VeiculoRepository implements IVeiculoRepository {
     @Override
     public VeiculoModel save(VeiculoModel v) {
         if (v.getId() == null) {
-            String sql = "INSERT INTO veiculo (placa, marca, modelo, ano_fabricacao, cor, quilometragem, cliente_id, ativo, data_hora_criacao) VALUES (?,?,?,?,?,?,?,?,?)";
+            String sql = "INSERT INTO veiculo (placa, cor, chassi, idModelo, idCliente) VALUES (?,?,?,?,?)";
             try (Connection conn = ConexaoBanco.getConexao();
                  PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, v.getPlaca());
-                ps.setString(2, v.getMarca());
-                ps.setString(3, v.getModelo());
-                ps.setInt(4, v.getAnoFabricacao());
-                ps.setString(5, v.getCor());
-                ps.setObject(6, v.getQuilometragem());
-                ps.setObject(7, v.getCliente() != null ? v.getCliente().getId() : null);
-                ps.setBoolean(8, v.isAtivo());
-                ps.setTimestamp(9, new Timestamp(v.getDataHoraCriacao().getTime()));
+                ps.setString(2, v.getCor());
+                ps.setString(3, v.getChassi());
+                ps.setInt(4, v.getIdModelo());
+                ps.setInt(5, v.getIdCliente());
                 ps.executeUpdate();
                 ResultSet keys = ps.getGeneratedKeys();
                 if (keys.next()) v.setId(keys.getInt(1));
@@ -81,18 +73,15 @@ public class VeiculoRepository implements IVeiculoRepository {
                 return null;
             }
         } else {
-            String sql = "UPDATE veiculo SET placa=?, marca=?, modelo=?, ano_fabricacao=?, cor=?, quilometragem=?, cliente_id=?, ativo=? WHERE id=?";
+            String sql = "UPDATE veiculo SET placa=?, cor=?, chassi=?, idModelo=?, idCliente=? WHERE idVeiculo=?";
             try (Connection conn = ConexaoBanco.getConexao();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, v.getPlaca());
-                ps.setString(2, v.getMarca());
-                ps.setString(3, v.getModelo());
-                ps.setInt(4, v.getAnoFabricacao());
-                ps.setString(5, v.getCor());
-                ps.setObject(6, v.getQuilometragem());
-                ps.setObject(7, v.getCliente() != null ? v.getCliente().getId() : null);
-                ps.setBoolean(8, v.isAtivo());
-                ps.setInt(9, v.getId());
+                ps.setString(2, v.getCor());
+                ps.setString(3, v.getChassi());
+                ps.setInt(4, v.getIdModelo());
+                ps.setInt(5, v.getIdCliente());
+                ps.setInt(6, v.getId());
                 ps.executeUpdate();
                 return v;
             } catch (SQLException e) {
@@ -104,7 +93,7 @@ public class VeiculoRepository implements IVeiculoRepository {
 
     @Override
     public boolean existsById(Integer id) {
-        String sql = "SELECT 1 FROM veiculo WHERE id = ?";
+        String sql = "SELECT 1 FROM veiculo WHERE idVeiculo = ?";
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -116,7 +105,7 @@ public class VeiculoRepository implements IVeiculoRepository {
 
     @Override
     public boolean existsByPlaca(String placa) {
-        String sql = "SELECT 1 FROM veiculo WHERE placa = ? AND ativo = 1";
+        String sql = "SELECT 1 FROM veiculo WHERE placa = ?";
         try (Connection conn = ConexaoBanco.getConexao();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, placa);

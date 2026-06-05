@@ -24,16 +24,16 @@ public class ResumoComPecas extends ResumoOSDecorator {
         StringBuilder sb = new StringBuilder(decorado.gerar());
         sb.append("\n--- Peças Aplicadas ---\n");
 
-        for (OrdemServicoPecaModel item : os.getPecasAplicadas()) {
-            sb.append("  • ");
-            if (item.getPeca() != null) {
-                sb.append(item.getPeca().getNome());
-            }
-            sb.append("  Qtd: ").append(item.getQuantidade());
-            sb.append("  Unit: R$ ").append(item.getValorUnitario());
-            sb.append("  Total: R$ ").append(item.getValorTotal());
-            sb.append("\n");
-        }
+//        for (OrdemServicoPecaModel item : os.getPecasAplicadas()) {
+//            sb.append("  • ");
+//            if (item.getPeca() != null) {
+//                sb.append(item.getPeca().getNome());
+//            }
+//            sb.append("  Qtd: ").append(item.getQuantidade());
+//            sb.append("  Unit: R$ ").append(item.getValorUnitario());
+//            sb.append("  Total: R$ ").append(item.getValorTotal());
+//            sb.append("\n");
+//        }
 
         return sb.toString();
     }

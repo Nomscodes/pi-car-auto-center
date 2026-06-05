@@ -1,19 +1,34 @@
 package br.com.picarauto.model.dto;
 
-import java.math.BigDecimal;
-
+/**
+ *
+ * @author Caio4breu
+ */
 public class PecaDTO extends BaseDTO {
 
-    private String nome;
-    private Integer quantidade;
-    private BigDecimal valorUnitario;
+    private Integer codigoNacional;
+    private String modelo;
+    private String marca;
+    private Integer anoVeiculo;
+    private Integer anoModelo;
+    private double precoUnitario;
+    private Integer garantia;
+    private Integer idFornecedor;
 
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
-
-    public Integer getQuantidade() { return quantidade; }
-    public void setQuantidade(Integer quantidade) { this.quantidade = quantidade; }
-
-    public BigDecimal getValorUnitario() { return valorUnitario; }
-    public void setValorUnitario(BigDecimal valorUnitario) { this.valorUnitario = valorUnitario; }
+    public Integer getCodigoNacional() { return codigoNacional; }
+    public void setCodigoNacional(Integer codigoNacional) { this.codigoNacional = codigoNacional; }
+    public String getModelo() { return modelo; }
+    public void setModelo(String modelo) { this.modelo = modelo; }
+    public String getMarca() { return marca; }
+    public void setMarca(String marca) { this.marca = marca; }
+    public Integer getAnoVeiculo() { return anoVeiculo; }
+    public void setAnoVeiculo(Integer anoVeiculo) { this.anoVeiculo = anoVeiculo; }
+    public Integer getAnoModelo() { return anoModelo; }
+    public void setAnoModelo(Integer anoModelo) { this.anoModelo = anoModelo; }
+    public double getPrecoUnitario() { return precoUnitario; }
+    public void setPrecoUnitario(double precoUnitario) { this.precoUnitario = precoUnitario; }
+    public Integer getGarantia() { return garantia; }
+    public void setGarantia(Integer garantia) { this.garantia = garantia; }
+    public Integer getIdFornecedor() { return idFornecedor; }
+    public void setIdFornecedor(Integer idFornecedor) { this.idFornecedor = idFornecedor; }
 }
