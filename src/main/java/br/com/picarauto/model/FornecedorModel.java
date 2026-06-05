@@ -10,17 +10,17 @@ package br.com.picarauto.model;
  */
 public class FornecedorModel extends BaseModel{
     
-    private String nome;
+    private String nomeFornecedor;
     private String cnpj;
     private String telefone;
     private String email;
 
     public String getNome() {
-        return nome;
+        return nomeFornecedor;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setNome(String nomeFornecedor) {
+        this.nomeFornecedor = nomeFornecedor;
     }
 
     public String getCnpj() {
