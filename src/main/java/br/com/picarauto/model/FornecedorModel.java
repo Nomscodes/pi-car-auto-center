@@ -15,11 +15,11 @@ public class FornecedorModel extends BaseModel{
     private String telefone;
     private String email;
 
-    public String getNome() {
+    public String getNomenomeFornecedor() {
         return nomeFornecedor;
     }
 
-    public void setNome(String nomeFornecedor) {
+    public void setnomeFornecedor(String nomeFornecedor) {
         this.nomeFornecedor = nomeFornecedor;
     }
 
