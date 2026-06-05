@@ -101,4 +101,43 @@ public class FilaOS implements Iterable<OrdemServicoModel> {
             return osAtual;
         }
     }
+    
+    // Busca por número da OS — retorna null se não encontrar
+    public OrdemServicoModel buscarPorNumero(Long numero) {
+        for (OrdemServicoModel os : this) {
+            if (os.getNumero() != null && os.getNumero().equals(numero)) {
+                return os;
+            }
+        }
+        return null;
+    }
+    
+    // Busca por placa do veículo — retorna todas as OS que combinam
+    public java.util.List<OrdemServicoModel> buscarPorPlaca(String placa) {
+        java.util.List<OrdemServicoModel> resultado = new java.util.ArrayList<>();
+        if (placa == null || placa.isBlank()) return resultado;
+        String placaNormalizada = placa.trim().toUpperCase();
+        for (OrdemServicoModel os : this) {
+            if (os.getVeiculo() != null
+                    && os.getVeiculo().getPlaca() != null
+                    && os.getVeiculo().getPlaca().toUpperCase().contains(placaNormalizada)) {
+                resultado.add(os);
+            }
+        }
+        return resultado;
+    }
+    // Busca por nome do cliente — busca parcial, case-insensitive
+    public java.util.List<OrdemServicoModel> buscarPorNomeCliente(String nomeCliente) {
+        java.util.List<OrdemServicoModel> resultado = new java.util.ArrayList<>();
+        if (nomeCliente == null || nomeCliente.isBlank()) return resultado;
+        String nomeLower = nomeCliente.trim().toLowerCase();
+        for (OrdemServicoModel os : this) {
+            if (os.getCliente() != null
+                    && os.getCliente().getNomeCompleto() != null
+                    && os.getCliente().getNomeCompleto().toLowerCase().contains(nomeLower)) {
+                resultado.add(os);
+            }
+        }
+        return resultado;
+    }
 }
