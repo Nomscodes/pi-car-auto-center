@@ -4,6 +4,10 @@ import br.com.picarauto.model.BaseModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.repository.IGenericRepository;
 
+/**
+ * 
+ * @author Caio4breu
+ */
 public abstract class GenericValidation<E extends BaseModel, R extends IGenericRepository<E>>
         implements IGenericValidation<E, R> {
 
