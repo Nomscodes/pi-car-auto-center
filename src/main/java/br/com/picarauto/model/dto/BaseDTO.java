@@ -1,5 +1,9 @@
 package br.com.picarauto.model.dto;
 
+/**
+ *
+ * @author Caio4breu
+ */
 public abstract class BaseDTO {
 
     private Integer id;
