@@ -4,6 +4,8 @@
  */
 package br.com.picarauto.model.dto;
 
+import java.time.LocalDate;
+
 /**
  *
  * @author Gabriel
@@ -11,7 +13,7 @@ package br.com.picarauto.model.dto;
 public class ModeloDTO extends BaseDTO{
 
     private String nomeModelo;
-    private Integer anoModelo;
+    private LocalDate anoModelo;
     private Integer idMarca;
 
     public String getNomeModelo() {
@@ -22,11 +24,11 @@ public class ModeloDTO extends BaseDTO{
         this.nomeModelo = nomeModelo;
     }
 
-    public Integer getAnoModelo() {
+    public LocalDate getAnoModelo() {
         return anoModelo;
     }
 
-    public void setAnoModelo(Integer anoModelo) {
+    public void setAnoModelo(LocalDate anoModelo) {
         this.anoModelo = anoModelo;
     }
 
