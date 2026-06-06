@@ -1,11 +1,12 @@
 package br.com.picarauto.repository;
 
 import br.com.picarauto.model.ServicoInternoModel;
+import org.springframework.stereotype.Repository;
 
 /**
- *
- * @author Caio4breu
+ * Repositório Spring Data para ServicoInternoModel.
+ * O Spring gera a implementação automaticamente em tempo de execução.
  */
+@Repository
 public interface IServicoInternoRepository extends IGenericRepository<ServicoInternoModel> {
-    boolean existsByDescricao(String descricao);
 }

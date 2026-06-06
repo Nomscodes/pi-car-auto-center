@@ -8,7 +8,19 @@ import br.com.picarauto.repository.IGenericRepository;
 import br.com.picarauto.validation.IGenericValidation;
 import java.util.List;
 
-public abstract class GenericService<E extends BaseModel, R extends IGenericRepository<E>, V extends IGenericValidation<E, R>>
+/**
+ * Service genérico — lógica de negócio reutilizável para todas as entidades.
+ *
+ * Padrão de Projeto: Template Method — define o fluxo de insert/update/delete
+ * com hooks (beforeInsert, afterInsert...) que subclasses sobrescrevem.
+ *
+ * Com Spring Data, o repository é injetado via @Autowired nas subclasses;
+ * passado aqui pelo construtor para manter o contrato genérico.
+ */
+public abstract class GenericService<
+        E extends BaseModel,
+        R extends IGenericRepository<E>,
+        V extends IGenericValidation<E, R>>
         implements IGenericService<E, R, V> {
 
     protected R repository;
@@ -21,17 +33,8 @@ public abstract class GenericService<E extends BaseModel, R extends IGenericRepo
 
     @Override
     public E findByIdActive(Integer id) {
-        try {
-            E entity = repository.findByIdAndAtivoTrue(id);
-            if (entity == null) {
-                throw new BusinessException("Registro não encontrado ou inativo.");
-            }
-            return entity;
-        } catch (BusinessException be) {
-            throw be;
-        } catch (Exception e) {
-            throw new BusinessException("Erro ao localizar o registro em " + getEntityName(), e);
-        }
+        return repository.findByIdAndAtivoTrue(id)
+                .orElseThrow(() -> new BusinessException("Registro não encontrado ou inativo."));
     }
 
     @Override
@@ -50,13 +53,11 @@ public abstract class GenericService<E extends BaseModel, R extends IGenericRepo
             validation.validateInsert(entity);
             entity.onCreate();
             beforeInsert(entity);
-
-            E savedEntity = repository.save(entity);
-
-            afterInsert(savedEntity, entity);
-            return savedEntity;
-        } catch (BusinessException | FieldValidationException | RuleValidationException be) {
-            throw be;
+            E saved = repository.save(entity);
+            afterInsert(saved, entity);
+            return saved;
+        } catch (BusinessException | FieldValidationException | RuleValidationException e) {
+            throw e;
         } catch (Exception e) {
             throw new BusinessException("Erro inesperado ao inserir em " + getEntityName(), e);
         }
@@ -68,13 +69,11 @@ public abstract class GenericService<E extends BaseModel, R extends IGenericRepo
             validation.validateFieldsUpdate(entity);
             validation.validateUpdate(entity);
             beforeUpdate(entity);
-
-            E savedEntity = repository.save(entity);
-
-            afterUpdate(savedEntity, entity);
-            return savedEntity;
-        } catch (BusinessException | FieldValidationException | RuleValidationException be) {
-            throw be;
+            E saved = repository.save(entity);
+            afterUpdate(saved, entity);
+            return saved;
+        } catch (BusinessException | FieldValidationException | RuleValidationException e) {
+            throw e;
         } catch (Exception e) {
             throw new BusinessException("Erro inesperado ao atualizar em " + getEntityName(), e);
         }
@@ -89,8 +88,8 @@ public abstract class GenericService<E extends BaseModel, R extends IGenericRepo
             entity.setAtivo(false);
             repository.save(entity);
             afterDelete(entity);
-        } catch (BusinessException | FieldValidationException | RuleValidationException be) {
-            throw be;
+        } catch (BusinessException | FieldValidationException | RuleValidationException e) {
+            throw e;
         } catch (Exception e) {
             throw new BusinessException("Não foi possível excluir o registro em " + getEntityName(), e);
         }
@@ -100,7 +99,7 @@ public abstract class GenericService<E extends BaseModel, R extends IGenericRepo
         return this.getClass().getSimpleName().replace("Service", "");
     }
 
-    // Hooks
+    // Hooks — sobrescreva nas subclasses quando necessário
     protected void beforeInsert(E entity) {}
     protected void afterInsert(E entity, E old) {}
     protected void beforeUpdate(E entity) {}

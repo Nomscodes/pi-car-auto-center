@@ -1,14 +1,27 @@
 package br.com.picarauto.model;
 
+import jakarta.persistence.*;
+
 /**
+ * Representa uma pessoa no sistema (abstrata).
+ * Mapeada com herança JOINED: cada subclasse tem sua própria tabela,
+ * ligada a esta via chave estrangeira — reflete o modelo relacional do schema.
  *
  * @author Caio4breu
  */
+@MappedSuperclass
 public abstract class PessoaModel extends BaseModel {
 
+    @Column(nullable = false)
     private String nomeCompleto;
+
+    @Column(length = 20)
     private String telefone;
+
+    @Column(length = 150)
     private String email;
+
+    @Column(length = 255)
     private String endereco;
 
     public String getNomeCompleto() { return nomeCompleto; }
