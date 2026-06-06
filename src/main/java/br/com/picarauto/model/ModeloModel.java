@@ -1,42 +1,34 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package br.com.picarauto.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDate;
 
 /**
- *
+ * Entidade Modelo de Veículo — tabela "modelo".
  * @author Gabriel
  */
-public class ModeloModel extends BaseModel{
+@Entity
+@Table(name = "modelo")
+public class ModeloModel extends BaseModel {
 
+    @Column(nullable = false, length = 100)
     private String nomeModelo;
+
+    @Column(name = "anoModelo")
     private LocalDate anoModelo;
-    private Integer idMarca;
 
-    public String getNomeModelo() {
-        return nomeModelo;
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idMarca", nullable = false)
+    private MarcaModel marca;
 
-    public void setNomeModelo(String nomeModelo) {
-        this.nomeModelo = nomeModelo;
-    }
+    public String getNomeModelo() { return nomeModelo; }
+    public void setNomeModelo(String nomeModelo) { this.nomeModelo = nomeModelo; }
 
-    public LocalDate getAnoModelo() {
-        return anoModelo;
-    }
+    public LocalDate getAnoModelo() { return anoModelo; }
+    public void setAnoModelo(LocalDate anoModelo) { this.anoModelo = anoModelo; }
 
-    public void setAnoModelo(LocalDate anoModelo) {
-        this.anoModelo = anoModelo;
-    }
+    public MarcaModel getMarca() { return marca; }
+    public void setMarca(MarcaModel marca) { this.marca = marca; }
 
-    public Integer getIdMarca() {
-        return idMarca;
-    }
-
-    public void setIdMarca(Integer idMarca) {
-        this.idMarca = idMarca;
-    }
+    public Integer getIdMarca() { return marca != null ? marca.getId() : null; }
 }

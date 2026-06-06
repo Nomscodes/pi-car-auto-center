@@ -1,12 +1,12 @@
 package br.com.picarauto.repository;
 
-/**
- *
- * @author Caio4breu
- */
 import br.com.picarauto.model.PessoaJuridicaModel;
+import org.springframework.stereotype.Repository;
 
+/**
+ * Repositório Spring Data para PessoaJuridicaModel.
+ * O Spring gera a implementação automaticamente em tempo de execução.
+ */
+@Repository
 public interface IPessoaJuridicaRepository extends IGenericRepository<PessoaJuridicaModel> {
-    boolean existsByCnpj(String cnpj);
-    PessoaJuridicaModel findByCnpj(String cnpj);
 }

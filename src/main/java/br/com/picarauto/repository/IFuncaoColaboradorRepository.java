@@ -1,11 +1,12 @@
 package br.com.picarauto.repository;
 
 import br.com.picarauto.model.FuncaoColaboradorModel;
+import org.springframework.stereotype.Repository;
 
 /**
- *
- * @author Caio4breu
+ * Repositório Spring Data para FuncaoColaboradorModel.
+ * O Spring gera a implementação automaticamente em tempo de execução.
  */
+@Repository
 public interface IFuncaoColaboradorRepository extends IGenericRepository<FuncaoColaboradorModel> {
-    boolean existsByFuncao(String funcao);
 }
