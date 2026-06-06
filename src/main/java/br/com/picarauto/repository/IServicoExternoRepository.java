@@ -4,9 +4,10 @@ import br.com.picarauto.model.ServicoExternoModel;
 import org.springframework.stereotype.Repository;
 
 /**
- * Repositório Spring Data para ServicoExternoModel.
- * O Spring gera a implementação automaticamente em tempo de execução.
+ *
+ * @author Caio4breu
  */
 @Repository
 public interface IServicoExternoRepository extends IGenericRepository<ServicoExternoModel> {
+    boolean existsByDescricao(String descricao);
 }
