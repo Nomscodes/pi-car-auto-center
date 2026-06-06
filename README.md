@@ -5,8 +5,10 @@
 **Projeto Integrador 2026/1 · SENAI FATESG · ADS 3º Período**
 
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![Spring Data JPA](https://img.shields.io/badge/Spring%20Data%20JPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Swing](https://img.shields.io/badge/Java%20Swing-007396?style=for-the-badge&logo=java&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow?style=for-the-badge)
 ![License](https://img.shields.io/badge/Licença-Acadêmica-blue?style=for-the-badge)
 
@@ -34,6 +36,7 @@ O sistema visa substituir o controle manual atual, que não registra adequadamen
 - ✅ Controle de **garantia de peças e serviços**
 - ✅ Cadastro de colaboradores com múltiplas funções
 - ✅ Registro de **serviços internos e terceirizados**
+- ✅ Importação de planilhas Excel (`.xlsx`) para cadastro de peças via **Adapter**
 - ✅ Funcionamento **100% local** — sem dependência de internet
 
 ---
@@ -54,20 +57,24 @@ O sistema visa substituir o controle manual atual, que não registra adequadamen
 
 ```
 pi-car-auto-center/
-├── src/br/com/picarauto/
-│   ├── model/          # Entidades e regras de domínio
-│   ├── dao/            # Acesso ao banco de dados (DAO Pattern)
-│   ├── service/        # Lógica de negócio
-│   ├── view/           # Telas Java Swing
-│   ├── controller/     # Controladores (MVC)
-│   └── util/           # Utilitários (conexão, helpers)
+├── src/main/
+│   ├── java/br/com/picarauto/
+│   │   ├── adapter/        # Padrão Adapter — importação de planilhas Excel
+│   │   ├── controller/     # Controladores (MVC)
+│   │   ├── dao/            # Placeholder de rastreabilidade Git
+│   │   ├── decorator/      # Padrão Decorator — resumo de OS
+│   │   ├── factory/        # Padrão Factory — criação de itens de serviço
+│   │   ├── model/          # Entidades JPA e DTOs
+│   │   ├── repository/     # Interfaces Spring Data JPA
+│   │   ├── service/        # Lógica de negócio
+│   │   ├── util/           # Utilitários (FilaOS, Ordenadores, ContextoAplicacao)
+│   │   ├── validation/     # Validações de campos e regras de negócio
+│   │   ├── view/           # Telas Java Swing
+│   │   └── Main.java       # Ponto de entrada Spring Boot
+│   └── resources/
+│       └── application.properties  # Configuração do banco e JPA
 ├── database/
-│   └── schema.sql      # Script de criação do banco
-├── docs/
-│   ├── atas/           # Atas de reunião
-│   ├── ers/            # Especificação de Requisitos do Sistema
-│   └── diagramas/      # DER, Casos de Uso, Diagrama de Classes
-├── lib/                # Dependências externas (.jar)
+│   └── schema.sql          # Script de referência do banco
 ├── .github/
 │   └── pull_request_template.md
 ├── .gitignore
@@ -79,19 +86,30 @@ pi-car-auto-center/
 
 ## 🛠️ Tecnologias
 
-| Tecnologia | Uso |
-|------------|-----|
-| Java 17+ | Linguagem principal |
-| Java Swing | Interface gráfica desktop |
-| SQLite | Banco de dados local |
-| JDBC | Conexão Java ↔ Banco |
-| NetBeans IDE | Ambiente de desenvolvimento |
+| Tecnologia        | Versão  | Uso                                        |
+|-------------------|---------|--------------------------------------------|
+| Java              | 17+     | Linguagem principal                        |
+| Spring Boot       | 3.3.0   | Inicialização e configuração da aplicação  |
+| Spring Data JPA   | 3.3.0   | Repositórios e acesso ao banco de dados    |
+| Hibernate         | 6.x     | ORM — mapeamento objeto-relacional         |
+| PostgreSQL        | 42.7.3  | Banco de dados relacional                  |
+| Apache POI        | 5.2.5   | Leitura de planilhas `.xlsx`               |
+| Java Swing        | —       | Interface gráfica desktop                  |
+| NetBeans IDE      | —       | Ambiente de desenvolvimento                |
+| Maven             | —       | Gerenciamento de dependências e build      |
+
+---
+
+## ⚙️ Pré-requisitos
+
+- Java 17+
+- PostgreSQL instalado e rodando
+- Banco de dados criado com o nome `pi_car_auto_center`
+- Usuário `postgres` com senha `postgres` (padrão — ajuste no `application.properties` se necessário)
 
 ---
 
 ## ▶️ Como Executar
-
-> **Pré-requisitos:** Java 17+ instalado · Compatível com Windows e Linux
 
 ```bash
 # Clone o repositório
@@ -100,12 +118,34 @@ git clone https://github.com/Nomscodes/pi-car-auto-center.git
 # Acesse o diretório
 cd pi-car-auto-center
 
-# Compile o projeto
-javac -cp "lib/*" -d out src/**/*.java
-
-# Execute
-java -cp "out:lib/*" br.com.picarauto.Main
+# Compile e execute via Maven
+mvn spring-boot:run
 ```
+
+> O Hibernate cria as tabelas automaticamente na primeira execução (`ddl-auto=update`).
+
+---
+
+## 🧩 Padrões de Projeto Aplicados
+
+| Padrão          | Classe principal          | Pacote              |
+|-----------------|---------------------------|---------------------|
+| Singleton       | `ContextoAplicacao`       | `util`              |
+| Iterator        | `FilaOS`                  | `util`              |
+| Template Method | `OrdenadorOS`             | `util`              |
+| Factory Method  | `IServicoItemFactory`     | `factory`           |
+| Decorator       | `ResumoOSDecorator`       | `decorator`         |
+| Adapter         | `PecaExcelAdapter`        | `adapter`           |
+
+---
+
+## 📊 Estrutura de Dados
+
+| Estrutura / Algoritmo     | Classe              | Justificativa                                              |
+|---------------------------|---------------------|------------------------------------------------------------|
+| Fila encadeada (FIFO)     | `FilaOS`            | Respeita a ordem de chegada dos veículos à oficina         |
+| Insertion Sort manual     | `OrdenadorOS`       | Eficiente para listas pequenas e parcialmente ordenadas    |
+| Busca linear via Iterator | `FilaOS`            | Adequada ao volume de OS de uma oficina de médio porte     |
 
 ---
 
@@ -121,42 +161,43 @@ Seguimos o padrão **Conventional Commits**. Todo commit deve ter a estrutura:
 
 ### Tipos
 
-| Tipo | Quando usar |
-|------|-------------|
-| `feat` | Nova funcionalidade |
-| `fix` | Correção de bug |
-| `docs` | Alteração em documentação |
+| Tipo       | Quando usar                         |
+|------------|-------------------------------------|
+| `feat`     | Nova funcionalidade                 |
+| `fix`      | Correção de bug                     |
+| `docs`     | Alteração em documentação           |
 | `refactor` | Refatoração sem nova funcionalidade |
-| `test` | Adição ou ajuste de testes |
-| `chore` | Configuração, build, dependências |
-| `style` | Formatação sem mudança de lógica |
+| `test`     | Adição ou ajuste de testes          |
+| `chore`    | Configuração, build, dependências   |
+| `style`    | Formatação sem mudança de lógica    |
 
 ### Escopos válidos
 
-| Escopo | O que cobre |
-|--------|-------------|
-| `cliente` | Tudo relacionado ao cadastro de clientes |
-| `veiculo` | Cadastro e histórico de veículos |
-| `os` | Ordem de Serviço e seu ciclo de vida |
-| `peca` | Cadastro e rastreabilidade de peças |
-| `fornecedor` | Cadastro de fornecedores |
-| `colaborador` | Cadastro de colaboradores e funções |
-| `parceiro` | Empresas terceirizadas |
-| `garantia` | Controle de garantias de peças e serviços |
-| `pagamento` | Registro e controle de pagamentos |
-| `db` | Schema, migrations, banco de dados |
-| `ui` | Componentes visuais sem escopo específico |
-| `util` | Classes utilitárias (conexão, helpers) |
-| `config` | Arquivos de configuração do projeto |
+| Escopo        | O que cobre                               |
+|---------------|-------------------------------------------|
+| `cliente`     | Tudo relacionado ao cadastro de clientes  |
+| `veiculo`     | Cadastro e histórico de veículos          |
+| `os`          | Ordem de Serviço e seu ciclo de vida      |
+| `peca`        | Cadastro e rastreabilidade de peças       |
+| `fornecedor`  | Cadastro de fornecedores                  |
+| `colaborador` | Cadastro de colaboradores e funções       |
+| `parceiro`    | Empresas terceirizadas                    |
+| `garantia`    | Controle de garantias de peças e serviços |
+| `pagamento`   | Registro e controle de pagamentos         |
+| `db`          | Schema, migrations, banco de dados        |
+| `ui`          | Componentes visuais sem escopo específico |
+| `util`        | Classes utilitárias                       |
+| `config`      | Arquivos de configuração do projeto       |
+| `adapter`     | Importação de dados externos              |
 
 ### Exemplos corretos ✅
 
 ```bash
+git commit -m "feat(peca): adiciona importação de planilha Excel via adapter"
 git commit -m "feat(cliente): adiciona cadastro de pessoa jurídica"
 git commit -m "fix(os): corrige transição de status para Finalizada"
-git commit -m "refactor(db): separa criação de tabelas em métodos distintos"
-git commit -m "docs: adiciona ata de reunião de 01/06/2026"
-git commit -m "chore(config): adiciona sqlite-jdbc ao lib"
+git commit -m "refactor(config): migra persistência para Spring Data JPA"
+git commit -m "chore(config): adiciona dependência Apache POI ao pom.xml"
 ```
 
 ### Exemplos incorretos ❌
@@ -176,52 +217,52 @@ git commit -m "feat(client): add new form"
 
 ## 🗄️ Modelo de Dados — Entidades Principais
 
-| Entidade | Descrição |
-|----------|-----------|
-| `Cliente` | PF ou PJ — vinculado ao histórico do veículo |
-| `Veiculo` | Identificado por marca, modelo e ano |
-| `OrdemDeServico` | Núcleo do sistema — controla todo o fluxo |
-| `Servico` | Interno ou terceirizado, com garantia |
-| `Peca` | Com código nacional e fornecedor rastreável |
-| `Fornecedor` | Responsável pela garantia das peças |
-| `Colaborador` | Com uma ou mais funções |
-| `Parceiro` | Empresa terceirizada para serviços externos |
+| Entidade         | Descrição                                    |
+|------------------|----------------------------------------------|
+| `Cliente`        | PF ou PJ — vinculado ao histórico do veículo |
+| `Veiculo`        | Identificado por marca, modelo e ano         |
+| `OrdemDeServico` | Núcleo do sistema — controla todo o fluxo    |
+| `Servico`        | Interno ou terceirizado, com garantia        |
+| `Peca`           | Com código nacional e fornecedor rastreável  |
+| `Fornecedor`     | Responsável pela garantia das peças          |
+| `Colaborador`    | Com uma ou mais funções                      |
+| `Parceiro`       | Empresa terceirizada para serviços externos  |
 
 ---
 
 ## 📅 Cronograma
 
-| Marco | Data |
-|-------|------|
-| Início do projeto | 01/06/2026 |
+| Marco                           | Data       |
+|---------------------------------|------------|
+| Início do projeto               | 01/06/2026 |
 | Entrega de Requisitos e MER/DER | 08/06/2026 |
-| Entrega de todos os artefatos | 15/06/2026 |
-| Apresentação final | 16/06/2026 |
+| Entrega de todos os artefatos   | 15/06/2026 |
+| Apresentação final              | 16/06/2026 |
 
 ---
 
 ## 👥 Equipe
 
-| Nome | GitHub |
-|------|--------|
-| Caio Nunes de Abreu | [@Caio4breu](https://github.com/Caio4breu) |
-| Cassiano Nunes de Abreu | [@Nomscodes](https://github.com/Nomscodes) |
-| Gabriel Naoki Uto Turigoe | [@GabrielNaokiUT](https://github.com/GabrielNaokiUT)) | 
-| Wyllian Mariano | — | [@wyllianmn](https://github.com/wyllianmn)) | 
+| Nome                      | GitHub                                                  |
+|---------------------------|---------------------------------------------------------|
+| Caio Nunes de Abreu       | [@Caio4breu](https://github.com/Caio4breu)              |
+| Cassiano Nunes de Abreu   | [@Nomscodes](https://github.com/Nomscodes)              |
+| Gabriel Naoki Uto Turigoe | [@GabrielNaokiUT](https://github.com/GabrielNaokiUT)   |
+| Wyllian Mariano           | [@wyllianmn](https://github.com/wyllianmn)              |
 
 ---
 
 ## 🏫 Informações Acadêmicas
 
-| Item | Detalhe |
-|------|---------|
-| Instituição | SENAI FATESG — Goiânia, GO |
-| Curso | Superior de Análise e Desenvolvimento de Sistemas |
-| Período | 3º Semestre |
-| Semestre | 2026/1 |
-| Professor Líder | Eugênio Júlio Messala C. Carvalho |
-| Coordenação Técnica | Fabrícia Neres Borges |
-| Coordenação Pedagógica | Eduardo Costa Jil |
+| Item                   | Detalhe                                           |
+|------------------------|---------------------------------------------------|
+| Instituição            | SENAI FATESG — Goiânia, GO                        |
+| Curso                  | Superior de Análise e Desenvolvimento de Sistemas |
+| Período                | 3º Semestre                                       |
+| Semestre               | 2026/1                                            |
+| Professor Líder        | Eugênio Júlio Messala C. Carvalho                 |
+| Coordenação Técnica    | Fabrícia Neres Borges                             |
+| Coordenação Pedagógica | Eduardo Costa Jil                                 |
 
 ---
 
