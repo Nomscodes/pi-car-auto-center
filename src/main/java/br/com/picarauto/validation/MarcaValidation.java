@@ -4,11 +4,13 @@ import br.com.picarauto.model.MarcaModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IMarcaRepository;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author Caio4breu
  */
+@Component
 public class MarcaValidation extends GenericValidation<MarcaModel, IMarcaRepository>
         implements IMarcaValidation {
 
@@ -19,11 +21,9 @@ public class MarcaValidation extends GenericValidation<MarcaModel, IMarcaReposit
     @Override
     public void validateFields(MarcaModel entity) {
         super.validateFields(entity);
-
         if (entity.getNome() == null || entity.getNome().isBlank())
             throw new FieldValidationException("nome",
                     "O nome da marca é de preenchimento obrigatório.");
-
         entity.setNome(capitalizar(entity.getNome().trim()));
     }
 

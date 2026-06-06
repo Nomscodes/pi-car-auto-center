@@ -1,42 +1,37 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package br.com.picarauto.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDate;
 
 /**
  *
  * @author Gabriel
  */
+@Entity
+@Table(name = "servicosDoColaborador")
 public class ServicoDoColaboradorModel extends BaseModel {
 
-    private Integer idColaborador;    
-    private Integer idServicoInterno; 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idColaborador", nullable = false)
+    private ColaboradorModel colaborador;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idServicoInterno", nullable = false)
+    private ServicoInternoModel servicoInterno;
+
+    @Column(name = "dataServico", nullable = false)
     private LocalDate dataServico;
 
-    public Integer getIdColaborador() {
-        return idColaborador;
-    }
+    public ColaboradorModel getColaborador() { return colaborador; }
+    public void setColaborador(ColaboradorModel colaborador) { this.colaborador = colaborador; }
 
-    public void setIdColaborador(Integer idColaborador) {
-        this.idColaborador = idColaborador;
-    }
+    public ServicoInternoModel getServicoInterno() { return servicoInterno; }
+    public void setServicoInterno(ServicoInternoModel servicoInterno) { this.servicoInterno = servicoInterno; }
 
-    public Integer getIdServicoInterno() {
-        return idServicoInterno;
-    }
+    public LocalDate getDataServico() { return dataServico; }
+    public void setDataServico(LocalDate dataServico) { this.dataServico = dataServico; }
 
-    public void setIdServicoInterno(Integer idServicoInterno) {
-        this.idServicoInterno = idServicoInterno;
-    }
-
-    public LocalDate getDataServico() {
-        return dataServico;
-    }
-
-    public void setDataServico(LocalDate dataServico) {
-        this.dataServico = dataServico;
-    }
+    // Getters de compatibilidade com código que usava Integer diretamente
+    public Integer getIdColaborador() { return colaborador != null ? colaborador.getId() : null; }
+    public Integer getIdServicoInterno() { return servicoInterno != null ? servicoInterno.getId() : null; }
 }

@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import java.util.Date;
 
 /**
- * Entidade Cliente — tabela "cliente".
  *
  * @author Caio4breu
  */
 @Entity
 @Table(name = "cliente")
+@Inheritance(strategy = InheritanceType.JOINED)
 public class ClienteModel extends PessoaModel {
 
     @Temporal(TemporalType.DATE)

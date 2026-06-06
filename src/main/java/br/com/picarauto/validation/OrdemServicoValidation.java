@@ -1,15 +1,17 @@
 package br.com.picarauto.validation;
 
-/**
- *
- * @author Caio4breu
- */
 import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.model.OrdemServicoModel.StatusOrdemServico;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IOrdemServicoRepository;
+import org.springframework.stereotype.Component;
 
+/**
+ *
+ * @author Caio4breu
+ */
+@Component
 public class OrdemServicoValidation extends GenericValidation<OrdemServicoModel, IOrdemServicoRepository>
         implements IOrdemServicoValidation {
 
@@ -20,13 +22,10 @@ public class OrdemServicoValidation extends GenericValidation<OrdemServicoModel,
     @Override
     public void validateFields(OrdemServicoModel entity) {
         super.validateFields(entity);
-
         if (entity.getIdVeiculo() == null)
             throw new FieldValidationException("idVeiculo", "O veículo da ordem de serviço é obrigatório.");
-
         if (entity.getStatus() == null)
             throw new FieldValidationException("status", "O status da ordem de serviço é obrigatório.");
-
         if (entity.getStatus() == StatusOrdemServico.FINALIZADO && entity.getDataFechamento() == null)
             throw new FieldValidationException("dataFechamento",
                     "A data de fechamento é obrigatória para OS finalizada.");
@@ -36,10 +35,8 @@ public class OrdemServicoValidation extends GenericValidation<OrdemServicoModel,
     public void validateUpdate(OrdemServicoModel entity) {
         OrdemServicoModel atual = repository.findByIdAndAtivoTrue(entity.getId()).orElse(null);
         if (atual == null) return;
-
         StatusOrdemServico de = atual.getStatus();
         StatusOrdemServico para = entity.getStatus();
-
         if (!transicaoValida(de, para))
             throw new RuleValidationException("Transição inválida",
                     "Não é permitido alterar o status de " + de + " para " + para
