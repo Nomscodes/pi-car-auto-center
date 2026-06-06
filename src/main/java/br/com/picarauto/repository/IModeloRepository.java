@@ -4,9 +4,10 @@ import br.com.picarauto.model.ModeloModel;
 import org.springframework.stereotype.Repository;
 
 /**
- * Repositório Spring Data para ModeloModel.
- * O Spring gera a implementação automaticamente em tempo de execução.
+ *
+ * @author Caio4breu
  */
 @Repository
 public interface IModeloRepository extends IGenericRepository<ModeloModel> {
+    boolean existsByNomeModelo(String nomeModelo);
 }

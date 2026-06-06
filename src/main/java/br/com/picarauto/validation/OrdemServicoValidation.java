@@ -34,7 +34,7 @@ public class OrdemServicoValidation extends GenericValidation<OrdemServicoModel,
 
     @Override
     public void validateUpdate(OrdemServicoModel entity) {
-        OrdemServicoModel atual = repository.findByIdAndAtivoTrue(entity.getId());
+        OrdemServicoModel atual = repository.findByIdAndAtivoTrue(entity.getId()).orElse(null);
         if (atual == null) return;
 
         StatusOrdemServico de = atual.getStatus();
@@ -52,12 +52,12 @@ public class OrdemServicoValidation extends GenericValidation<OrdemServicoModel,
      * Não é permitido voltar nem pular etapas.
      */
     private boolean transicaoValida(StatusOrdemServico de, StatusOrdemServico para) {
-        if (de == para) return true; // mesma etapa — update sem mudança de status
+        if (de == para) return true;
         return switch (de) {
             case ORCAMENTO  -> para == StatusOrdemServico.EXECUCAO;
             case EXECUCAO   -> para == StatusOrdemServico.PAGAMENTO;
             case PAGAMENTO  -> para == StatusOrdemServico.FINALIZADO;
-            case FINALIZADO -> false; // OS finalizada não pode ser alterada
+            case FINALIZADO -> false;
         };
     }
 }
