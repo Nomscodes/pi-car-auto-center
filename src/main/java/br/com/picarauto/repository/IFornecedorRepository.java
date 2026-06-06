@@ -1,17 +1,12 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package br.com.picarauto.repository;
 
 import br.com.picarauto.model.FornecedorModel;
+import org.springframework.stereotype.Repository;
 
 /**
- *
- * @author Gabriel
+ * Repositório Spring Data para FornecedorModel.
+ * O Spring gera a implementação automaticamente em tempo de execução.
  */
-public interface IFornecedorRepository extends IGenericRepository<FornecedorModel>{
-    
-    boolean existsByCnpj(String cnpj);
-    boolean existsByTelefone(String telefone);
+@Repository
+public interface IFornecedorRepository extends IGenericRepository<FornecedorModel> {
 }

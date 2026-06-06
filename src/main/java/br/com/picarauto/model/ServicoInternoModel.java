@@ -1,12 +1,19 @@
 package br.com.picarauto.model;
 
+import jakarta.persistence.*;
+
 /**
- *
+ * Entidade Serviço Interno — tabela "servicoInterno".
  * @author Caio4breu
  */
+@Entity
+@Table(name = "servicoInterno")
 public class ServicoInternoModel extends BaseModel {
 
+    @Column(nullable = false, length = 255)
     private String descricao;
+
+    @Column(name = "valorCobrado", nullable = false)
     private double valorCobrado;
 
     public String getDescricao() { return descricao; }
