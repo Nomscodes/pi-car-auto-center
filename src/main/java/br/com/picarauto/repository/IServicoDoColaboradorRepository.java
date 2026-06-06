@@ -1,25 +1,21 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package br.com.picarauto.repository;
 
-import java.time.LocalDate;
+import br.com.picarauto.model.ServicoDoColaboradorModel;
+import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
  *
  * @author Gabriel
  */
-public interface IServicoDoColaboradorRepository {
+@Repository
+public interface IServicoDoColaboradorRepository extends IGenericRepository<ServicoDoColaboradorModel> {
+    // Busca todos os serviços executados por um colaborador
+    List<ServicoDoColaboradorModel> findAllByColaboradorId(Integer idColaborador);
 
-    void save(Integer idColaborador, Integer idServicoInterno, LocalDate dataServico);
+    // Busca todos os colaboradores que executaram um serviço interno
+    List<ServicoDoColaboradorModel> findAllByServicoInternoId(Integer idServicoInterno);
 
-    List<Integer> findIdServicoInternoByIdColaborador(Integer idColaborador);
-
-    List<Integer> findIdColaboradorByIdServicoInterno(Integer idServicoInterno);
-
-    boolean existsByIdColaboradorAndIdServicoInterno(Integer idColaborador, Integer idServicoInterno);
-
-    void delete(Integer idColaborador, Integer idServicoInterno, LocalDate dataServico);
+    // Verifica se um colaborador já tem vínculo com um serviço interno específico
+    boolean existsByColaboradorIdAndServicoInternoId(Integer idColaborador, Integer idServicoInterno);
 }

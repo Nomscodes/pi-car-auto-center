@@ -4,11 +4,13 @@ import br.com.picarauto.model.ServicoInternoModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IServicoInternoRepository;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author Caio4breu
  */
+@Component
 public class ServicoInternoValidation extends GenericValidation<ServicoInternoModel, IServicoInternoRepository>
         implements IServicoInternoValidation {
 
@@ -19,11 +21,9 @@ public class ServicoInternoValidation extends GenericValidation<ServicoInternoMo
     @Override
     public void validateFields(ServicoInternoModel entity) {
         super.validateFields(entity);
-
         if (entity.getDescricao() == null || entity.getDescricao().isBlank())
             throw new FieldValidationException("descricao",
                     "A descrição do serviço interno é de preenchimento obrigatório.");
-
         if (entity.getValorCobrado() <= 0)
             throw new FieldValidationException("valorCobrado",
                     "O valor cobrado deve ser maior que zero.");

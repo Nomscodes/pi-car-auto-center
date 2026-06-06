@@ -1,18 +1,34 @@
 package br.com.picarauto.model;
 
+import jakarta.persistence.*;
 import java.util.Date;
 
 /**
- * 
+ *
  * @author Caio4breu
  */
+@Entity
+@Table(name = "itemPedidoPeca")
 public class ItemPedidoPecaModel extends BaseModel {
 
+    @Column(nullable = false)
     private int quantidade;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "dataEntrega")
     private Date dataEntrega;
-    private Integer codigoNacional;
-    private Integer idFornecedor;
-    private Integer idOS;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "codigoNacional", referencedColumnName = "codigoNacional", nullable = false)
+    private PecaModel peca;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idFornecedor", nullable = false)
+    private FornecedorModel fornecedor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idOS", nullable = false)
+    private OrdemServicoModel ordemServico;
 
     public int getQuantidade() { return quantidade; }
     public void setQuantidade(int quantidade) { this.quantidade = quantidade; }
@@ -20,12 +36,17 @@ public class ItemPedidoPecaModel extends BaseModel {
     public Date getDataEntrega() { return dataEntrega; }
     public void setDataEntrega(Date dataEntrega) { this.dataEntrega = dataEntrega; }
 
-    public Integer getCodigoNacional() { return codigoNacional; }
-    public void setCodigoNacional(Integer codigoNacional) { this.codigoNacional = codigoNacional; }
+    public PecaModel getPeca() { return peca; }
+    public void setPeca(PecaModel peca) { this.peca = peca; }
 
-    public Integer getIdFornecedor() { return idFornecedor; }
-    public void setIdFornecedor(Integer idFornecedor) { this.idFornecedor = idFornecedor; }
+    public FornecedorModel getFornecedor() { return fornecedor; }
+    public void setFornecedor(FornecedorModel fornecedor) { this.fornecedor = fornecedor; }
 
-    public Integer getIdOS() { return idOS; }
-    public void setIdOS(Integer idOS) { this.idOS = idOS; }
+    public OrdemServicoModel getOrdemServico() { return ordemServico; }
+    public void setOrdemServico(OrdemServicoModel ordemServico) { this.ordemServico = ordemServico; }
+
+    // Getters de compatibilidade com código que usava Integer diretamente
+    public Integer getCodigoNacional() { return peca != null ? peca.getCodigoNacional() : null; }
+    public Integer getIdFornecedor() { return fornecedor != null ? fornecedor.getId() : null; }
+    public Integer getIdOS() { return ordemServico != null ? ordemServico.getId() : null; }
 }

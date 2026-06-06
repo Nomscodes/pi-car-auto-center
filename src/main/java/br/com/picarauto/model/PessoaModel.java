@@ -3,9 +3,6 @@ package br.com.picarauto.model;
 import jakarta.persistence.*;
 
 /**
- * Representa uma pessoa no sistema (abstrata).
- * Mapeada com herança JOINED: cada subclasse tem sua própria tabela,
- * ligada a esta via chave estrangeira — reflete o modelo relacional do schema.
  *
  * @author Caio4breu
  */
