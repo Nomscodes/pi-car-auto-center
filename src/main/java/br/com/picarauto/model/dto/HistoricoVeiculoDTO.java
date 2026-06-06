@@ -4,6 +4,7 @@
  */
 package br.com.picarauto.model.dto;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -14,8 +15,8 @@ public class HistoricoVeiculoDTO extends BaseDTO {
 
     private Integer idPessoa;
     private Integer idVeiculo;
-    private Date dataInicio;
-    private Date dataFim;
+    private LocalDate dataInicio;
+    private LocalDate dataFim;
 
     public Integer getIdPessoa() {
         return idPessoa;
@@ -33,19 +34,19 @@ public class HistoricoVeiculoDTO extends BaseDTO {
         this.idVeiculo = idVeiculo;
     }
 
-    public Date getDataInicio() {
+    public LocalDate getDataInicio() {
         return dataInicio;
     }
 
-    public void setDataInicio(Date dataInicio) {
+    public void setDataInicio(LocalDate dataInicio) {
         this.dataInicio = dataInicio;
     }
 
-    public Date getDataFim() {
+    public LocalDate getDataFim() {
         return dataFim;
     }
 
-    public void setDataFim(Date dataFim) {
+    public void setDataFim(LocalDate dataFim) {
         this.dataFim = dataFim;
     }
 }
