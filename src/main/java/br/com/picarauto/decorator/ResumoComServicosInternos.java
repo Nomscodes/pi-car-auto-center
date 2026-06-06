@@ -11,7 +11,7 @@ import java.util.List;
  * Padrão de Projeto: Decorator (decorator concreto)
  *
  * Recebe o repositório por injeção no construtor — mesma estratégia usada
- * em {@link ResumoComPecas} — e chama {@code findAllByIdOS()} para listar
+ * em {@link ResumoComPecas} — e chama {@code findAllByOrdemServicoId()} para listar
  * os itens reais vinculados à OS, sem acoplar o decorator ao banco diretamente.
  *
  * Exemplo de uso:
@@ -42,15 +42,12 @@ public class ResumoComServicosInternos extends ResumoOSDecorator {
     public String gerar() {
         StringBuilder sb = new StringBuilder(decorado.gerar());
         sb.append("\n--- Serviços Internos ---\n");
-
         if (os.getId() == null) {
             sb.append("  (OS sem ID — nenhum item carregado)\n");
             return sb.toString();
         }
-
         List<ItemServicoInternoModel> itens =
-                itemServicoInternoRepository.findAllByIdOS(os.getId());
-
+                itemServicoInternoRepository.findAllByOrdemServicoId(os.getId());
         if (itens == null || itens.isEmpty()) {
             sb.append("  Nenhum serviço interno registrado.\n");
         } else {
@@ -62,7 +59,6 @@ public class ResumoComServicosInternos extends ResumoOSDecorator {
                 sb.append("\n");
             }
         }
-
         return sb.toString();
     }
 }
