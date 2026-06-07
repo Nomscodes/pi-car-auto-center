@@ -12,7 +12,7 @@ import java.time.LocalDate;
 public class HistoricoVeiculoModel extends BaseModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idCliente", nullable = false)
+    @JoinColumn(name = "idPessoa", nullable = false)
     private ClienteModel cliente;
 
     @ManyToOne(fetch = FetchType.LAZY)

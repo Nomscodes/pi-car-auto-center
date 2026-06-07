@@ -9,4 +9,8 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface IFornecedorRepository extends IGenericRepository<FornecedorModel> {
+
+    boolean existsByCnpj(String cnpj);
+
+    boolean existsByTelefone(String telefone);
 }
