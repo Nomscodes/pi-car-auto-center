@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface IColaboradorRepository extends IGenericRepository<ColaboradorModel> {
+
+    boolean existsByEmaul(String email);
 }
