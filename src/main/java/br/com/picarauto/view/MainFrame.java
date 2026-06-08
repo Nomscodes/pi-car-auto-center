@@ -36,8 +36,8 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         setTitle("AV CAR AUTO CENTER — Sistema de Controle de Oficina");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(960, 620);
-        setMinimumSize(new Dimension(800, 520));
+        setSize(1024, 680);
+        setMinimumSize(new Dimension(900, 600));
         setLocationRelativeTo(null);
         setResizable(true);
 

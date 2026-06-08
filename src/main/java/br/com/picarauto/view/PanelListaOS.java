@@ -106,14 +106,29 @@ public class PanelListaOS extends JPanel {
             esquerda.add(criarBotaoFiltro(filtro));
         }
 
-        JButton btnOrdenar = new JButton("↕ Ordenar");
-        btnOrdenar.setFont(MainFrame.FONT_SMALL);
-        btnOrdenar.setForeground(new Color(0x555555));
-        btnOrdenar.setBackground(Color.WHITE);
-        btnOrdenar.setBorder(BorderFactory.createLineBorder(new Color(0xbbbbbb), 1));
+        JButton btnOrdenar = new JButton("Ordenar") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? new Color(0xf0ebe0) : Color.WHITE);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 6, 6));
+                g2.setColor(new Color(0xbbbbbb));
+                g2.setStroke(new BasicStroke(0.8f));
+                g2.draw(new RoundRectangle2D.Float(0, 0, getWidth() - 1, getHeight() - 1, 6, 6));
+                g2.setColor(new Color(0x555555));
+                g2.setFont(MainFrame.FONT_SMALL);
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btnOrdenar.setPreferredSize(new Dimension(90, 28));
+        btnOrdenar.setBorderPainted(false);
+        btnOrdenar.setContentAreaFilled(false);
         btnOrdenar.setFocusPainted(false);
         btnOrdenar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnOrdenar.setPreferredSize(new Dimension(100, 28));
 
         toolbar.add(esquerda,   BorderLayout.WEST);
         toolbar.add(btnOrdenar, BorderLayout.EAST);
