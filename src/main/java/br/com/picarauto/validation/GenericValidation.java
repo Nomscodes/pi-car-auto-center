@@ -1,19 +1,20 @@
 package br.com.picarauto.validation;
 
-import br.com.picarauto.model.BaseModel;
-import br.com.picarauto.model.exception.FieldValidationException;
-import br.com.picarauto.repository.IGenericRepository;
-
 /**
- * 
+ *
  * @author Caio4breu
  */
+import br.com.picarauto.model.base.BaseModel;
+import br.com.picarauto.model.exception.FieldValidationException;
+import br.com.picarauto.model.exception.RuleValidationException;
+import br.com.picarauto.repository.IGenericRepository;
+
 public abstract class GenericValidation<E extends BaseModel, R extends IGenericRepository<E>>
         implements IGenericValidation<E, R> {
 
-    protected R repository;
+    protected final R repository;
 
-    public GenericValidation(R repository) {
+    protected GenericValidation(R repository) {
         this.repository = repository;
     }
 
@@ -38,13 +39,10 @@ public abstract class GenericValidation<E extends BaseModel, R extends IGenericR
         if (entity.getId() == null) {
             throw new FieldValidationException("id", "O ID é obrigatório para atualizações.");
         }
-        if (!repository.existsById(entity.getId())) {
-            throw new FieldValidationException("id", "O registro com o ID informado não existe.");
-        }
     }
 
     @Override
-    public void validateDelete(Integer id) {
+    public void validateDelete(Long id) {
         if (id == null) {
             throw new FieldValidationException("id", "ID de exclusão inválido.");
         }
@@ -54,5 +52,9 @@ public abstract class GenericValidation<E extends BaseModel, R extends IGenericR
     public void validateInsert(E entity) {}
 
     @Override
-    public void validateUpdate(E entity) {}
+    public void validateUpdate(E entity) {
+        if (!repository.existsById(entity.getId())) {
+            throw new RuleValidationException("id", "O registro com o ID informado não existe.");
+        }
+    }
 }

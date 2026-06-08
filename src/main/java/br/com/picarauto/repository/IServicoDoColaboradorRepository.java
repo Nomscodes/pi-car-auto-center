@@ -1,21 +1,21 @@
 package br.com.picarauto.repository;
 
-import br.com.picarauto.model.ServicoDoColaboradorModel;
-import org.springframework.stereotype.Repository;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
- *
+ * 
  * @author Gabriel
  */
-@Repository
-public interface IServicoDoColaboradorRepository extends IGenericRepository<ServicoDoColaboradorModel> {
-    // Busca todos os serviços executados por um colaborador
-    List<ServicoDoColaboradorModel> findAllByColaboradorId(Integer idColaborador);
+public interface IServicoDoColaboradorRepository {
 
-    // Busca todos os colaboradores que executaram um serviço interno
-    List<ServicoDoColaboradorModel> findAllByServicoInternoId(Integer idServicoInterno);
+    void save(Long idColaborador, Long idServicoInterno, LocalDate dataServico);
 
-    // Verifica se um colaborador já tem vínculo com um serviço interno específico
-    boolean existsByColaboradorIdAndServicoInternoId(Integer idColaborador, Integer idServicoInterno);
+    List<Long> findIdServicoInternoByIdColaborador(Long idColaborador);
+
+    List<Long> findIdColaboradorByIdServicoInterno(Long idServicoInterno);
+
+    boolean existsByIdColaboradorAndIdServicoInterno(Long idColaborador, Long idServicoInterno);
+
+    void delete(Long idColaborador, Long idServicoInterno, LocalDate dataServico);
 }

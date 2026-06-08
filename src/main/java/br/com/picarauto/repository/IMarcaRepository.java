@@ -1,13 +1,16 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ */
 package br.com.picarauto.repository;
 
 import br.com.picarauto.model.MarcaModel;
-import org.springframework.stereotype.Repository;
 
 /**
  *
- * @author Caio4breu
+ * @author Gabriel
  */
-@Repository
-public interface IMarcaRepository extends IGenericRepository<MarcaModel> {
+public interface IMarcaRepository extends IGenericRepository<MarcaModel>{
+    
     boolean existsByNome(String nome);
 }

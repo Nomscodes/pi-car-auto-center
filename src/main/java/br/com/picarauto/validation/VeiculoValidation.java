@@ -1,15 +1,15 @@
 package br.com.picarauto.validation;
 
+/**
+ *
+ * @author Caio4breu
+ */
 import br.com.picarauto.model.VeiculoModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IVeiculoRepository;
 import org.springframework.stereotype.Component;
 
-/**
- *
- * @author Caio4breu
- */
 @Component
 public class VeiculoValidation extends GenericValidation<VeiculoModel, IVeiculoRepository>
         implements IVeiculoValidation {

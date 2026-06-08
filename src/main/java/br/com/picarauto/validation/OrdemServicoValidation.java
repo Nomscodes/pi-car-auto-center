@@ -1,16 +1,17 @@
 package br.com.picarauto.validation;
 
+/**
+ *
+ * @author Caio4breu
+ */
 import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.model.OrdemServicoModel.StatusOrdemServico;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IOrdemServicoRepository;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 
-/**
- *
- * @author Caio4breu
- */
 @Component
 public class OrdemServicoValidation extends GenericValidation<OrdemServicoModel, IOrdemServicoRepository>
         implements IOrdemServicoValidation {
@@ -33,8 +34,10 @@ public class OrdemServicoValidation extends GenericValidation<OrdemServicoModel,
 
     @Override
     public void validateUpdate(OrdemServicoModel entity) {
-        OrdemServicoModel atual = repository.findByIdAndAtivoTrue(entity.getId()).orElse(null);
-        if (atual == null) return;
+        // corrigido — findByIdAndAtivoTrue retorna Optional
+        Optional<OrdemServicoModel> optAtual = repository.findByIdAndAtivoTrue(entity.getId());
+        if (optAtual.isEmpty()) return;
+        OrdemServicoModel atual = optAtual.get();
         StatusOrdemServico de = atual.getStatus();
         StatusOrdemServico para = entity.getStatus();
         if (!transicaoValida(de, para))
@@ -43,11 +46,6 @@ public class OrdemServicoValidation extends GenericValidation<OrdemServicoModel,
                     + ". Fluxo esperado: ORCAMENTO → EXECUCAO → PAGAMENTO → FINALIZADO.");
     }
 
-    /**
-     * Define as transições de status permitidas.
-     * Fluxo: orcamento → execucao → pagamento → finalizado
-     * Não é permitido voltar nem pular etapas.
-     */
     private boolean transicaoValida(StatusOrdemServico de, StatusOrdemServico para) {
         if (de == para) return true;
         return switch (de) {

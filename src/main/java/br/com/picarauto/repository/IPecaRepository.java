@@ -1,12 +1,13 @@
 package br.com.picarauto.repository;
 
-import br.com.picarauto.model.PecaModel;
-import org.springframework.stereotype.Repository;
-import java.util.Optional;
-
 /**
- * Repositório Spring Data para PecaModel.
+ *
+ * @author Caio4breu
  */
+import br.com.picarauto.model.PecaModel;
+import java.util.Optional;
+import org.springframework.stereotype.Repository;
+
 @Repository
 public interface IPecaRepository extends IGenericRepository<PecaModel> {
     Optional<PecaModel> findByCodigoNacional(Integer codigoNacional);

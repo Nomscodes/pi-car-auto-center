@@ -1,31 +1,19 @@
 package br.com.picarauto.model.dto;
 
-import java.util.Date;
-
 /**
  *
  * @author Caio4breu
  */
+import lombok.Getter;
+import lombok.Setter;
+import java.time.LocalDate;
+
+@Getter
+@Setter
 public class ItemPedidoPecaDTO extends BaseDTO {
-
     private int quantidade;
-    private Date dataEntrega;
-    private Integer codigoNacional;
-    private Integer idFornecedor;
-    private Integer idOS;
-
-    public int getQuantidade() { return quantidade; }
-    public void setQuantidade(int quantidade) { this.quantidade = quantidade; }
-
-    public Date getDataEntrega() { return dataEntrega; }
-    public void setDataEntrega(Date dataEntrega) { this.dataEntrega = dataEntrega; }
-
-    public Integer getCodigoNacional() { return codigoNacional; }
-    public void setCodigoNacional(Integer codigoNacional) { this.codigoNacional = codigoNacional; }
-
-    public Integer getIdFornecedor() { return idFornecedor; }
-    public void setIdFornecedor(Integer idFornecedor) { this.idFornecedor = idFornecedor; }
-
-    public Integer getIdOS() { return idOS; }
-    public void setIdOS(Integer idOS) { this.idOS = idOS; }
+    private LocalDate dataEntrega;
+    private Long codigoNacional;
+    private Long idFornecedor;
+    private Long idOS;
 }
