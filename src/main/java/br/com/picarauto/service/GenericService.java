@@ -10,19 +10,20 @@ import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IGenericRepository;
 import br.com.picarauto.validation.IGenericValidation;
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 public abstract class GenericService<E extends BaseModel, R extends IGenericRepository<E>, V extends IGenericValidation<E, R>>
         implements IGenericService<E, R, V> {
 
-    @Autowired
-    protected R repository;
+    protected final R repository;
+    protected final V validation;
 
-    @Autowired
-    protected V validation;
+    protected GenericService(R repository, V validation) {
+        this.repository = repository;
+        this.validation = validation;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -108,7 +109,6 @@ public abstract class GenericService<E extends BaseModel, R extends IGenericRepo
         return this.getClass().getSimpleName().replace("Service", "");
     }
 
-    // Hooks
     protected void beforeInsert(E entity) {}
     protected void afterInsert(E entity, E old) {}
     protected void beforeUpdate(E entity) {}
