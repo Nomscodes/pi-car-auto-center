@@ -84,9 +84,9 @@ public class PanelSelecaoModelo extends JPanel {
         lbl.setForeground(new Color(0x555555));
         instrucao.add(lbl);
 
-        gradeModelos = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 16));
+        gradeModelos = new JPanel(new GridLayout(0, 4, 20, 20));
         gradeModelos.setOpaque(false);
-        gradeModelos.setBorder(new EmptyBorder(4, 16, 4, 16));
+        gradeModelos.setBorder(new EmptyBorder(12, 20, 12, 20));
 
         carregarModelos();
 
@@ -109,9 +109,7 @@ public class PanelSelecaoModelo extends JPanel {
         Color[] corMarca = getMarcaCor(marcaAtual);
 
         for (String modelo : modelos) {
-            JPanel card = criarCardModelo(modelo, corMarca[0], corMarca[1]);
-            card.setPreferredSize(new Dimension(130, 130));
-            gradeModelos.add(card);
+            gradeModelos.add(criarCardModelo(modelo, corMarca[0], corMarca[1]));
         }
         gradeModelos.revalidate();
         gradeModelos.repaint();
@@ -146,7 +144,7 @@ public class PanelSelecaoModelo extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 boolean sel = nome.equals(modeloSelecionado);
                 int cx = getWidth() / 2, cy = getHeight() / 2 - 8;
-                int r = Math.min(getWidth(), getHeight()) / 2 - 12;
+                int r = Math.min(Math.min(getWidth(), getHeight()) / 2 - 12, 48);
 
                 if (sel) {
                     g2.setColor(new Color(0xc9a86c33, true));
