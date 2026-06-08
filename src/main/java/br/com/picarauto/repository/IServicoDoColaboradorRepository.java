@@ -1,25 +1,21 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package br.com.picarauto.repository;
 
 import java.time.LocalDate;
 import java.util.List;
 
 /**
- *
+ * 
  * @author Gabriel
  */
 public interface IServicoDoColaboradorRepository {
 
-    void save(Integer idColaborador, Integer idServicoInterno, LocalDate dataServico);
+    void save(Long idColaborador, Long idServicoInterno, LocalDate dataServico);
 
-    List<Integer> findIdServicoInternoByIdColaborador(Integer idColaborador);
+    List<Long> findIdServicoInternoByIdColaborador(Long idColaborador);
 
-    List<Integer> findIdColaboradorByIdServicoInterno(Integer idServicoInterno);
+    List<Long> findIdColaboradorByIdServicoInterno(Long idServicoInterno);
 
-    boolean existsByIdColaboradorAndIdServicoInterno(Integer idColaborador, Integer idServicoInterno);
+    boolean existsByIdColaboradorAndIdServicoInterno(Long idColaborador, Long idServicoInterno);
 
-    void delete(Integer idColaborador, Integer idServicoInterno, LocalDate dataServico);
+    void delete(Long idColaborador, Long idServicoInterno, LocalDate dataServico);
 }
