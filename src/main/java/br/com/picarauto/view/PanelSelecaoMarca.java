@@ -79,17 +79,19 @@ public class PanelSelecaoMarca extends JPanel {
         lbl.setForeground(new Color(0x555555));
         instrucao.add(lbl);
 
-        JPanel grade = new JPanel(new GridLayout(3, 4, 20, 20));
+        JPanel grade = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 16));
         grade.setOpaque(false);
-        grade.setBorder(new EmptyBorder(12, 20, 12, 20));
+        grade.setBorder(new EmptyBorder(4, 16, 4, 16));
 
         for (Object[] marca : MARCAS) {
-            grade.add(criarCardMarca(
+            JPanel card = criarCardMarca(
                 (String) marca[0],
                 (Color)  marca[1],
                 (Color)  marca[2],
                 (String) marca[3]
-            ));
+            );
+            card.setPreferredSize(new Dimension(130, 130));
+            grade.add(card);
         }
 
         JPanel wrapper = new JPanel(new BorderLayout());
