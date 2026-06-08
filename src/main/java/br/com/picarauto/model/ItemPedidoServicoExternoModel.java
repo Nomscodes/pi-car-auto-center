@@ -29,8 +29,6 @@ public class ItemPedidoServicoExternoModel extends BaseModel implements IItemSer
     @Column(name = "idServicoExterno", nullable = false)
     private Long idServicoExterno;
 
-    // Campo em memória — não é coluna do banco
-    // Populado pelo service antes de usar na view ou no decorator
     @Transient
     private Long idOS;
 

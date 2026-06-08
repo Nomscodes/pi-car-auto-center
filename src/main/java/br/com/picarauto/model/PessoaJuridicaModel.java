@@ -11,6 +11,7 @@ import java.time.LocalDate;
 @Data
 @Entity
 @Table(name = "pessoaJuridica")
+@PrimaryKeyJoinColumn(name = "idCliente")  // ← FK que liga pessoaJuridica → cliente
 public class PessoaJuridicaModel extends ClienteModel {
 
     @Column(name = "cnpj", nullable = false, unique = true, length = 14)
@@ -20,7 +21,7 @@ public class PessoaJuridicaModel extends ClienteModel {
     private String razaoSocial;
 
     @Column(name = "nomeFantasia", length = 150)
-    private String nomeFantasia;            // nullable — campo opcional no banco
+    private String nomeFantasia;
 
     @Column(name = "dataAbertura", nullable = false)
     private LocalDate dataAbertura;
