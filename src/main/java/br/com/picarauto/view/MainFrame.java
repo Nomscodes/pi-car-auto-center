@@ -46,9 +46,11 @@ public class MainFrame extends JFrame {
 
         PanelSplash    splash    = new PanelSplash(this);
         PanelDashboard dashboard = new PanelDashboard(this);
+        PanelSelecaoMarca selecaoMarca = new PanelSelecaoMarca(this);
 
         painelPrincipal.add(splash,    TELA_SPLASH);
         painelPrincipal.add(dashboard, TELA_DASHBOARD);
+        painelPrincipal.add(selecaoMarca, TELA_MARCA);
 
         add(painelPrincipal);
         mostrarTela(TELA_SPLASH);
