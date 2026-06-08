@@ -1,5 +1,9 @@
 package br.com.picarauto.validation;
 
+/**
+ *
+ * @author Caio4breu
+ */
 import br.com.picarauto.model.ModeloModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
@@ -7,10 +11,6 @@ import br.com.picarauto.repository.IModeloRepository;
 import java.time.LocalDate;
 import org.springframework.stereotype.Component;
 
-/**
- *
- * @author Caio4breu
- */
 @Component
 public class ModeloValidation extends GenericValidation<ModeloModel, IModeloRepository>
         implements IModeloValidation {
@@ -23,18 +23,14 @@ public class ModeloValidation extends GenericValidation<ModeloModel, IModeloRepo
     public void validateFields(ModeloModel entity) {
         super.validateFields(entity);
         if (entity.getNomeModelo() == null || entity.getNomeModelo().isBlank())
-            throw new FieldValidationException("nomeModelo",
-                    "O nome do modelo é de preenchimento obrigatório.");
+            throw new FieldValidationException("nomeModelo", "O nome do modelo é de preenchimento obrigatório.");
         entity.setNomeModelo(capitalizar(entity.getNomeModelo().trim()));
         if (entity.getAnoModelo() == null)
-            throw new FieldValidationException("anoModelo",
-                    "O ano do modelo é de preenchimento obrigatório.");
+            throw new FieldValidationException("anoModelo", "O ano do modelo é de preenchimento obrigatório.");
         if (entity.getAnoModelo().isAfter(LocalDate.now()))
-            throw new FieldValidationException("anoModelo",
-                    "O ano do modelo não pode ser no futuro.");
+            throw new FieldValidationException("anoModelo", "O ano do modelo não pode ser no futuro.");
         if (entity.getIdMarca() == null)
-            throw new FieldValidationException("idMarca",
-                    "A marca do modelo é de preenchimento obrigatório.");
+            throw new FieldValidationException("idMarca", "A marca do modelo é de preenchimento obrigatório.");
     }
 
     @Override

@@ -1,33 +1,25 @@
 package br.com.picarauto.model;
 
-import jakarta.persistence.*;
-import java.util.Date;
-
 /**
- * Entidade Pessoa Física — tabela "pessoaFisica".
  *
  * @author Caio4breu
  */
+import jakarta.persistence.*;
+import lombok.Data;
+import java.time.LocalDate;
+
+@Data
 @Entity
 @Table(name = "pessoaFisica")
+@PrimaryKeyJoinColumn(name = "idCliente")  // ← FK que liga pessoaFisica → cliente
 public class PessoaFisicaModel extends ClienteModel {
 
-    @Column(length = 14, unique = true)
+    @Column(name = "cpf", nullable = false, unique = true, length = 11)
     private String cpf;
 
-    @Column(length = 20)
+    @Column(name = "rg", nullable = false, unique = true, length = 20)
     private String rg;
 
-    @Temporal(TemporalType.DATE)
-    @Column(name = "dataNascimento")
-    private Date dataNascimento;
-
-    public String getCpf() { return cpf; }
-    public void setCpf(String cpf) { this.cpf = cpf; }
-
-    public String getRg() { return rg; }
-    public void setRg(String rg) { this.rg = rg; }
-
-    public Date getDataNascimento() { return dataNascimento; }
-    public void setDataNascimento(Date dataNascimento) { this.dataNascimento = dataNascimento; }
+    @Column(name = "dataNascimento", nullable = false)
+    private LocalDate dataNascimento;
 }

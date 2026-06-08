@@ -1,18 +1,16 @@
 package br.com.picarauto.repository;
 
+/**
+ *
+ * @author Caio4breu
+ */
 import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.model.OrdemServicoModel.StatusOrdemServico;
-import org.springframework.stereotype.Repository;
 import java.util.List;
+import org.springframework.stereotype.Repository;
 
-/**
- * Repositório Spring Data para OrdemServicoModel.
- */
 @Repository
 public interface IOrdemServicoRepository extends IGenericRepository<OrdemServicoModel> {
-    // Busca OS por veículo — Spring Data navega pelo relacionamento @ManyToOne
-    List<OrdemServicoModel> findAllByVeiculoId(Integer idVeiculo);
-    // Busca OS por status usando o enum diretamente
+    List<OrdemServicoModel> findAllByIdVeiculo(Long idVeiculo);
     List<OrdemServicoModel> findAllByStatus(StatusOrdemServico status);
-    List<OrdemServicoModel> findAllByAtivoTrueOrderByDataAberturaDesc();
 }

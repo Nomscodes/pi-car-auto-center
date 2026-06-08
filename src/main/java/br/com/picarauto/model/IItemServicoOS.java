@@ -11,6 +11,6 @@ package br.com.picarauto.model;
  * @author Caio4breu
  */
 public interface IItemServicoOS {
-    Integer getId();
+    Long getId();
     String getDescricao();
 }

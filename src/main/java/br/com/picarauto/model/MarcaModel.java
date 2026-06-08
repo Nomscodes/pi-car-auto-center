@@ -1,18 +1,18 @@
 package br.com.picarauto.model;
 
-import jakarta.persistence.*;
-
 /**
- * Entidade Marca — tabela "marca".
+ *
  * @author Gabriel
  */
+import br.com.picarauto.model.base.BaseModel;
+import jakarta.persistence.*;
+import lombok.Data;
+
+@Data
 @Entity
 @Table(name = "marca")
 public class MarcaModel extends BaseModel {
 
-    @Column(nullable = false, length = 80)
+    @Column(name = "nome", nullable = false, length = 200)
     private String nome;
-
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
 }
