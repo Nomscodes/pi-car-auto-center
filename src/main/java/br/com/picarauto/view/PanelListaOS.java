@@ -228,6 +228,8 @@ public class PanelListaOS extends JPanel {
         JScrollPane scroll = new JScrollPane(tabela);
         scroll.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0xe0dbd0)));
         scroll.getViewport().setBackground(Color.WHITE);
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         return scroll;
     }
 
