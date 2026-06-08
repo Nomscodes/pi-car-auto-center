@@ -21,7 +21,7 @@ public class PanelDashboard extends JPanel {
         {"Clientes",           "Pessoa física / PJ", MainFrame.TELA_CLIENTE},
         {"Veículos",           "Por marca",          MainFrame.TELA_MARCA},
         {"Peças",              "234 itens",          MainFrame.TELA_PECA},
-        {"Colaboradores",      "8 ativos",           ""},
+        {"Colaboradores",      "8 ativos",           MainFrame.TELA_COLABORADOR},
         {"Fornecedores",       "15 cadastrados",     ""},
         {"Serviços",           "Interno e externo",  ""},
         {"Marcas e modelos",   "22 marcas",          ""},
