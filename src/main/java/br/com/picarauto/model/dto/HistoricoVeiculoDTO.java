@@ -5,7 +5,6 @@
 package br.com.picarauto.model.dto;
 
 import java.time.LocalDate;
-import java.util.Date;
 
 /**
  *
