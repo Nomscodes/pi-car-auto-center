@@ -23,8 +23,8 @@ public class PanelDashboard extends JPanel {
         {"Peças",              "234 itens",          MainFrame.TELA_PECA},
         {"Colaboradores",      "8 ativos",           MainFrame.TELA_COLABORADOR},
         {"Fornecedores",       "15 cadastrados",     MainFrame.TELA_FORNECEDOR},
-        {"Serviços",           "Interno e externo",  ""},
-        {"Marcas e modelos",   "22 marcas",          ""},
+        {"Serviços",           "Interno e externo",  MainFrame.TELA_SERVICOS},
+        {"Marcas e modelos",   "22 marcas",          MainFrame.TELA_MARCAS_MOD},
     };
 
     public PanelDashboard(MainFrame frame) {
