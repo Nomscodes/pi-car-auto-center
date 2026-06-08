@@ -19,7 +19,7 @@ public class PanelDashboard extends JPanel {
     private static final String[][] CARDS = {
         {"Ordens de serviço",  "12 abertas",        MainFrame.TELA_LISTA_OS},
         {"Clientes",           "Pessoa física / PJ", MainFrame.TELA_CLIENTE},
-        {"Veículos",           "Por marca",          MainFrame.TELA_VEICULO},
+        {"Veículos",           "Por marca",          MainFrame.TELA_MARCA},
         {"Peças",              "234 itens",          ""},
         {"Colaboradores",      "8 ativos",           ""},
         {"Fornecedores",       "15 cadastrados",     ""},
