@@ -13,10 +13,9 @@ import java.time.LocalDate;
  */
 public class HistoricoVeiculoModel extends BaseModel {
 
-    private Integer idPessoa;  
-    private Integer idVeiculo; 
-    private LocalDate dataInicio;
-    private LocalDate dataFim;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idPessoa", nullable = false)
+    private ClienteModel cliente;
 
     public Integer getIdPessoa() {
         return idPessoa;
