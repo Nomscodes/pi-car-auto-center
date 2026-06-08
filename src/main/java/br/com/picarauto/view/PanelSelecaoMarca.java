@@ -235,17 +235,29 @@ public class PanelSelecaoMarca extends JPanel {
     }
 
     private JButton criarBotaoVoltar() {
-        JButton btn = new JButton("← Voltar");
-        btn.setFont(MainFrame.FONT_SMALL);
-        btn.setForeground(MainFrame.COR_MUTED);
-        btn.setBackground(MainFrame.COR_NAVY_DARK);
-        btn.setBorder(BorderFactory.createLineBorder(MainFrame.COR_MUTED, 1));
+        JButton btn = new JButton("← Voltar") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(0x1e3060));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 6, 6));
+                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD : MainFrame.COR_MUTED);
+                g2.setStroke(new BasicStroke(0.8f));
+                g2.draw(new RoundRectangle2D.Float(0, 0, getWidth() - 1, getHeight() - 1, 6, 6));
+                g2.setFont(MainFrame.FONT_SMALL);
+                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD : MainFrame.COR_MUTED);
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btn.setPreferredSize(new Dimension(80, 28));
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) { btn.setForeground(MainFrame.COR_GOLD); }
-            @Override public void mouseExited (MouseEvent e) { btn.setForeground(MainFrame.COR_MUTED); }
-        });
         return btn;
     }
 }
