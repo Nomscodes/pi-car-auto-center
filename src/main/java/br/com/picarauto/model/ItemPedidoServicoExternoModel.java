@@ -34,4 +34,7 @@ public class ItemPedidoServicoExternoModel extends BaseModel implements IItemSer
 
     @Override
     public String getDescricao() { return observacoes; }
+    
+    @Override
+    public Long getId() { return super.getId(); }
 }
