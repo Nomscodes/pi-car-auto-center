@@ -1,15 +1,17 @@
 package br.com.picarauto.service;
 
+/**
+ *
+ * @author Caio4breu
+ */
 import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.repository.IOrdemServicoRepository;
 import br.com.picarauto.util.FilaOS;
 import br.com.picarauto.validation.IOrdemServicoValidation;
 import java.time.LocalDate;
+import org.springframework.stereotype.Service;
 
-/**
- *
- * @author Caio4breu
- */
+@Service
 public class OrdemServicoService extends GenericService<OrdemServicoModel, IOrdemServicoRepository, IOrdemServicoValidation>
         implements IOrdemServicoService {
 
