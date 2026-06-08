@@ -222,16 +222,40 @@ public class PanelListaOS extends JPanel {
 
         tabela.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
+            public void mousePressed(MouseEvent e) {
+                int row = tabela.rowAtPoint(e.getPoint());
                 int col = tabela.columnAtPoint(e.getPoint());
-                if (col == 6) frame.mostrarTela(MainFrame.TELA_COMPOSICAO);
+                if (col == 6 && row >= 0) {
+                    frame.mostrarTela(MainFrame.TELA_COMPOSICAO);
+                }
+            }
+        });
+        tabela.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                int col = tabela.columnAtPoint(e.getPoint());
+                tabela.setCursor(col == 6
+                    ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+                    : Cursor.getDefaultCursor());
             }
         });
 
         for (int i = 0; i < 5; i++) {
-            DefaultTableCellRenderer r = new DefaultTableCellRenderer();
-            r.setBorder(new EmptyBorder(0, 16, 0, 8));
-            tabela.getColumnModel().getColumn(i).setCellRenderer(r);
+            final int col = i;
+            tabela.getColumnModel().getColumn(i).setCellRenderer(
+                new DefaultTableCellRenderer() {
+                    @Override
+                    public Component getTableCellRendererComponent(JTable t, Object val,
+                            boolean sel, boolean foc, int row, int c) {
+                        JLabel lbl = (JLabel) super.getTableCellRendererComponent(t, val, sel, foc, row, c);
+                        lbl.setBorder(new EmptyBorder(0, 16, 0, 8));
+                        lbl.setBackground(sel ? t.getSelectionBackground()
+                            : row % 2 == 0 ? Color.WHITE : new Color(0xfaf8f4));
+                        lbl.setOpaque(true);
+                        return lbl;
+                    }
+                }
+            );
         }
 
         JScrollPane scroll = new JScrollPane(tabela);
