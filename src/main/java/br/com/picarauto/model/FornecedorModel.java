@@ -19,8 +19,8 @@ public class FornecedorModel extends BaseModel {
     @Column(name = "cnpj", unique = true, length = 14)
     private String cnpj;                // nullable — fornecedor pode não ter CNPJ
 
-    @Column(name = "telefone", nullable = false, unique = true, length = 20)
-    private String telefone;
+    @Column(name = "telefone", nullable = false, length = 20)
+    private String telefone;            // obrigatório mas não único
 
     @Column(name = "email", nullable = false, length = 150)
     private String email;
