@@ -38,7 +38,8 @@ public class MainFrame extends JFrame {
     public static final String TELA_PECA          = "PECA";
     public static final String TELA_COLABORADOR  = "COLABORADOR";
     public static final String TELA_FORNECEDOR  = "FORNECEDOR";
-    public static final String TELA_SERVICOS    = "SERVICOS";
+    public static final String TELA_SERVICOS      = "SERVICOS";
+    public static final String TELA_MARCAS_MOD  = "MARCAS_MOD";
 
     public MainFrame() {
         setTitle("AV CAR AUTO CENTER — Sistema de Controle de Oficina");
@@ -62,7 +63,8 @@ public class MainFrame extends JFrame {
         PanelCadastroPeca          cadastroPeca       = new PanelCadastroPeca(this);
         PanelCadastroColaborador  cadastroColab      = new PanelCadastroColaborador(this);
         PanelCadastroFornecedor  cadastroFornecedor = new PanelCadastroFornecedor(this);
-        PanelCadastroServicos    cadastroServicos   = new PanelCadastroServicos(this);
+        PanelCadastroServicos  cadastroServicos  = new PanelCadastroServicos(this);
+        PanelMarcasModelos     marcasModelos     = new PanelMarcasModelos(this);
 
         painelPrincipal.add(splash,          TELA_SPLASH);
         painelPrincipal.add(dashboard,       TELA_DASHBOARD);
@@ -75,7 +77,8 @@ public class MainFrame extends JFrame {
         painelPrincipal.add(cadastroPeca,  TELA_PECA);
         painelPrincipal.add(cadastroColab,       TELA_COLABORADOR);
         painelPrincipal.add(cadastroFornecedor, TELA_FORNECEDOR);
-        painelPrincipal.add(cadastroServicos,   TELA_SERVICOS);
+        painelPrincipal.add(cadastroServicos, TELA_SERVICOS);
+        painelPrincipal.add(marcasModelos,    TELA_MARCAS_MOD);
 
         add(painelPrincipal);
         mostrarTela(TELA_SPLASH);
