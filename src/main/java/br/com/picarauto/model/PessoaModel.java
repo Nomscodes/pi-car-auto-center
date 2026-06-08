@@ -9,7 +9,9 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Data
-@MappedSuperclass
+@Entity
+@Table(name = "pessoa")
+@Inheritance(strategy = InheritanceType.JOINED)  // ← tabelas separadas com FK
 public abstract class PessoaModel extends BaseModel {
 
     @Column(name = "nomeCompleto", nullable = false, length = 150)

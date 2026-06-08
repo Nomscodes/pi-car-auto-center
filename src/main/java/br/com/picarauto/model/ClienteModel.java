@@ -11,6 +11,7 @@ import java.time.LocalDate;
 @Data
 @Entity
 @Table(name = "cliente")
+@PrimaryKeyJoinColumn(name = "idPessoa")  // ← FK que liga cliente → pessoa
 public class ClienteModel extends PessoaModel {
 
     @Column(name = "dataCadastro", nullable = false)
