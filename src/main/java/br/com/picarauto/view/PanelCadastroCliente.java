@@ -68,23 +68,38 @@ public class PanelCadastroCliente extends JPanel {
         corpo.setLayout(new BoxLayout(corpo, BoxLayout.Y_AXIS));
         corpo.setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        corpo.add(criarToggleTipo());
+        JPanel togglePanel = criarToggleTipo();
+        togglePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        corpo.add(togglePanel);
         corpo.add(Box.createVerticalStrut(16));
-        corpo.add(criarSecao("Dados pessoais", criarCamposDadosPessoais()));
-        corpo.add(Box.createVerticalStrut(12));
+
+        JPanel dadosPessoais = criarCamposDadosPessoais();
+        dadosPessoais.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel lblDadosPessoais = new JLabel("Dados pessoais");
+        lblDadosPessoais.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblDadosPessoais.setForeground(new Color(0x555555));
+        lblDadosPessoais.setAlignmentX(Component.LEFT_ALIGNMENT);
+        corpo.add(lblDadosPessoais);
+        corpo.add(Box.createVerticalStrut(8));
+        corpo.add(dadosPessoais);
+        corpo.add(Box.createVerticalStrut(14));
+
+        JLabel lblDadosEsp = new JLabel("Dados específicos");
+        lblDadosEsp.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblDadosEsp.setForeground(new Color(0x555555));
+        lblDadosEsp.setAlignmentX(Component.LEFT_ALIGNMENT);
+        corpo.add(lblDadosEsp);
+        corpo.add(Box.createVerticalStrut(8));
 
         painelCamposPF = criarCamposPF();
+        painelCamposPF.setAlignmentX(Component.LEFT_ALIGNMENT);
         painelCamposPJ = criarCamposPJ();
+        painelCamposPJ.setAlignmentX(Component.LEFT_ALIGNMENT);
         painelCamposPJ.setVisible(false);
 
-        painelCentral = new JPanel(new BorderLayout());
-        painelCentral.setOpaque(false);
-        painelCentral.add(painelCamposPF, BorderLayout.CENTER);
-        painelCentral.add(painelCamposPJ, BorderLayout.SOUTH);
-        painelCentral.setAlignmentX(Component.LEFT_ALIGNMENT);
-        painelCentral.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
-
-        corpo.add(criarSecao("Dados específicos", painelCentral));
+        corpo.add(painelCamposPF);
+        corpo.add(painelCamposPJ);
 
         JScrollPane scroll = new JScrollPane(corpo);
         scroll.setBorder(null);
