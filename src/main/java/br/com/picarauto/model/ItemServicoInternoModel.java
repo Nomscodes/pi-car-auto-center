@@ -26,7 +26,7 @@ public class ItemServicoInternoModel extends BaseModel implements IItemServicoOS
     @Column(name = "observacoes", length = 500, nullable = false)
     private String observacoes;
 
-    @Transient
+    @Column(name = "idOS", nullable = false)
     private Long idOS;
 
     @Override
