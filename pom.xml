@@ -19,7 +19,7 @@
         <exec.mainClass>br.com.picarauto.Main</exec.mainClass>
     </properties>
     <dependencies>
-        <!-- Driver PostgreSQL (conforme o banco do projeto de vocês) -->
+        <!-- Driver PostgreSQL -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -30,15 +30,22 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
-        <!-- Spring Data JPA (para conectar ao banco) -->
+        <!-- Spring Data JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        <!-- Apache POI — leitura de planilhas .xlsx (PecaExcelAdapter) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.3.0</version>
         </dependency>
     </dependencies>
 </project>
