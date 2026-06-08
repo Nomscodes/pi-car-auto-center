@@ -30,6 +30,7 @@ public class MainFrame extends JFrame {
     public static final String TELA_DASHBOARD  = "DASHBOARD";
     public static final String TELA_LISTA_OS   = "LISTA_OS";
     public static final String TELA_MARCA      = "MARCA";
+    public static final String TELA_MODELO     = "MODELO";
     public static final String TELA_COMPOSICAO = "COMPOSICAO";
     public static final String TELA_CLIENTE    = "CLIENTE";
     public static final String TELA_VEICULO    = "VEICULO";
@@ -45,19 +46,21 @@ public class MainFrame extends JFrame {
         cardLayout      = new CardLayout();
         painelPrincipal = new JPanel(cardLayout);
 
-        PanelSplash    splash    = new PanelSplash(this);
-        PanelDashboard dashboard = new PanelDashboard(this);
-        PanelSelecaoMarca selecaoMarca = new PanelSelecaoMarca(this);
-        PanelListaOS listaOS = new PanelListaOS(this);
-        PanelComposicaoOS composicaoOS = new PanelComposicaoOS(this);
-        PanelCadastroCliente cadastroCliente = new PanelCadastroCliente(this);
-        PanelCadastroVeiculo cadastroVeiculo = new PanelCadastroVeiculo(this);
+        PanelSplash           splash           = new PanelSplash(this);
+        PanelDashboard        dashboard        = new PanelDashboard(this);
+        PanelSelecaoMarca     selecaoMarca     = new PanelSelecaoMarca(this);
+        PanelSelecaoModelo    selecaoModelo    = new PanelSelecaoModelo(this);
+        PanelListaOS          listaOS          = new PanelListaOS(this);
+        PanelComposicaoOS     composicaoOS     = new PanelComposicaoOS(this);
+        PanelCadastroCliente  cadastroCliente  = new PanelCadastroCliente(this);
+        PanelCadastroVeiculo  cadastroVeiculo  = new PanelCadastroVeiculo(this);
 
-        painelPrincipal.add(splash,    TELA_SPLASH);
-        painelPrincipal.add(dashboard, TELA_DASHBOARD);
-        painelPrincipal.add(selecaoMarca, TELA_MARCA);
-        painelPrincipal.add(listaOS, TELA_LISTA_OS);
-        painelPrincipal.add(composicaoOS, TELA_COMPOSICAO);
+        painelPrincipal.add(splash,          TELA_SPLASH);
+        painelPrincipal.add(dashboard,       TELA_DASHBOARD);
+        painelPrincipal.add(selecaoMarca,    TELA_MARCA);
+        painelPrincipal.add(selecaoModelo,   TELA_MODELO);
+        painelPrincipal.add(listaOS,         TELA_LISTA_OS);
+        painelPrincipal.add(composicaoOS,    TELA_COMPOSICAO);
         painelPrincipal.add(cadastroCliente, TELA_CLIENTE);
         painelPrincipal.add(cadastroVeiculo, TELA_VEICULO);
 
