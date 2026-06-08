@@ -10,6 +10,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface IClienteRepository extends IGenericRepository<ClienteModel> {
-    boolean existsByCpf(String cpf);
     Optional<ClienteModel> findByIdAndAtivoTrue(Long id);
 }

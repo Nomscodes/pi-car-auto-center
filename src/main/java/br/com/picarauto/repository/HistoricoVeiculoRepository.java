@@ -1,98 +1,77 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package br.com.picarauto.repository;
-
-import br.com.picarauto.model.exception.BusinessException;
-import br.com.picarauto.util.ConexaoBanco;
-import java.sql.*;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
  * @author Gabriel
  */
+import br.com.picarauto.model.exception.BusinessException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import java.time.LocalDate;
+import java.util.List;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+@Repository
 public class HistoricoVeiculoRepository implements IHistoricoVeiculoRepository {
 
-    //Persistência (INSERT) 
-    @Override
-    public void save(Integer idPessoa, Integer idVeiculo, LocalDate dataInicio, LocalDate dataFim) {
-        String sql = "INSERT INTO historicoVeiculo (idPessoa, idVeiculo, dataInicio, dataFim) VALUES (?, ?, ?, ?)";
-        try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idPessoa);
-            ps.setInt(2, idVeiculo);
-            ps.setDate(3, Date.valueOf(dataInicio));
-            if (dataFim != null) {
-                ps.setDate(4, Date.valueOf(dataFim));
-            } else {
-                ps.setNull(4, Types.DATE);
-            }
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            BusinessException.handleSQLException(e, "histórico do veículo");
-        }
-    }
+    @PersistenceContext
+    private EntityManager em;
 
-    //Consultas específicas 
     @Override
-    public List<Integer> findIdVeiculoByIdPessoa(Integer idPessoa) {
-        String sql = "SELECT idVeiculo FROM historicoVeiculo WHERE idPessoa = ?";
-        List<Integer> ids = new ArrayList<>();
-        try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idPessoa);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                ids.add(rs.getInt("idVeiculo"));
-            }
-            return ids;
-        } catch (SQLException e) {
-            throw new BusinessException("Erro ao buscar veículos por pessoa.", e);
-        }
+    @Transactional
+    public void save(Long idPessoa, Long idVeiculo, LocalDate dataInicio, LocalDate dataFim) {
+        em.createNativeQuery("""
+                INSERT INTO historicoVeiculo (idPessoa, idVeiculo, dataInicio, dataFim)
+                VALUES (:idPessoa, :idVeiculo, :dataInicio, :dataFim)
+                """)
+                .setParameter("idPessoa", idPessoa)
+                .setParameter("idVeiculo", idVeiculo)
+                .setParameter("dataInicio", dataInicio)
+                .setParameter("dataFim", dataFim)
+                .executeUpdate();
     }
 
     @Override
-    public List<Integer> findIdPessoaByIdVeiculo(Integer idVeiculo) {
-        String sql = "SELECT idPessoa FROM historicoVeiculo WHERE idVeiculo = ?";
-        List<Integer> ids = new ArrayList<>();
-        try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idVeiculo);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                ids.add(rs.getInt("idPessoa"));
-            }
-            return ids;
-        } catch (SQLException e) {
-            throw new BusinessException("Erro ao buscar pessoas por veículo.", e);
-        }
+    public List<Long> findIdVeiculoByIdPessoa(Long idPessoa) {
+        return em.createNativeQuery("""
+                SELECT idVeiculo FROM historicoVeiculo WHERE idPessoa = :idPessoa
+                """)
+                .setParameter("idPessoa", idPessoa)
+                .getResultList();
     }
 
-    //Verificações de existência
     @Override
-    public boolean existsByIdPessoaAndIdVeiculo(Integer idPessoa, Integer idVeiculo) {
-        String sql = "SELECT 1 FROM historicoVeiculo WHERE idPessoa = ? AND idVeiculo = ?";
-        try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idPessoa);
-            ps.setInt(2, idVeiculo);
-            return ps.executeQuery().next();
-        } catch (SQLException e) {
-            throw new BusinessException("Erro ao verificar histórico.", e);
-        }
+    public List<Long> findIdPessoaByIdVeiculo(Long idVeiculo) {
+        return em.createNativeQuery("""
+                SELECT idPessoa FROM historicoVeiculo WHERE idVeiculo = :idVeiculo
+                """)
+                .setParameter("idVeiculo", idVeiculo)
+                .getResultList();
     }
 
-    //Remoção (DELETE) 
     @Override
-    public void delete(Integer idPessoa, Integer idVeiculo, LocalDate dataInicio) {
-        String sql = "DELETE FROM historicoVeiculo WHERE idPessoa = ? AND idVeiculo = ? AND dataInicio = ?";
-        try (Connection conn = ConexaoBanco.getConexao(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idPessoa);
-            ps.setInt(2, idVeiculo);
-            ps.setDate(3, Date.valueOf(dataInicio));
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new BusinessException("Erro ao remover histórico do veículo.", e);
-        }
+    public boolean existsByIdPessoaAndIdVeiculo(Long idPessoa, Long idVeiculo) {
+        Number count = (Number) em.createNativeQuery("""
+                SELECT COUNT(1) FROM historicoVeiculo
+                WHERE idPessoa = :idPessoa AND idVeiculo = :idVeiculo
+                """)
+                .setParameter("idPessoa", idPessoa)
+                .setParameter("idVeiculo", idVeiculo)
+                .getSingleResult();
+        return count.longValue() > 0;
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long idPessoa, Long idVeiculo, LocalDate dataInicio) {
+        em.createNativeQuery("""
+                DELETE FROM historicoVeiculo
+                WHERE idPessoa = :idPessoa AND idVeiculo = :idVeiculo AND dataInicio = :dataInicio
+                """)
+                .setParameter("idPessoa", idPessoa)
+                .setParameter("idVeiculo", idVeiculo)
+                .setParameter("dataInicio", dataInicio)
+                .executeUpdate();
     }
 }
