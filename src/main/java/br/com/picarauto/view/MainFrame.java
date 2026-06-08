@@ -32,6 +32,7 @@ public class MainFrame extends JFrame {
     public static final String TELA_MARCA      = "MARCA";
     public static final String TELA_COMPOSICAO = "COMPOSICAO";
     public static final String TELA_CLIENTE    = "CLIENTE";
+    public static final String TELA_VEICULO    = "VEICULO";
 
     public MainFrame() {
         setTitle("AV CAR AUTO CENTER — Sistema de Controle de Oficina");
@@ -50,6 +51,7 @@ public class MainFrame extends JFrame {
         PanelListaOS listaOS = new PanelListaOS(this);
         PanelComposicaoOS composicaoOS = new PanelComposicaoOS(this);
         PanelCadastroCliente cadastroCliente = new PanelCadastroCliente(this);
+        PanelCadastroVeiculo cadastroVeiculo = new PanelCadastroVeiculo(this);
 
         painelPrincipal.add(splash,    TELA_SPLASH);
         painelPrincipal.add(dashboard, TELA_DASHBOARD);
@@ -57,6 +59,7 @@ public class MainFrame extends JFrame {
         painelPrincipal.add(listaOS, TELA_LISTA_OS);
         painelPrincipal.add(composicaoOS, TELA_COMPOSICAO);
         painelPrincipal.add(cadastroCliente, TELA_CLIENTE);
+        painelPrincipal.add(cadastroVeiculo, TELA_VEICULO);
 
         add(painelPrincipal);
         mostrarTela(TELA_SPLASH);
