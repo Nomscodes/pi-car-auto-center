@@ -8,13 +8,15 @@ import br.com.picarauto.model.base.BaseModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IGenericRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public abstract class GenericValidation<E extends BaseModel, R extends IGenericRepository<E>>
         implements IGenericValidation<E, R> {
 
-    @Autowired
-    protected R repository;
+    protected final R repository;
+
+    protected GenericValidation(R repository) {
+        this.repository = repository;
+    }
 
     @Override
     public void validateFields(E entity) {
@@ -51,7 +53,6 @@ public abstract class GenericValidation<E extends BaseModel, R extends IGenericR
 
     @Override
     public void validateUpdate(E entity) {
-        // Verifica se o registro existe antes de atualizar
         if (!repository.existsById(entity.getId())) {
             throw new RuleValidationException("id", "O registro com o ID informado não existe.");
         }
