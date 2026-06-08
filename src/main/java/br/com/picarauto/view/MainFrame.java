@@ -1,0 +1,73 @@
+package br.com.picarauto.view;
+
+/**
+ *
+ * @author Cassiano
+ */
+import javax.swing.*;
+import java.awt.*;
+
+public class MainFrame extends JFrame {
+
+    public static final Color COR_NAVY      = new Color(0x1a2744);
+    public static final Color COR_NAVY_DARK = new Color(0x111d38);
+    public static final Color COR_GOLD      = new Color(0xc9a86c);
+    public static final Color COR_GREEN     = new Color(0x2d4a3e);
+    public static final Color COR_CREAM     = new Color(0xf5f0e6);
+    public static final Color COR_CREAM_ALT = new Color(0xeae5d8);
+    public static final Color COR_MUTED     = new Color(0x8899bb);
+    public static final Color COR_CARD_BG   = new Color(0x223060);
+
+    public static final Font FONT_TITLE  = new Font("Segoe UI", Font.BOLD,   18);
+    public static final Font FONT_MEDIUM = new Font("Segoe UI", Font.BOLD,   13);
+    public static final Font FONT_NORMAL = new Font("Segoe UI", Font.PLAIN,  12);
+    public static final Font FONT_SMALL  = new Font("Segoe UI", Font.PLAIN,  11);
+
+    private final CardLayout cardLayout;
+    private final JPanel     painelPrincipal;
+
+    public static final String TELA_SPLASH     = "SPLASH";
+    public static final String TELA_DASHBOARD  = "DASHBOARD";
+    public static final String TELA_LISTA_OS   = "LISTA_OS";
+    public static final String TELA_MARCA      = "MARCA";
+    public static final String TELA_COMPOSICAO = "COMPOSICAO";
+    public static final String TELA_CLIENTE    = "CLIENTE";
+
+    public MainFrame() {
+        setTitle("AV CAR AUTO CENTER — Sistema de Controle de Oficina");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(960, 620);
+        setMinimumSize(new Dimension(800, 520));
+        setLocationRelativeTo(null);
+        setResizable(true);
+
+        cardLayout      = new CardLayout();
+        painelPrincipal = new JPanel(cardLayout);
+
+        PanelSplash    splash    = new PanelSplash(this);
+        PanelDashboard dashboard = new PanelDashboard(this);
+
+        painelPrincipal.add(splash,    TELA_SPLASH);
+        painelPrincipal.add(dashboard, TELA_DASHBOARD);
+
+        add(painelPrincipal);
+        mostrarTela(TELA_SPLASH);
+    }
+
+    public void mostrarTela(String nomeTela) {
+        cardLayout.show(painelPrincipal, nomeTela);
+    }
+
+    public void adicionarTela(JPanel painel, String nomeTela) {
+        painelPrincipal.add(painel, nomeTela);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception ignored) {}
+            new MainFrame().setVisible(true);
+        });
+    }
+}
