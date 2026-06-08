@@ -49,12 +49,14 @@ public class MainFrame extends JFrame {
         PanelSelecaoMarca selecaoMarca = new PanelSelecaoMarca(this);
         PanelListaOS listaOS = new PanelListaOS(this);
         PanelComposicaoOS composicaoOS = new PanelComposicaoOS(this);
+        PanelCadastroCliente cadastroCliente = new PanelCadastroCliente(this);
 
         painelPrincipal.add(splash,    TELA_SPLASH);
         painelPrincipal.add(dashboard, TELA_DASHBOARD);
         painelPrincipal.add(selecaoMarca, TELA_MARCA);
         painelPrincipal.add(listaOS, TELA_LISTA_OS);
         painelPrincipal.add(composicaoOS, TELA_COMPOSICAO);
+        painelPrincipal.add(cadastroCliente, TELA_CLIENTE);
 
         add(painelPrincipal);
         mostrarTela(TELA_SPLASH);
