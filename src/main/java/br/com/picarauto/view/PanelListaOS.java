@@ -200,7 +200,14 @@ public class PanelListaOS extends JPanel {
         cabecalho.setFont(new Font("Segoe UI", Font.BOLD, 12));
         cabecalho.setPreferredSize(new Dimension(0, 36));
         cabecalho.setReorderingAllowed(false);
-        ((DefaultTableCellRenderer) cabecalho.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.LEFT);
+        DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer();
+        headerRenderer.setBackground(MainFrame.COR_NAVY);
+        headerRenderer.setForeground(MainFrame.COR_GOLD);
+        headerRenderer.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        headerRenderer.setBorder(new EmptyBorder(0, 16, 0, 8));
+        for (int i = 0; i < COLUNAS.length; i++) {
+            tabela.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
+        }
 
         tabela.getColumnModel().getColumn(0).setPreferredWidth(60);
         tabela.getColumnModel().getColumn(1).setPreferredWidth(150);
@@ -221,9 +228,11 @@ public class PanelListaOS extends JPanel {
             }
         });
 
-        DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer();
-        cellRenderer.setBorder(new EmptyBorder(0, 16, 0, 8));
-        for (int i = 0; i < 5; i++) tabela.getColumnModel().getColumn(i).setCellRenderer(cellRenderer);
+        for (int i = 0; i < 5; i++) {
+            DefaultTableCellRenderer r = new DefaultTableCellRenderer();
+            r.setBorder(new EmptyBorder(0, 16, 0, 8));
+            tabela.getColumnModel().getColumn(i).setCellRenderer(r);
+        }
 
         JScrollPane scroll = new JScrollPane(tabela);
         scroll.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0xe0dbd0)));
