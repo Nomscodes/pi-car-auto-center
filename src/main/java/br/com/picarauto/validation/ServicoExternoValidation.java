@@ -4,11 +4,13 @@ import br.com.picarauto.model.ServicoExternoModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IServicoExternoRepository;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author Caio4breu
  */
+@Component
 public class ServicoExternoValidation extends GenericValidation<ServicoExternoModel, IServicoExternoRepository>
         implements IServicoExternoValidation {
 
