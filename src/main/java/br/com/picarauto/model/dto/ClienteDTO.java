@@ -4,28 +4,16 @@ package br.com.picarauto.model.dto;
  *
  * @author Caio4breu
  */
-import java.util.Date;
+import lombok.Getter;
+import lombok.Setter;
+import java.time.LocalDate;
 
+@Getter
+@Setter
 public class ClienteDTO extends BaseDTO {
-
     private String nomeCompleto;
     private String telefone;
     private String email;
     private String endereco;
-    private Date dataCadastro;
-
-    public String getNomeCompleto() { return nomeCompleto; }
-    public void setNomeCompleto(String nomeCompleto) { this.nomeCompleto = nomeCompleto; }
-
-    public String getTelefone() { return telefone; }
-    public void setTelefone(String telefone) { this.telefone = telefone; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getEndereco() { return endereco; }
-    public void setEndereco(String endereco) { this.endereco = endereco; }
-
-    public Date getDataCadastro() { return dataCadastro; }
-    public void setDataCadastro(Date dataCadastro) { this.dataCadastro = dataCadastro; }
+    private LocalDate dataCadastro;
 }

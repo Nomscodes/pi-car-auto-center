@@ -1,8 +1,5 @@
 package br.com.picarauto.repository;
 
-import java.time.LocalDate;
-import java.util.List;
-
 /**
  * Repository para a tabela de relacionamento {@code itemFornecedor}.
  *
@@ -14,20 +11,13 @@ import java.util.List;
  *
  * @author Caio4breu
  */
+import java.time.LocalDate;
+import java.util.List;
+
 public interface IItemFornecedorRepository {
-
-    // Vincula um fornecedor a um item de serviço externo
-    void save(Integer idFornecedor, Integer idItemPedidoServicoExterno, LocalDate dataExecucao);
-
-    // Retorna os IDs de itens de serviço externo executados por um fornecedor
-    List<Integer> findIdItemByIdFornecedor(Integer idFornecedor);
-
-    // Retorna os IDs de fornecedores que executaram um item de serviço externo
-    List<Integer> findIdFornecedorByIdItem(Integer idItemPedidoServicoExterno);
-
-    // Verifica se o vínculo já existe
-    boolean existsByFornecedorAndItem(Integer idFornecedor, Integer idItemPedidoServicoExterno);
-
-    // Remove o vínculo
-    void delete(Integer idFornecedor, Integer idItemPedidoServicoExterno, LocalDate dataExecucao);
+    void save(Long idFornecedor, Long idItemPedidoServicoExterno, LocalDate dataExecucao);
+    List<Long> findIdItemByIdFornecedor(Long idFornecedor);
+    List<Long> findIdFornecedorByIdItem(Long idItemPedidoServicoExterno);
+    boolean existsByFornecedorAndItem(Long idFornecedor, Long idItemPedidoServicoExterno);
+    void delete(Long idFornecedor, Long idItemPedidoServicoExterno, LocalDate dataExecucao);
 }

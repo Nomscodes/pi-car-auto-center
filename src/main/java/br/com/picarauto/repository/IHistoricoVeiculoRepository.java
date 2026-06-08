@@ -1,12 +1,17 @@
 package br.com.picarauto.repository;
 
-import br.com.picarauto.model.HistoricoVeiculoModel;
-import org.springframework.stereotype.Repository;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
- * Repositório Spring Data para HistoricoVeiculoModel.
- * O Spring gera a implementação automaticamente em tempo de execução.
+ * 
+ * @author Gabriel
  */
-@Repository
-public interface IHistoricoVeiculoRepository extends IGenericRepository<HistoricoVeiculoModel> {
+public interface IHistoricoVeiculoRepository {
+
+    void save(Long idPessoa, Long idVeiculo, LocalDate dataInicio, LocalDate dataFim);
+    List<Long> findIdVeiculoByIdPessoa(Long idPessoa);
+    List<Long> findIdPessoaByIdVeiculo(Long idVeiculo);
+    boolean existsByIdPessoaAndIdVeiculo(Long idPessoa, Long idVeiculo);
+    void delete(Long idPessoa, Long idVeiculo, LocalDate dataInicio);
 }

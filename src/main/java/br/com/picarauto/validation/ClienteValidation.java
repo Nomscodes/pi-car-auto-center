@@ -1,14 +1,14 @@
 package br.com.picarauto.validation;
 
+/**
+ *
+ * @author Caio4breu
+ */
 import br.com.picarauto.model.ClienteModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.repository.IClienteRepository;
 import org.springframework.stereotype.Component;
 
-/**
- *
- * @author Caio4breu
- */
 @Component
 public class ClienteValidation extends GenericValidation<ClienteModel, IClienteRepository>
         implements IClienteValidation {

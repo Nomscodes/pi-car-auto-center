@@ -1,34 +1,25 @@
 package br.com.picarauto.model;
 
-import jakarta.persistence.*;
-import java.time.LocalDate;
-
 /**
- * Entidade Modelo de Veículo — tabela "modelo".
+ *
  * @author Gabriel
  */
+import br.com.picarauto.model.base.BaseModel;
+import jakarta.persistence.*;
+import lombok.Data;
+import java.time.LocalDate;
+
+@Data
 @Entity
 @Table(name = "modelo")
 public class ModeloModel extends BaseModel {
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "nomeModelo", nullable = false, length = 200)
     private String nomeModelo;
 
-    @Column(name = "anoModelo")
+    @Column(name = "anoModelo", nullable = false)
     private LocalDate anoModelo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idMarca", nullable = false)
-    private MarcaModel marca;
-
-    public String getNomeModelo() { return nomeModelo; }
-    public void setNomeModelo(String nomeModelo) { this.nomeModelo = nomeModelo; }
-
-    public LocalDate getAnoModelo() { return anoModelo; }
-    public void setAnoModelo(LocalDate anoModelo) { this.anoModelo = anoModelo; }
-
-    public MarcaModel getMarca() { return marca; }
-    public void setMarca(MarcaModel marca) { this.marca = marca; }
-
-    public Integer getIdMarca() { return marca != null ? marca.getId() : null; }
+    @Column(name = "idMarca", nullable = false)
+    private Long idMarca;                   // Integer → Long
 }

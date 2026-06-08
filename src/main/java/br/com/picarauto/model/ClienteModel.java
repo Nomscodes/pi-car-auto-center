@@ -1,21 +1,19 @@
 package br.com.picarauto.model;
 
-import jakarta.persistence.*;
-import java.util.Date;
-
 /**
  *
  * @author Caio4breu
  */
+import jakarta.persistence.*;
+import lombok.Data;
+import java.time.LocalDate;
+
+@Data
 @Entity
 @Table(name = "cliente")
-@Inheritance(strategy = InheritanceType.JOINED)
+@PrimaryKeyJoinColumn(name = "idPessoa")  // ← FK que liga cliente → pessoa
 public class ClienteModel extends PessoaModel {
 
-    @Temporal(TemporalType.DATE)
-    @Column(name = "dataCadastro")
-    private Date dataCadastro;
-
-    public Date getDataCadastro() { return dataCadastro; }
-    public void setDataCadastro(Date dataCadastro) { this.dataCadastro = dataCadastro; }
+    @Column(name = "dataCadastro", nullable = false)
+    private LocalDate dataCadastro;
 }
