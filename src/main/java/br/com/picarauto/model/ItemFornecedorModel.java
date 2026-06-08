@@ -4,40 +4,38 @@
  */
 package br.com.picarauto.model;
 
-import br.com.picarauto.model.base.BaseModel;
+import jakarta.persistence.*;
 import java.time.LocalDate;
 
 /**
  *
  * @author Gabriel
  */
+@Entity
+@Table(name = "itemFornecedor")
 public class ItemFornecedorModel extends BaseModel {
     
-    private Integer idFornecedor;
-    private Integer idItemPedidoServicoExterno;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idFornecedor", nullable = false)
+    private FornecedorModel fornecedor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idItemPedidoServicoExterno", nullable = false)
+    private ItemPedidoServicoExternoModel itemPedidoServicoExterno;
+
+    @Column(name = "dataExecucao", nullable = false)
     private LocalDate dataExecucao;
 
-    public Integer getIdFornecedor() {
-        return idFornecedor;
-    }
+    public FornecedorModel getFornecedor() { return fornecedor; }
+    public void setFornecedor(FornecedorModel fornecedor) { this.fornecedor = fornecedor; }
 
-    public void setIdFornecedor(Integer idFornecedor) {
-        this.idFornecedor = idFornecedor;
-    }
+    public ItemPedidoServicoExternoModel getItemPedidoServicoExterno() { return itemPedidoServicoExterno; }
+    public void setItemPedidoServicoExterno(ItemPedidoServicoExternoModel itemPedidoServicoExterno) { this.itemPedidoServicoExterno = itemPedidoServicoExterno; }
 
-    public Integer getIdItemPedidoServicoExterno() {
-        return idItemPedidoServicoExterno;
-    }
+    public LocalDate getDataExecucao() { return dataExecucao; }
+    public void setDataExecucao(LocalDate dataExecucao) { this.dataExecucao = dataExecucao; }
 
-    public void setIdItemPedidoServicoExterno(Integer idItemPedidoServicoExterno) {
-        this.idItemPedidoServicoExterno = idItemPedidoServicoExterno;
-    }
-
-    public LocalDate getDataExecucao() {
-        return dataExecucao;
-    }
-
-    public void setDataExecucao(LocalDate dataExecucao) {
-        this.dataExecucao = dataExecucao;
-    }
+    // Getters de compatibilidade
+    public Integer getIdFornecedor() { return fornecedor != null ? fornecedor.getId() : null; }
+    public Integer getIdItemPedidoServicoExterno() { return itemPedidoServicoExterno != null ? itemPedidoServicoExterno.getId() : null; }
 }
