@@ -56,7 +56,7 @@ public class PanelSelecaoMarca extends JPanel {
         lblTitulo.setForeground(MainFrame.COR_GOLD);
 
         JButton btnVoltar = criarBotaoVoltar();
-        btnVoltar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_OS));
+        btnVoltar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_DASHBOARD));
 
         header.add(lblTitulo, BorderLayout.WEST);
         header.add(btnVoltar, BorderLayout.EAST);
