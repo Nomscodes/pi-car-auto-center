@@ -20,6 +20,7 @@ public class ColaboradorModel extends PessoaModel {
     @Column(name = "salario", nullable = false)
     private double salario;
 
-    @Column(name = "idFuncao", nullable = false)
-    private Long idFuncao;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idFuncao", nullable = false)
+    private FuncaoColaboradorModel funcao;
 }
