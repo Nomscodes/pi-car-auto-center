@@ -7,9 +7,11 @@ package br.com.picarauto.model;
 import br.com.picarauto.model.base.BaseModel;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "modelo")
 public class ModeloModel extends BaseModel {

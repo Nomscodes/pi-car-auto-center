@@ -7,8 +7,10 @@ package br.com.picarauto.model;
 import br.com.picarauto.model.base.BaseModel;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "fornecedor")
 public class FornecedorModel extends BaseModel {
