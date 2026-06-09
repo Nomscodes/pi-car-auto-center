@@ -45,20 +45,22 @@ public class PanelLogin extends JPanel {
         conteudo.setBorder(new EmptyBorder(36, 36, 36, 36));
 
         // Logo
-        JPanel logo = new JPanel() {
-            { setOpaque(false); setPreferredSize(new Dimension(80, 80)); setMaximumSize(new Dimension(80, 80)); }
+        JLabel logo = new JLabel("AV") {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(MainFrame.COR_NAVY);
                 g2.fill(new RoundRectangle2D.Float(0, 0, 80, 80, 16, 16));
                 g2.setColor(MainFrame.COR_GOLD);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 22));
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 24));
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString("AV", (80-fm.stringWidth("AV"))/2, (80+fm.getAscent()-fm.getDescent())/2);
                 g2.dispose();
             }
         };
+        logo.setPreferredSize(new Dimension(80, 80));
+        logo.setMinimumSize(new Dimension(80, 80));
+        logo.setMaximumSize(new Dimension(80, 80));
         logo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel lblTitulo = new JLabel("AV CAR AUTO CENTER");
