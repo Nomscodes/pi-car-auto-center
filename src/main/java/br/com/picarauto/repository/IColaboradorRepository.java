@@ -7,5 +7,5 @@ import br.com.picarauto.model.ColaboradorModel;
  * @author Gabriel
  */
 public interface IColaboradorRepository extends IGenericRepository<ColaboradorModel> {
-    boolean existsByEmail(String email);
+
 }
