@@ -20,11 +20,11 @@ public class PanelDashboard extends JPanel {
         {"Ordens de serviço",  "12 abertas",        MainFrame.TELA_LISTA_OS},
         {"Clientes",           "Pessoa física / PJ", MainFrame.TELA_CLIENTE},
         {"Veículos",           "Por marca",          MainFrame.TELA_MARCA},
-        {"Peças",              "234 itens",          MainFrame.TELA_PECA},
-        {"Colaboradores",      "8 ativos",           MainFrame.TELA_COLABORADOR},
-        {"Fornecedores",       "15 cadastrados",     MainFrame.TELA_FORNECEDOR},
-        {"Serviços",           "Interno e externo",  MainFrame.TELA_SERVICOS},
-        {"Marcas e modelos",   "22 marcas",          MainFrame.TELA_MARCAS_MOD},
+        {"Peças",              "234 itens",          ""},
+        {"Colaboradores",      "8 ativos",           ""},
+        {"Fornecedores",       "15 cadastrados",     ""},
+        {"Serviços",           "Interno e externo",  ""},
+        {"Marcas e modelos",   "22 marcas",          ""},
     };
 
     public PanelDashboard(MainFrame frame) {
