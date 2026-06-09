@@ -20,10 +20,10 @@ public class BusinessException extends BaseException {
 
     public static void handleSQLException(Exception e, String entityName) {
         String message = e.getMessage();
-        if (message != null && message.contains("UNIQUE constraint failed")) {
+        if (message != null && message.contains("duplicate key value violates unique constraint")) {
             throw new BusinessException("Valor duplicado em " + entityName + ". Este valor já existe no sistema.");
         }
-        if (message != null && message.contains("FOREIGN KEY constraint failed")) {
+        if (message != null && message.contains("violates foreign key constraint")) {
             throw new BusinessException("Não é possível processar esta operação. Verifique as referências a outras entidades.");
         }
         throw new BusinessException("Erro ao processar " + entityName + ". Verifique os dados informados.", e);
