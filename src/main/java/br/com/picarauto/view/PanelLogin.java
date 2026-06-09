@@ -125,6 +125,7 @@ public class PanelLogin extends JPanel {
         lblRodape.setForeground(new Color(0x888888));
 
         gbc.gridy = 0; gbc.insets = new Insets(0, 0, 12, 0);
+        gbc.anchor = GridBagConstraints.CENTER;
         corpo.add(logo, gbc);
         gbc.gridy = 1; gbc.insets = new Insets(0, 0, 4, 0);
         corpo.add(lblTitulo, gbc);
