@@ -101,15 +101,15 @@ public class PanelCadastroFornecedor extends JPanel {
         texto.setOpaque(false);
         texto.setLayout(new BoxLayout(texto, BoxLayout.Y_AXIS));
 
-        JLabel lblTitulo = new JLabel("O CNPJ é opcional");
+        JLabel lblTitulo = new JLabel("CNPJ obrigatório");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblTitulo.setForeground(new Color(0x0c447c));
 
-        JLabel lblDesc = new JLabel("Fornecedores sem CNPJ podem ser cadastrados normalmente.");
+        JLabel lblDesc = new JLabel("O CNPJ é o identificador único do fornecedor.");
         lblDesc.setFont(MainFrame.FONT_SMALL);
         lblDesc.setForeground(new Color(0x185fa5));
 
-        JLabel lblDesc2 = new JLabel("O telefone é único e obrigatório para identificação.");
+        JLabel lblDesc2 = new JLabel("O telefone é obrigatório mas não precisa ser único.");
         lblDesc2.setFont(MainFrame.FONT_SMALL);
         lblDesc2.setForeground(new Color(0x185fa5));
 
