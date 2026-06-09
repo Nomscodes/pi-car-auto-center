@@ -22,13 +22,18 @@ public class ModeloValidation extends GenericValidation<ModeloModel, IModeloRepo
     @Override
     public void validateFields(ModeloModel entity) {
         super.validateFields(entity);
+
         if (entity.getNomeModelo() == null || entity.getNomeModelo().isBlank())
             throw new FieldValidationException("nomeModelo", "O nome do modelo é de preenchimento obrigatório.");
         entity.setNomeModelo(capitalizar(entity.getNomeModelo().trim()));
+
         if (entity.getAnoModelo() == null)
             throw new FieldValidationException("anoModelo", "O ano do modelo é de preenchimento obrigatório.");
-        if (entity.getAnoModelo().isAfter(LocalDate.now()))
+        if (entity.getAnoModelo() < 1900)
+            throw new FieldValidationException("anoModelo", "O ano do modelo não pode ser anterior a 1900.");
+        if (entity.getAnoModelo() > LocalDate.now().getYear())
             throw new FieldValidationException("anoModelo", "O ano do modelo não pode ser no futuro.");
+
         if (entity.getIdMarca() == null)
             throw new FieldValidationException("idMarca", "A marca do modelo é de preenchimento obrigatório.");
     }

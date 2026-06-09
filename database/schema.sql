@@ -42,7 +42,7 @@ CREATE TABLE modelo (
     data_hora_criacao TIMESTAMP    DEFAULT NOW(),
     ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
     nomeModelo        VARCHAR(200) NOT NULL,
-    anoModelo         DATE         NOT NULL,
+    anoModelo         INT          NOT NULL,
     idMarca           INT          NOT NULL,
     FOREIGN KEY (idMarca) REFERENCES marca (id)
 );
@@ -137,7 +137,7 @@ CREATE TABLE colaborador (
     dataAdmissao      DATE             NOT NULL,
     salario           DOUBLE PRECISION NOT NULL,
     idFuncao          INT              NOT NULL,
-    FOREIGN KEY (idPessoa) REFERENCES pessoa           (id),
+    FOREIGN KEY (idPessoa) REFERENCES pessoa            (id),
     FOREIGN KEY (idFuncao) REFERENCES funcaoColaborador (id)
 );
 
@@ -232,7 +232,9 @@ CREATE TABLE itemPedidoServicoExterno (
     garantia          INT          NOT NULL,
     observacoes       VARCHAR(500),
     idServicoExterno  INT          NOT NULL,
-    FOREIGN KEY (idServicoExterno) REFERENCES servicoExterno (id)
+    idOS              INT          NOT NULL,
+    FOREIGN KEY (idServicoExterno) REFERENCES servicoExterno  (id),
+    FOREIGN KEY (idOS)             REFERENCES ordemDeServico  (id)
 );
 
 -- ─── ITEM FORNECEDOR ─────────────────────────────────────────
