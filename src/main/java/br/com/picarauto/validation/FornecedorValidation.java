@@ -3,7 +3,6 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package br.com.picarauto.validation;
-
 import br.com.picarauto.model.FornecedorModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Component;
  *
  * @author Gabriel
  */
-
 @Component
 public class FornecedorValidation extends GenericValidation<FornecedorModel, IFornecedorRepository> implements IFornecedorValidation {
 
@@ -57,8 +55,5 @@ public class FornecedorValidation extends GenericValidation<FornecedorModel, IFo
         if (entity.getCnpj() != null && repository.existsByCnpj(entity.getCnpj()))
             throw new RuleValidationException("CNPJ Duplicado",
                     "Já existe um fornecedor cadastrado com esse CNPJ.");
-
-            throw new RuleValidationException("Telefone Duplicado",
-                    "Já existe um fornecedor cadastrado com esse telefone.");
     }
 }
