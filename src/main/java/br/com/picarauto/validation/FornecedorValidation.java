@@ -58,7 +58,6 @@ public class FornecedorValidation extends GenericValidation<FornecedorModel, IFo
             throw new RuleValidationException("CNPJ Duplicado",
                     "Já existe um fornecedor cadastrado com esse CNPJ.");
 
-        if (repository.existsByTelefone(entity.getTelefone()))
             throw new RuleValidationException("Telefone Duplicado",
                     "Já existe um fornecedor cadastrado com esse telefone.");
     }
