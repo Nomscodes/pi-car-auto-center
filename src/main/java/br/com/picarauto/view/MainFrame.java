@@ -27,21 +27,26 @@ public class MainFrame extends JFrame {
     private final JPanel     painelPrincipal;
     private PanelSelecaoModelo selecaoModelo;
 
-    public static final String TELA_LOGIN        = "LOGIN";
-    public static final String TELA_SPLASH       = "SPLASH";
-    public static final String TELA_DASHBOARD    = "DASHBOARD";
-    public static final String TELA_LISTA_OS     = "LISTA_OS";
-    public static final String TELA_MARCA        = "MARCA";
-    public static final String TELA_MODELO       = "MODELO";
-    public static final String TELA_COMPOSICAO   = "COMPOSICAO";
+    private static String usuarioLogado = "admin";
+
+    public static String getUsuarioLogado() { return usuarioLogado; }
+    public static void setUsuarioLogado(String usuario) { usuarioLogado = usuario; }
+
+    public static final String TELA_LOGIN          = "LOGIN";
+    public static final String TELA_SPLASH         = "SPLASH";
+    public static final String TELA_DASHBOARD      = "DASHBOARD";
+    public static final String TELA_LISTA_OS       = "LISTA_OS";
+    public static final String TELA_MARCA          = "MARCA";
+    public static final String TELA_MODELO         = "MODELO";
+    public static final String TELA_COMPOSICAO     = "COMPOSICAO";
     public static final String TELA_LISTA_CLIENTES = "LISTA_CLIENTES";
-    public static final String TELA_CLIENTE      = "CLIENTE";
-    public static final String TELA_VEICULO      = "VEICULO";
-    public static final String TELA_PECA         = "PECA";
-    public static final String TELA_COLABORADOR  = "COLABORADOR";
-    public static final String TELA_FORNECEDOR   = "FORNECEDOR";
-    public static final String TELA_SERVICOS     = "SERVICOS";
-    public static final String TELA_MARCAS_MOD   = "MARCAS_MOD";
+    public static final String TELA_CLIENTE        = "CLIENTE";
+    public static final String TELA_VEICULO        = "VEICULO";
+    public static final String TELA_PECA           = "PECA";
+    public static final String TELA_COLABORADOR    = "COLABORADOR";
+    public static final String TELA_FORNECEDOR     = "FORNECEDOR";
+    public static final String TELA_SERVICOS       = "SERVICOS";
+    public static final String TELA_MARCAS_MOD     = "MARCAS_MOD";
 
     public MainFrame() {
         setTitle("AV CAR AUTO CENTER — Sistema de Controle de Oficina");
@@ -54,37 +59,37 @@ public class MainFrame extends JFrame {
         cardLayout      = new CardLayout();
         painelPrincipal = new JPanel(cardLayout);
 
-        PanelLogin              login            = new PanelLogin(this);
-        PanelSplash             splash           = new PanelSplash(this);
-        PanelDashboard          dashboard        = new PanelDashboard(this);
-        PanelSelecaoMarca       selecaoMarca     = new PanelSelecaoMarca(this);
-        selecaoModelo                            = new PanelSelecaoModelo(this);
-        PanelListaOS            listaOS          = new PanelListaOS(this);
-        PanelComposicaoOS       composicaoOS     = new PanelComposicaoOS(this);
-        PanelListaClientes      listaClientes    = new PanelListaClientes(this);
-        PanelCadastroCliente    cadastroCliente  = new PanelCadastroCliente(this);
-        PanelCadastroVeiculo    cadastroVeiculo  = new PanelCadastroVeiculo(this);
-        PanelCadastroPeca       cadastroPeca     = new PanelCadastroPeca(this);
-        PanelCadastroColaborador cadastroColab   = new PanelCadastroColaborador(this);
-        PanelCadastroFornecedor cadastroFornecedor = new PanelCadastroFornecedor(this);
-        PanelCadastroServicos   cadastroServicos = new PanelCadastroServicos(this);
-        PanelMarcasModelos      marcasModelos    = new PanelMarcasModelos(this);
+        PanelLogin               login              = new PanelLogin(this);
+        PanelSplash              splash             = new PanelSplash(this);
+        PanelDashboard           dashboard          = new PanelDashboard(this);
+        PanelSelecaoMarca        selecaoMarca       = new PanelSelecaoMarca(this);
+        selecaoModelo                               = new PanelSelecaoModelo(this);
+        PanelListaOS             listaOS            = new PanelListaOS(this);
+        PanelComposicaoOS        composicaoOS       = new PanelComposicaoOS(this);
+        PanelListaClientes       listaClientes      = new PanelListaClientes(this);
+        PanelCadastroCliente     cadastroCliente    = new PanelCadastroCliente(this);
+        PanelCadastroVeiculo     cadastroVeiculo    = new PanelCadastroVeiculo(this);
+        PanelCadastroPeca        cadastroPeca       = new PanelCadastroPeca(this);
+        PanelCadastroColaborador cadastroColab      = new PanelCadastroColaborador(this);
+        PanelCadastroFornecedor  cadastroFornecedor = new PanelCadastroFornecedor(this);
+        PanelCadastroServicos    cadastroServicos   = new PanelCadastroServicos(this);
+        PanelMarcasModelos       marcasModelos      = new PanelMarcasModelos(this);
 
-        painelPrincipal.add(login,             TELA_LOGIN);
-        painelPrincipal.add(splash,            TELA_SPLASH);
-        painelPrincipal.add(dashboard,         TELA_DASHBOARD);
-        painelPrincipal.add(selecaoMarca,      TELA_MARCA);
-        painelPrincipal.add(selecaoModelo,     TELA_MODELO);
-        painelPrincipal.add(listaOS,           TELA_LISTA_OS);
-        painelPrincipal.add(composicaoOS,      TELA_COMPOSICAO);
-        painelPrincipal.add(listaClientes,     TELA_LISTA_CLIENTES);
-        painelPrincipal.add(cadastroCliente,   TELA_CLIENTE);
-        painelPrincipal.add(cadastroVeiculo,   TELA_VEICULO);
-        painelPrincipal.add(cadastroPeca,      TELA_PECA);
-        painelPrincipal.add(cadastroColab,     TELA_COLABORADOR);
-        painelPrincipal.add(cadastroFornecedor,TELA_FORNECEDOR);
-        painelPrincipal.add(cadastroServicos,  TELA_SERVICOS);
-        painelPrincipal.add(marcasModelos,     TELA_MARCAS_MOD);
+        painelPrincipal.add(login,              TELA_LOGIN);
+        painelPrincipal.add(splash,             TELA_SPLASH);
+        painelPrincipal.add(dashboard,          TELA_DASHBOARD);
+        painelPrincipal.add(selecaoMarca,       TELA_MARCA);
+        painelPrincipal.add(selecaoModelo,      TELA_MODELO);
+        painelPrincipal.add(listaOS,            TELA_LISTA_OS);
+        painelPrincipal.add(composicaoOS,       TELA_COMPOSICAO);
+        painelPrincipal.add(listaClientes,      TELA_LISTA_CLIENTES);
+        painelPrincipal.add(cadastroCliente,    TELA_CLIENTE);
+        painelPrincipal.add(cadastroVeiculo,    TELA_VEICULO);
+        painelPrincipal.add(cadastroPeca,       TELA_PECA);
+        painelPrincipal.add(cadastroColab,      TELA_COLABORADOR);
+        painelPrincipal.add(cadastroFornecedor, TELA_FORNECEDOR);
+        painelPrincipal.add(cadastroServicos,   TELA_SERVICOS);
+        painelPrincipal.add(marcasModelos,      TELA_MARCAS_MOD);
 
         add(painelPrincipal);
         mostrarTela(TELA_LOGIN);
