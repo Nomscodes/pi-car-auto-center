@@ -1,186 +1,279 @@
 -- ============================================================
--- AV CAR AUTO CENTER — Schema SQLite
--- Projeto Integrador 2026/1 — SENAI FATESG ADS
+-- PI 2026/1 — SENAI FATESG — ADS 3º Período
+-- Sistema de Controle de Oficina Mecânica — AV CAR AUTO CENTER
+-- Banco de dados: PostgreSQL
 -- ============================================================
 
-PRAGMA foreign_keys = ON;
+-- ─── DROP (ordem inversa das dependências) ───────────────────
+DROP TABLE IF EXISTS itemPedidoPeca                CASCADE;
+DROP TABLE IF EXISTS peca                          CASCADE;
+DROP TABLE IF EXISTS itemFornecedor                CASCADE;
+DROP TABLE IF EXISTS itemPedidoServicoExterno      CASCADE;
+DROP TABLE IF EXISTS servicoExterno                CASCADE;
+DROP TABLE IF EXISTS servicosItens                 CASCADE;
+DROP TABLE IF EXISTS servicosDoColaborador         CASCADE;
+DROP TABLE IF EXISTS itemServicoInterno            CASCADE;
+DROP TABLE IF EXISTS servicosInternos              CASCADE;
+DROP TABLE IF EXISTS ordemDeServico                CASCADE;
+DROP TABLE IF EXISTS historicoVeiculo              CASCADE;
+DROP TABLE IF EXISTS veiculo                       CASCADE;
+DROP TABLE IF EXISTS modelo                        CASCADE;
+DROP TABLE IF EXISTS marca                         CASCADE;
+DROP TABLE IF EXISTS colaborador                   CASCADE;
+DROP TABLE IF EXISTS funcaoColaborador             CASCADE;
+DROP TABLE IF EXISTS pessoaFisica                  CASCADE;
+DROP TABLE IF EXISTS pessoaJuridica                CASCADE;
+DROP TABLE IF EXISTS cliente                       CASCADE;
+DROP TABLE IF EXISTS pessoa                        CASCADE;
+DROP TABLE IF EXISTS fornecedor                    CASCADE;
+DROP TYPE  IF EXISTS status_os;
 
-CREATE TABLE IF NOT EXISTS marca (
-    idMarca   INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome      VARCHAR(200) NOT NULL
+-- ─── MARCA ───────────────────────────────────────────────────
+CREATE TABLE marca (
+    id                SERIAL       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    nome              VARCHAR(200) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS modelo (
-    idModelo   INTEGER PRIMARY KEY AUTOINCREMENT,
-    nomeModelo VARCHAR(200) NOT NULL,
-    anoModelo  INTEGER NOT NULL,
-    idMarca    INTEGER NOT NULL,
-    FOREIGN KEY (idMarca) REFERENCES marca (idMarca)
+-- ─── MODELO ──────────────────────────────────────────────────
+CREATE TABLE modelo (
+    id                SERIAL       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    nomeModelo        VARCHAR(200) NOT NULL,
+    anoModelo         DATE         NOT NULL,
+    idMarca           INT          NOT NULL,
+    FOREIGN KEY (idMarca) REFERENCES marca (id)
 );
 
-CREATE TABLE IF NOT EXISTS pessoa (
-    idPessoa      INTEGER PRIMARY KEY AUTOINCREMENT,
-    nomeCompleto  VARCHAR(150) NOT NULL,
-    telefone      VARCHAR(20)  NOT NULL UNIQUE,
-    email         VARCHAR(150) NOT NULL UNIQUE,
-    endereco      VARCHAR(255) NOT NULL
+-- ─── PESSOA ──────────────────────────────────────────────────
+-- Entidade genérica: centraliza dados comuns a clientes e colaboradores
+CREATE TABLE pessoa (
+    id                SERIAL       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    nomeCompleto      VARCHAR(150) NOT NULL,
+    telefone          VARCHAR(20)  NOT NULL UNIQUE,
+    email             VARCHAR(150) NOT NULL UNIQUE,
+    endereco          VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS cliente (
-    idCliente    INTEGER PRIMARY KEY AUTOINCREMENT,
-    dataCadastro DATE NOT NULL,
-    idPessoa     INTEGER NOT NULL UNIQUE,
-    FOREIGN KEY (idPessoa) REFERENCES pessoa (idPessoa)
+-- ─── CLIENTE ─────────────────────────────────────────────────
+-- Especialização de Pessoa (herança JOINED)
+CREATE TABLE cliente (
+    idPessoa          INT       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP DEFAULT NOW(),
+    ativo             BOOLEAN   NOT NULL DEFAULT TRUE,
+    dataCadastro      DATE      NOT NULL,
+    FOREIGN KEY (idPessoa) REFERENCES pessoa (id)
 );
 
-CREATE TABLE IF NOT EXISTS pessoaFisica (
-    cpf             VARCHAR(11) PRIMARY KEY,
-    rg              VARCHAR(20) NOT NULL UNIQUE,
-    dataNascimento  DATE NOT NULL,
-    idCliente       INTEGER NOT NULL UNIQUE,
-    FOREIGN KEY (idCliente) REFERENCES cliente (idCliente)
+-- ─── PESSOA FÍSICA ───────────────────────────────────────────
+-- Especialização de Cliente
+CREATE TABLE pessoaFisica (
+    idCliente         INT         PRIMARY KEY,
+    data_hora_criacao TIMESTAMP   DEFAULT NOW(),
+    ativo             BOOLEAN     NOT NULL DEFAULT TRUE,
+    cpf               VARCHAR(11) NOT NULL UNIQUE,
+    rg                VARCHAR(20) NOT NULL UNIQUE,
+    dataNascimento    DATE        NOT NULL,
+    FOREIGN KEY (idCliente) REFERENCES cliente (idPessoa)
 );
 
-CREATE TABLE IF NOT EXISTS pessoaJuridica (
-    cnpj         VARCHAR(14) PRIMARY KEY,
-    razaoSocial  VARCHAR(150) NOT NULL,
-    nomeFantasia VARCHAR(150),
-    dataAbertura DATE NOT NULL,
-    idCliente    INTEGER NOT NULL,
-    FOREIGN KEY (idCliente) REFERENCES cliente (idCliente)
+-- ─── PESSOA JURÍDICA ─────────────────────────────────────────
+-- Especialização de Cliente
+CREATE TABLE pessoaJuridica (
+    idCliente         INT          PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    cnpj              VARCHAR(14)  NOT NULL UNIQUE,
+    razaoSocial       VARCHAR(150) NOT NULL,
+    nomeFantasia      VARCHAR(150),
+    dataAbertura      DATE         NOT NULL,
+    FOREIGN KEY (idCliente) REFERENCES cliente (idPessoa)
 );
 
-CREATE TABLE IF NOT EXISTS veiculo (
-    idVeiculo INTEGER PRIMARY KEY AUTOINCREMENT,
-    placa     VARCHAR(8)  NOT NULL UNIQUE,
-    cor       VARCHAR(50) NOT NULL,
-    chassi    VARCHAR(17) NOT NULL UNIQUE,
-    idModelo  INTEGER NOT NULL,
-    idCliente INTEGER NOT NULL,
-    FOREIGN KEY (idModelo)  REFERENCES modelo  (idModelo),
-    FOREIGN KEY (idCliente) REFERENCES cliente (idCliente)
+-- ─── VEÍCULO ─────────────────────────────────────────────────
+CREATE TABLE veiculo (
+    id                SERIAL      PRIMARY KEY,
+    data_hora_criacao TIMESTAMP   DEFAULT NOW(),
+    ativo             BOOLEAN     NOT NULL DEFAULT TRUE,
+    placa             VARCHAR(8)  NOT NULL UNIQUE,
+    cor               VARCHAR(50) NOT NULL,
+    chassi            VARCHAR(17) NOT NULL UNIQUE,
+    idModelo          INT         NOT NULL,
+    idCliente         INT         NOT NULL,
+    FOREIGN KEY (idModelo)  REFERENCES modelo  (id),
+    FOREIGN KEY (idCliente) REFERENCES cliente (idPessoa)
 );
 
-CREATE TABLE IF NOT EXISTS historicoVeiculo (
-    idPessoa   INTEGER NOT NULL,
-    idVeiculo  INTEGER NOT NULL,
+-- ─── HISTÓRICO DE PROPRIETÁRIOS ──────────────────────────────
+-- Rastreia todos os donos de um veículo ao longo do tempo
+CREATE TABLE historicoVeiculo (
+    idPessoa   INT  NOT NULL,
+    idVeiculo  INT  NOT NULL,
     dataInicio DATE NOT NULL,
     dataFim    DATE,
     PRIMARY KEY (idPessoa, idVeiculo, dataInicio),
-    FOREIGN KEY (idPessoa)  REFERENCES pessoa  (idPessoa),
-    FOREIGN KEY (idVeiculo) REFERENCES veiculo (idVeiculo)
+    FOREIGN KEY (idPessoa)  REFERENCES pessoa  (id),
+    FOREIGN KEY (idVeiculo) REFERENCES veiculo (id)
 );
 
-CREATE TABLE IF NOT EXISTS funcaoColaborador (
-    idFuncao INTEGER PRIMARY KEY AUTOINCREMENT,
-    funcao   VARCHAR(100) NOT NULL
+-- ─── FUNÇÃO DO COLABORADOR ───────────────────────────────────
+CREATE TABLE funcaoColaborador (
+    id                SERIAL       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    funcao            VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS colaborador (
-    idColaborador INTEGER PRIMARY KEY AUTOINCREMENT,
-    dataAdmissao  DATE NOT NULL,
-    salario       REAL NOT NULL,
-    idPessoa      INTEGER NOT NULL,
-    idFuncao      INTEGER NOT NULL,
-    FOREIGN KEY (idPessoa)  REFERENCES pessoa             (idPessoa),
-    FOREIGN KEY (idFuncao)  REFERENCES funcaoColaborador  (idFuncao)
+-- ─── COLABORADOR ─────────────────────────────────────────────
+-- Especialização de Pessoa (herança JOINED)
+CREATE TABLE colaborador (
+    idPessoa          INT              PRIMARY KEY,
+    data_hora_criacao TIMESTAMP        DEFAULT NOW(),
+    ativo             BOOLEAN          NOT NULL DEFAULT TRUE,
+    dataAdmissao      DATE             NOT NULL,
+    salario           DOUBLE PRECISION NOT NULL,
+    idFuncao          INT              NOT NULL,
+    FOREIGN KEY (idPessoa) REFERENCES pessoa           (id),
+    FOREIGN KEY (idFuncao) REFERENCES funcaoColaborador (id)
 );
 
--- status: 'orcamento' | 'execucao' | 'pagamento' | 'finalizado'
-CREATE TABLE IF NOT EXISTS ordemDeServico (
-    idOS           INTEGER PRIMARY KEY AUTOINCREMENT,
-    dataAbertura   DATE NOT NULL,
-    dataFechamento DATE,
-    status         TEXT NOT NULL CHECK (status IN ('orcamento','execucao','pagamento','finalizado')),
-    valorTotal     REAL,
-    observacoes    VARCHAR(500),
-    idVeiculo      INTEGER NOT NULL,
-    FOREIGN KEY (idVeiculo) REFERENCES veiculo (idVeiculo)
+-- ─── STATUS DA ORDEM DE SERVIÇO ──────────────────────────────
+CREATE TYPE status_os AS ENUM ('ORCAMENTO', 'EXECUCAO', 'PAGAMENTO', 'FINALIZADO');
+
+-- ─── ORDEM DE SERVIÇO ────────────────────────────────────────
+CREATE TABLE ordemDeServico (
+    id                SERIAL    PRIMARY KEY,
+    data_hora_criacao TIMESTAMP DEFAULT NOW(),
+    ativo             BOOLEAN   NOT NULL DEFAULT TRUE,
+    dataAbertura      DATE      NOT NULL,
+    dataFechamento    DATE,
+    status            status_os NOT NULL,
+    valorTotal        REAL,
+    observacoes       VARCHAR(500),
+    idVeiculo         INT       NOT NULL,
+    FOREIGN KEY (idVeiculo) REFERENCES veiculo (id)
 );
 
-CREATE TABLE IF NOT EXISTS servicosInternos (
-    idServicoInterno INTEGER PRIMARY KEY AUTOINCREMENT,
-    descricao        VARCHAR(500) NOT NULL,
-    valorCobrado     REAL NOT NULL
+-- ─── SERVIÇOS INTERNOS (catálogo) ────────────────────────────
+CREATE TABLE servicosInternos (
+    id                SERIAL       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    descricao         VARCHAR(500) NOT NULL,
+    valorCobrado      REAL         NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS itemServicoInterno (
-    idItemServicoInterno INTEGER PRIMARY KEY AUTOINCREMENT,
-    valorItem            REAL NOT NULL,
-    garantia             INTEGER NOT NULL,
-    observacoes          VARCHAR(500),
-    idOS                 INTEGER NOT NULL,
-    FOREIGN KEY (idOS) REFERENCES ordemDeServico (idOS)
+-- ─── ITEM SERVIÇO INTERNO ────────────────────────────────────
+-- Execução de um serviço interno dentro de uma OS
+CREATE TABLE itemServicoInterno (
+    id                SERIAL       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    valorItem         REAL         NOT NULL,
+    garantia          INT          NOT NULL,
+    observacoes       VARCHAR(500) NOT NULL,
+    idOS              INT          NOT NULL,
+    FOREIGN KEY (idOS) REFERENCES ordemDeServico (id)
 );
 
-CREATE TABLE IF NOT EXISTS servicosDoColaborador (
-    idColaborador    INTEGER NOT NULL,
-    idServicoInterno INTEGER NOT NULL,
+-- ─── SERVIÇOS DO COLABORADOR ─────────────────────────────────
+-- Serviços que um colaborador está executando
+CREATE TABLE servicosDoColaborador (
+    idColaborador    INT  NOT NULL,
+    idServicoInterno INT  NOT NULL,
     dataServico      DATE NOT NULL,
     PRIMARY KEY (idColaborador, idServicoInterno, dataServico),
-    FOREIGN KEY (idColaborador)    REFERENCES colaborador      (idColaborador),
-    FOREIGN KEY (idServicoInterno) REFERENCES servicosInternos (idServicoInterno)
+    FOREIGN KEY (idColaborador)    REFERENCES colaborador     (idPessoa),
+    FOREIGN KEY (idServicoInterno) REFERENCES servicosInternos (id)
 );
 
-CREATE TABLE IF NOT EXISTS servicosItens (
-    idServicoInterno     INTEGER NOT NULL,
-    idItemServicoInterno INTEGER NOT NULL,
+-- ─── SERVIÇOS ITENS ──────────────────────────────────────────
+-- Vincula um item de serviço interno ao seu respectivo serviço interno
+CREATE TABLE servicosItens (
+    idServicoInterno     INT  NOT NULL,
+    idItemServicoInterno INT  NOT NULL,
     dataExecucao         DATE NOT NULL,
     PRIMARY KEY (idServicoInterno, idItemServicoInterno),
-    FOREIGN KEY (idServicoInterno)     REFERENCES servicosInternos  (idServicoInterno),
-    FOREIGN KEY (idItemServicoInterno) REFERENCES itemServicoInterno (idItemServicoInterno)
+    FOREIGN KEY (idServicoInterno)     REFERENCES servicosInternos   (id),
+    FOREIGN KEY (idItemServicoInterno) REFERENCES itemServicoInterno (id)
 );
 
-CREATE TABLE IF NOT EXISTS fornecedor (
-    idFornecedor   INTEGER PRIMARY KEY AUTOINCREMENT,
-    nomeFornecedor VARCHAR(200) NOT NULL,
-    telefone       VARCHAR(20)  NOT NULL UNIQUE
+-- ─── FORNECEDOR ──────────────────────────────────────────────
+CREATE TABLE fornecedor (
+    id                SERIAL       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    nomeFornecedor    VARCHAR(200) NOT NULL,
+    telefone          VARCHAR(20)  NOT NULL,
+    cnpj              VARCHAR(14)  UNIQUE,
+    email             VARCHAR(150) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS servicoExterno (
-    idServicoExterno INTEGER PRIMARY KEY AUTOINCREMENT,
-    descricao        VARCHAR(255) NOT NULL,
-    valorCobrado     REAL NOT NULL
+-- ─── SERVIÇO EXTERNO (catálogo) ──────────────────────────────
+CREATE TABLE servicoExterno (
+    id                SERIAL       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    descricao         VARCHAR(255) NOT NULL,
+    valorCobrado      REAL         NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS itemPedidoServicoExterno (
-    idItemPedidoServicoExterno INTEGER PRIMARY KEY AUTOINCREMENT,
-    valorItem        REAL NOT NULL,
-    garantia         INTEGER NOT NULL,
-    observacoes      VARCHAR(500),
-    idServicoExterno INTEGER NOT NULL,
-    FOREIGN KEY (idServicoExterno) REFERENCES servicoExterno (idServicoExterno)
+-- ─── ITEM PEDIDO SERVIÇO EXTERNO ─────────────────────────────
+-- Execução de um serviço externo (terceirizado) vinculado a uma OS
+CREATE TABLE itemPedidoServicoExterno (
+    id                SERIAL       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    valorItem         REAL         NOT NULL,
+    garantia          INT          NOT NULL,
+    observacoes       VARCHAR(500),
+    idServicoExterno  INT          NOT NULL,
+    FOREIGN KEY (idServicoExterno) REFERENCES servicoExterno (id)
 );
 
-CREATE TABLE IF NOT EXISTS itemFornecedor (
-    idFornecedor               INTEGER NOT NULL,
-    idItemPedidoServicoExterno INTEGER NOT NULL,
+-- ─── ITEM FORNECEDOR ─────────────────────────────────────────
+-- Vincula fornecedor ao serviço externo prestado
+CREATE TABLE itemFornecedor (
+    idFornecedor               INT  NOT NULL,
+    idItemPedidoServicoExterno INT  NOT NULL,
     dataExecucao               DATE NOT NULL,
     PRIMARY KEY (idFornecedor, idItemPedidoServicoExterno, dataExecucao),
-    FOREIGN KEY (idFornecedor)               REFERENCES fornecedor                (idFornecedor),
-    FOREIGN KEY (idItemPedidoServicoExterno) REFERENCES itemPedidoServicoExterno  (idItemPedidoServicoExterno)
+    FOREIGN KEY (idFornecedor)               REFERENCES fornecedor              (id),
+    FOREIGN KEY (idItemPedidoServicoExterno) REFERENCES itemPedidoServicoExterno (id)
 );
 
-CREATE TABLE IF NOT EXISTS peca (
-    codigoNacional INTEGER PRIMARY KEY,
-    modelo         VARCHAR(50)  NOT NULL,
-    marca          VARCHAR(100) NOT NULL,
-    anoVeiculo     INTEGER NOT NULL,
-    anoModelo      INTEGER NOT NULL,
-    precoUnitario  REAL NOT NULL,
-    garantia       INTEGER NOT NULL,
-    idFornecedor   INTEGER NOT NULL,
-    FOREIGN KEY (idFornecedor) REFERENCES fornecedor (idFornecedor)
+-- ─── PEÇA ────────────────────────────────────────────────────
+CREATE TABLE peca (
+    id                SERIAL       PRIMARY KEY,
+    data_hora_criacao TIMESTAMP    DEFAULT NOW(),
+    ativo             BOOLEAN      NOT NULL DEFAULT TRUE,
+    codigoNacional    INT          NOT NULL UNIQUE,
+    modelo            VARCHAR(50)  NOT NULL,
+    marca             VARCHAR(100) NOT NULL,
+    anoVeiculo        INT          NOT NULL CHECK (anoVeiculo >= 1900),
+    anoModelo         INT          NOT NULL CHECK (anoModelo  >= 1900),
+    precoUnitario     REAL         NOT NULL CHECK (precoUnitario > 0),
+    garantia          INT          NOT NULL CHECK (garantia >= 0),
+    idFornecedor      INT          NOT NULL,
+    FOREIGN KEY (idFornecedor) REFERENCES fornecedor (id)
 );
 
-CREATE TABLE IF NOT EXISTS itemPedidoPeca (
-    idItemPedidoPeca INTEGER PRIMARY KEY AUTOINCREMENT,
-    quantidade       INTEGER NOT NULL,
-    dataEntrega      DATE,
-    codigoNacional   INTEGER NOT NULL,
-    idFornecedor     INTEGER NOT NULL,
-    idOS             INTEGER NOT NULL,
+-- ─── ITEM PEDIDO PEÇA ────────────────────────────────────────
+-- Cada peça dentro de uma OS, com rastreabilidade de fornecedor
+CREATE TABLE itemPedidoPeca (
+    id                SERIAL    PRIMARY KEY,
+    data_hora_criacao TIMESTAMP DEFAULT NOW(),
+    ativo             BOOLEAN   NOT NULL DEFAULT TRUE,
+    quantidade        INT       NOT NULL CHECK (quantidade > 0),
+    dataEntrega       DATE,
+    codigoNacional    INT       NOT NULL,
+    idFornecedor      INT       NOT NULL,
+    idOS              INT       NOT NULL,
     FOREIGN KEY (codigoNacional) REFERENCES peca          (codigoNacional),
-    FOREIGN KEY (idFornecedor)   REFERENCES fornecedor     (idFornecedor),
-    FOREIGN KEY (idOS)           REFERENCES ordemDeServico (idOS)
+    FOREIGN KEY (idFornecedor)   REFERENCES fornecedor    (id),
+    FOREIGN KEY (idOS)           REFERENCES ordemDeServico (id)
 );
