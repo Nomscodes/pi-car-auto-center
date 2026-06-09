@@ -21,6 +21,7 @@ public class PanelSelecaoModelo extends JPanel {
     private String modeloSelecionado = null;
     private JButton btnProximo;
     private JLabel lblModeloSel;
+    private JLabel lblTitulo;
     private JPanel gradeModelos;
 
     private static final Map<String, String[]> MODELOS_POR_MARCA = new HashMap<>();
@@ -62,7 +63,7 @@ public class PanelSelecaoModelo extends JPanel {
         header.setBackground(MainFrame.COR_NAVY);
         header.setBorder(new EmptyBorder(14, 20, 14, 20));
 
-        JLabel lblTitulo = new JLabel("Selecionar modelo — " + marcaAtual);
+        lblTitulo = new JLabel("Selecionar modelo — " + marcaAtual);
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblTitulo.setForeground(MainFrame.COR_GOLD);
         lblTitulo.setName("lblTitulo");
@@ -103,6 +104,10 @@ public class PanelSelecaoModelo extends JPanel {
     }
 
     public void carregarModelos() {
+        if (lblTitulo != null) lblTitulo.setText("Selecionar modelo — " + marcaAtual);
+        modeloSelecionado = null;
+        if (lblModeloSel != null) { lblModeloSel.setText("Nenhum modelo selecionado"); lblModeloSel.setForeground(new Color(0x888888)); }
+        if (btnProximo != null) btnProximo.setEnabled(false);
         gradeModelos.removeAll();
         String[] modelos = MODELOS_POR_MARCA.getOrDefault(marcaAtual, new String[]{});
 
