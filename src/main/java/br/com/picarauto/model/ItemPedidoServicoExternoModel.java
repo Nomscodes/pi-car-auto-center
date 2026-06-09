@@ -31,12 +31,12 @@ public class ItemPedidoServicoExternoModel extends BaseModel implements IItemSer
     @Column(name = "idServicoExterno", nullable = false)
     private Long idServicoExterno;
 
-    @Transient
+    @Column(name = "idOS", nullable = false)
     private Long idOS;
 
     @Override
     public String getDescricao() { return observacoes; }
-    
+
     @Override
     public Long getId() { return super.getId(); }
 }

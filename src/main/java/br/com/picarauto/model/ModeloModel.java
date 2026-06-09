@@ -8,7 +8,6 @@ import br.com.picarauto.model.base.BaseModel;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import java.time.LocalDate;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -20,8 +19,8 @@ public class ModeloModel extends BaseModel {
     private String nomeModelo;
 
     @Column(name = "anoModelo", nullable = false)
-    private LocalDate anoModelo;
+    private Integer anoModelo;
 
     @Column(name = "idMarca", nullable = false)
-    private Long idMarca;                   // Integer → Long
+    private Long idMarca;
 }
