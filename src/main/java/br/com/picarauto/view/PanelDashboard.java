@@ -73,7 +73,7 @@ public class PanelDashboard extends JPanel {
         separador.setPreferredSize(new Dimension(1, 20));
         separador.setBackground(MainFrame.COR_MUTED);
 
-        JLabel lblUsuario = new JLabel("👤 " + MainFrame.getUsuarioLogado());
+        JLabel lblUsuario = criarBadgeUsuario(MainFrame.getUsuarioLogado());
         lblUsuario.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblUsuario.setForeground(MainFrame.COR_CREAM);
 
@@ -175,5 +175,34 @@ public class PanelDashboard extends JPanel {
         inner.add(lblSub);
         card.add(inner);
         return card;
+    }
+
+    private JLabel criarBadgeUsuario(String nome) {
+        JLabel lbl = new JLabel(nome) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // circulo de usuario
+                g2.setColor(MainFrame.COR_GOLD);
+                g2.fillOval(0, (getHeight()-20)/2, 20, 20);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                FontMetrics fm = g2.getFontMetrics();
+                String inicial = nome.substring(0,1).toUpperCase();
+                g2.drawString(inicial, (20-fm.stringWidth(inicial))/2, (getHeight()-20)/2 + fm.getAscent() - 2);
+                // nome
+                g2.setColor(MainFrame.COR_CREAM);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                fm = g2.getFontMetrics();
+                g2.drawString(" " + nome, 24, (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                g2.dispose();
+            }
+            @Override public Dimension getPreferredSize() {
+                FontMetrics fm = getFontMetrics(new Font("Segoe UI", Font.BOLD, 12));
+                return new Dimension(28 + fm.stringWidth(getText()), 28);
+            }
+        };
+        lbl.setOpaque(false);
+        return lbl;
     }
 }
