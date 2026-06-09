@@ -13,9 +13,9 @@ import java.awt.geom.RoundRectangle2D;
 public class PanelLogin extends JPanel {
 
     private final MainFrame frame;
-    private JTextField    txtUsuario;
+    private JTextField     txtUsuario;
     private JPasswordField txtSenha;
-    private JLabel        lblErro;
+    private JLabel         lblErro;
 
     public PanelLogin(MainFrame frame) {
         this.frame = frame;
@@ -25,7 +25,7 @@ public class PanelLogin extends JPanel {
     }
 
     private void construirUI() {
-        JPanel card = new JPanel() {
+        JPanel card = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -36,13 +36,16 @@ public class PanelLogin extends JPanel {
             }
         };
         card.setOpaque(false);
-        card.setLayout(new GridBagLayout());
-        card.setPreferredSize(new Dimension(380, 420));
+        card.setPreferredSize(new Dimension(400, 460));
 
-        JPanel conteudo = new JPanel();
-        conteudo.setOpaque(false);
-        conteudo.setLayout(new BoxLayout(conteudo, BoxLayout.Y_AXIS));
-        conteudo.setBorder(new EmptyBorder(36, 36, 36, 36));
+        JPanel corpo = new JPanel(new GridBagLayout());
+        corpo.setOpaque(false);
+        corpo.setBorder(new EmptyBorder(32, 40, 32, 40));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(4, 0, 4, 0);
+        gbc.weightx = 1.0;
 
         // Logo
         JLabel logo = new JLabel("AV") {
@@ -59,53 +62,42 @@ public class PanelLogin extends JPanel {
             }
         };
         logo.setPreferredSize(new Dimension(80, 80));
-        logo.setMinimumSize(new Dimension(80, 80));
-        logo.setMaximumSize(new Dimension(80, 80));
-        logo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        logo.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JLabel lblTitulo = new JLabel("AV CAR AUTO CENTER");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        JLabel lblTitulo = new JLabel("AV CAR AUTO CENTER", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitulo.setForeground(MainFrame.COR_NAVY);
-        lblTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblSub = new JLabel("Acesso restrito a colaboradores");
+        JLabel lblSub = new JLabel("Acesso restrito a colaboradores", SwingConstants.CENTER);
         lblSub.setFont(MainFrame.FONT_SMALL);
         lblSub.setForeground(new Color(0x888888));
-        lblSub.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Campo usuário
         JLabel lblUsuario = new JLabel("Usuário");
         lblUsuario.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblUsuario.setForeground(new Color(0x555555));
-        lblUsuario.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         txtUsuario = new JTextField();
         txtUsuario.setFont(MainFrame.FONT_NORMAL);
+        txtUsuario.setPreferredSize(new Dimension(320, 38));
         txtUsuario.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(0xd0cbc0), 1),
-            new EmptyBorder(8, 10, 8, 10)));
-        txtUsuario.setAlignmentX(Component.LEFT_ALIGNMENT);
-        txtUsuario.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+            new EmptyBorder(6, 10, 6, 10)));
 
-        // Campo senha
         JLabel lblSenha = new JLabel("Senha");
         lblSenha.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblSenha.setForeground(new Color(0x555555));
-        lblSenha.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         txtSenha = new JPasswordField();
         txtSenha.setFont(MainFrame.FONT_NORMAL);
+        txtSenha.setPreferredSize(new Dimension(320, 38));
         txtSenha.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(0xd0cbc0), 1),
-            new EmptyBorder(8, 10, 8, 10)));
-        txtSenha.setAlignmentX(Component.LEFT_ALIGNMENT);
-        txtSenha.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+            new EmptyBorder(6, 10, 6, 10)));
         txtSenha.addActionListener(e -> realizarLogin());
 
-        lblErro = new JLabel(" ");
+        lblErro = new JLabel(" ", SwingConstants.CENTER);
         lblErro.setFont(MainFrame.FONT_SMALL);
         lblErro.setForeground(new Color(0xcc0000));
-        lblErro.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JButton btnEntrar = new JButton("Entrar") {
             @Override protected void paintComponent(Graphics g) {
@@ -121,41 +113,39 @@ public class PanelLogin extends JPanel {
                 g2.dispose();
             }
         };
-        btnEntrar.setPreferredSize(new Dimension(Integer.MAX_VALUE, 42));
-        btnEntrar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
-        btnEntrar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btnEntrar.setPreferredSize(new Dimension(320, 42));
         btnEntrar.setBorderPainted(false);
         btnEntrar.setContentAreaFilled(false);
         btnEntrar.setFocusPainted(false);
         btnEntrar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnEntrar.addActionListener(e -> realizarLogin());
 
-        JLabel lblRodape = new JLabel("SENAI FATESG · PI 2026/1");
+        JLabel lblRodape = new JLabel("SENAI FATESG · PI 2026/1", SwingConstants.CENTER);
         lblRodape.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         lblRodape.setForeground(new Color(0x888888));
-        lblRodape.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        conteudo.add(logo);
-        conteudo.add(Box.createVerticalStrut(14));
-        conteudo.add(lblTitulo);
-        conteudo.add(Box.createVerticalStrut(4));
-        conteudo.add(lblSub);
-        conteudo.add(Box.createVerticalStrut(24));
-        conteudo.add(lblUsuario);
-        conteudo.add(Box.createVerticalStrut(5));
-        conteudo.add(txtUsuario);
-        conteudo.add(Box.createVerticalStrut(12));
-        conteudo.add(lblSenha);
-        conteudo.add(Box.createVerticalStrut(5));
-        conteudo.add(txtSenha);
-        conteudo.add(Box.createVerticalStrut(6));
-        conteudo.add(lblErro);
-        conteudo.add(Box.createVerticalStrut(6));
-        conteudo.add(btnEntrar);
-        conteudo.add(Box.createVerticalStrut(14));
-        conteudo.add(lblRodape);
+        gbc.gridy = 0; gbc.insets = new Insets(0, 0, 12, 0);
+        corpo.add(logo, gbc);
+        gbc.gridy = 1; gbc.insets = new Insets(0, 0, 4, 0);
+        corpo.add(lblTitulo, gbc);
+        gbc.gridy = 2; gbc.insets = new Insets(0, 0, 20, 0);
+        corpo.add(lblSub, gbc);
+        gbc.gridy = 3; gbc.insets = new Insets(0, 0, 4, 0);
+        corpo.add(lblUsuario, gbc);
+        gbc.gridy = 4; gbc.insets = new Insets(0, 0, 12, 0);
+        corpo.add(txtUsuario, gbc);
+        gbc.gridy = 5; gbc.insets = new Insets(0, 0, 4, 0);
+        corpo.add(lblSenha, gbc);
+        gbc.gridy = 6; gbc.insets = new Insets(0, 0, 6, 0);
+        corpo.add(txtSenha, gbc);
+        gbc.gridy = 7; gbc.insets = new Insets(0, 0, 10, 0);
+        corpo.add(lblErro, gbc);
+        gbc.gridy = 8; gbc.insets = new Insets(0, 0, 16, 0);
+        corpo.add(btnEntrar, gbc);
+        gbc.gridy = 9; gbc.insets = new Insets(0, 0, 0, 0);
+        corpo.add(lblRodape, gbc);
 
-        card.add(conteudo);
+        card.add(corpo, BorderLayout.CENTER);
         add(card);
     }
 
