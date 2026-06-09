@@ -46,16 +46,16 @@ public class PanelLogin extends JPanel {
 
         // Logo
         JPanel logo = new JPanel() {
-            { setOpaque(false); setPreferredSize(new Dimension(70, 70)); setMaximumSize(new Dimension(70, 70)); }
+            { setOpaque(false); setPreferredSize(new Dimension(80, 80)); setMaximumSize(new Dimension(80, 80)); }
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(MainFrame.COR_NAVY);
-                g2.fill(new RoundRectangle2D.Float(0, 0, 70, 70, 14, 14));
+                g2.fill(new RoundRectangle2D.Float(0, 0, 80, 80, 16, 16));
                 g2.setColor(MainFrame.COR_GOLD);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 22));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString("AV", (70-fm.stringWidth("AV"))/2, (70+fm.getAscent()-fm.getDescent())/2);
+                g2.drawString("AV", (80-fm.stringWidth("AV"))/2, (80+fm.getAscent()-fm.getDescent())/2);
                 g2.dispose();
             }
         };
