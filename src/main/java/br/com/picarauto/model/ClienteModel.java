@@ -6,9 +6,11 @@ package br.com.picarauto.model;
  */
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "cliente")
 @PrimaryKeyJoinColumn(name = "idPessoa")  // ← FK que liga cliente → pessoa
