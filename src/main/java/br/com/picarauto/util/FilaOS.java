@@ -102,14 +102,19 @@ public class FilaOS implements Iterable<OrdemServicoModel> {
         }
     }
     
-    // Busca por ID da OS — retorna null se não encontrar
-    public OrdemServicoModel buscarPorId(Integer id) {
-        for (OrdemServicoModel os : this) {
+    // BUSCA SEQUENCIAL por ID da OS
+    // A fila não garante nenhuma ordem — OS entram pela ordem de chegada na oficina.
+    // Por isso não há como saber em qual posição está uma OS pelo seu id.
+    // O único caminho é percorrer nó a nó do início ao fim até encontrar ou esgotar a fila.
+    // Isso é, por definição, busca sequencial: O(n) no pior caso.
+    // Retorna null se não encontrar.
+    public OrdemServicoModel buscarSequencialPorId(Long id) {
+        for (OrdemServicoModel os : this) {         // usa o Iterator interno da FilaOS
             if (os.getId() != null && os.getId().equals(id)) {
-                return os;
+                return os;                          // encontrou — para imediatamente
             }
         }
-        return null;
+        return null;                                // percorreu tudo e não achou
     }
     
     // Busca por placa do veículo — retorna todas as OS que combinam
