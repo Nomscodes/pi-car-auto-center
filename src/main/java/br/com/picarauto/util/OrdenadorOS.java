@@ -60,4 +60,51 @@ public abstract class OrdenadorOS {
      * @return valor negativo se a vem antes de b, positivo se b vem antes de a, zero se iguais
      */
     protected abstract int comparar(OrdemServicoModel a, OrdemServicoModel b);
+
+    /**
+     * Busca Binária na lista já ordenada por data de abertura.
+     *
+     * Pré-requisito: a lista deve estar ordenada pela data de abertura —
+     * exatamente o que o OrdenadorPorData.ordenar() garante.
+     * A busca binária só funciona em estrutura ordenada: ela descarta metade
+     * dos elementos a cada comparação, chegando ao resultado em O(log n).
+     * Em 500 OS são no máximo 9 comparações em vez de 500.
+     *
+     * Retorna a primeira OS encontrada com aquela data, ou null se não existir.
+     *
+     * @param listaOrdenada lista retornada por OrdenadorPorData.ordenar()
+     * @param data          data de abertura a buscar
+     * @return OS encontrada ou null
+     */
+    public OrdemServicoModel buscarBinariaPorData(
+            List<OrdemServicoModel> listaOrdenada,
+            java.time.LocalDate data) {
+
+        if (listaOrdenada == null || listaOrdenada.isEmpty() || data == null) return null;
+
+        int inicio = 0;
+        int fim = listaOrdenada.size() - 1;
+
+        while (inicio <= fim) {
+            int meio = (inicio + fim) / 2;                  // posição do elemento do meio
+            OrdemServicoModel osMeio = listaOrdenada.get(meio);
+
+            if (osMeio.getDataAbertura() == null) {
+                fim = meio - 1;                             // OS sem data ficam no fim — descarta a direita
+                continue;
+            }
+
+            int comparacao = osMeio.getDataAbertura().compareTo(data);
+
+            if (comparacao == 0) {
+                return osMeio;                              // achou a data — retorna
+            } else if (comparacao < 0) {
+                inicio = meio + 1;                          // data do meio é anterior — descarta a esquerda
+            } else {
+                fim = meio - 1;                             // data do meio é posterior — descarta a direita
+            }
+        }
+
+        return null; // data não encontrada na lista
+    }
 }
