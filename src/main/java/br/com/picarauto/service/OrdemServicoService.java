@@ -23,8 +23,28 @@ public class OrdemServicoService extends GenericService<OrdemServicoModel, IOrde
 
     @Override
     protected void beforeInsert(OrdemServicoModel entity) {
-        if (entity.getDataAbertura() == null)
+        if (entity.getDataAbertura() == null) {
             entity.setDataAbertura(LocalDate.now());
+        }
         filaEspera.enfileirar(entity);
+    }
+    
+    //Enfileiramento (afterInsert)
+    @Override
+    protected void afterInsert(OrdemServicoModel savedEntity, OrdemServicoModel old) {
+        filaEspera.enfileirar(savedEntity);
+    }
+
+    //Consulta da fila
+    public FilaOS getFilaEspera() {
+        return filaEspera;
+    }
+
+    //Processamento FIFO
+    public OrdemServicoModel processarProximaOS() {
+        if (filaEspera.estaVazia()) {
+            return null;
+        }
+        return filaEspera.desenfileirar();
     }
 }
