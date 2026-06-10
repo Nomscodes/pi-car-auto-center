@@ -52,8 +52,14 @@ public class FornecedorValidation extends GenericValidation<FornecedorModel, IFo
 
     @Override
     public void validateInsert(FornecedorModel entity) {
-        if (entity.getCnpj() != null && repository.existsByCnpj(entity.getCnpj()))
+        if (entity.getCnpj() != null && repository.existsByCnpj(entity.getCnpj())) {
             throw new RuleValidationException("CNPJ Duplicado",
                     "Já existe um fornecedor cadastrado com esse CNPJ.");
+        }
+
+        if (repository.existsByTelefone(entity.getTelefone())) {
+            throw new RuleValidationException("Telefone Duplicado",
+                    "Já existe um fornecedor cadastrado com esse telefone.");
+        }
     }
 }

@@ -8,4 +8,5 @@ import br.com.picarauto.model.FornecedorModel;
  */
 public interface IFornecedorRepository extends IGenericRepository<FornecedorModel> {
     boolean existsByCnpj(String cnpj);
+    boolean existsByTelefone(String telefone);
 }
