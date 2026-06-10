@@ -26,9 +26,8 @@ public class OrdemServicoService extends GenericService<OrdemServicoModel, IOrde
         if (entity.getDataAbertura() == null) {
             entity.setDataAbertura(LocalDate.now());
         }
-        filaEspera.enfileirar(entity);
     }
-    
+
     //Enfileiramento (afterInsert)
     @Override
     protected void afterInsert(OrdemServicoModel savedEntity, OrdemServicoModel old) {
