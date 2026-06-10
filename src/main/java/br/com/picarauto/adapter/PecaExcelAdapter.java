@@ -57,7 +57,13 @@ public class PecaExcelAdapter implements IPecaExcelAdapter {
                 peca.setPrecoUnitario(lerDecimal(linha.getCell(5)));
                 peca.setGarantia(lerInteiro(linha.getCell(6)));
 
-                pecas.add(peca);
+                // Só adiciona se os campos obrigatórios (not null no banco) vieram preenchidos.
+                // Evita que uma linha com célula vazia ou malformada quebre o fluxo inteiro.
+                if (peca.getCodigoNacional() != null
+                        && peca.getModelo() != null
+                        && peca.getMarca() != null) {
+                    pecas.add(peca);
+                }
             }
 
         } catch (Exception e) {
