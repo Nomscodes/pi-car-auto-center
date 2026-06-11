@@ -40,20 +40,13 @@ public class PanelLogin extends JPanel {
             }
         };
         card.setOpaque(false);
-        card.setPreferredSize(new Dimension(320, 400));
+        card.setPreferredSize(new Dimension(320, 460));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(new EmptyBorder(36, 36, 36, 36));
+        card.setBorder(new EmptyBorder(28, 36, 28, 36));
 
         // --- Logo ---
-        JLabel lblAV = new JLabel("AV CAR", SwingConstants.CENTER);
-        lblAV.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblAV.setForeground(MainFrame.COR_NAVY);
-        lblAV.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel lblAuto = new JLabel("AUTO CENTER", SwingConstants.CENTER);
-        lblAuto.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblAuto.setForeground(MainFrame.COR_MUTED);
-        lblAuto.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JLabel logoLabel = carregarLogo();
+        logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Divisor gold 40px
         JPanel divider = new JPanel() {
@@ -116,9 +109,7 @@ public class PanelLogin extends JPanel {
         btnEntrar.addActionListener(e -> realizarLogin());
 
         // --- Montagem ---
-        card.add(lblAV);
-        card.add(Box.createVerticalStrut(4));
-        card.add(lblAuto);
+        card.add(logoLabel);
         card.add(Box.createVerticalStrut(14));
         card.add(divider);
         card.add(Box.createVerticalStrut(28));
@@ -135,6 +126,19 @@ public class PanelLogin extends JPanel {
         card.add(btnEntrar);
 
         add(card);
+    }
+
+    private JLabel carregarLogo() {
+        java.net.URL url = getClass().getResource("/images/logo.png");
+        if (url != null) {
+            Image scaled = new ImageIcon(url).getImage()
+                .getScaledInstance(200, 100, Image.SCALE_SMOOTH);
+            return new JLabel(new ImageIcon(scaled), SwingConstants.CENTER);
+        }
+        return new JLabel(
+            "<html><center><span style='font-size:18pt;font-weight:bold;color:#1a2744'>AV CAR</span>"
+            + "<br><span style='font-size:9pt;color:#8899bb'>AUTO CENTER</span></center></html>",
+            SwingConstants.CENTER);
     }
 
     private JLabel criarLabel(String texto) {
