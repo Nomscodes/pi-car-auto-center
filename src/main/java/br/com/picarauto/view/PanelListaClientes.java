@@ -12,6 +12,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class PanelListaClientes extends JPanel {
 
@@ -19,6 +21,7 @@ public class PanelListaClientes extends JPanel {
     private JTextField    txtBusca;
     private JTable        tabela;
     private DefaultTableModel modelo;
+    private TableRowSorter<DefaultTableModel> sorter;
     private String        filtroTipo = "Todos";
 
     private static final String[] COLUNAS = {"Nome", "Tipo", "CPF / CNPJ", "Telefone", "Veículos", ""};
@@ -120,6 +123,16 @@ public class PanelListaClientes extends JPanel {
             new EmptyBorder(6, 10, 6, 10)));
         txtBusca.setBackground(Color.WHITE);
         txtBusca.setToolTipText("Buscar cliente...");
+        txtBusca.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e)  { filtrar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { filtrar(); }
+            @Override public void changedUpdate(DocumentEvent e) { filtrar(); }
+            void filtrar() {
+                if (sorter == null) return;
+                String txt = txtBusca.getText().trim();
+                sorter.setRowFilter(txt.isEmpty() ? null : RowFilter.regexFilter("(?i)" + txt));
+            }
+        });
 
         JButton btnNovo = criarBotaoNavy("Novo cliente", 120, 34);
         btnNovo.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_CLIENTE));
@@ -181,6 +194,8 @@ public class PanelListaClientes extends JPanel {
         for (Object[] row : DADOS_MOCK) modelo.addRow(row);
 
         tabela = new JTable(modelo);
+        sorter = new TableRowSorter<>(modelo);
+        tabela.setRowSorter(sorter);
         tabela.setFont(MainFrame.FONT_NORMAL);
         tabela.setRowHeight(40);
         tabela.setShowGrid(false);
