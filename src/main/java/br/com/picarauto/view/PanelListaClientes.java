@@ -108,21 +108,28 @@ public class PanelListaClientes extends JPanel {
     }
 
     private JPanel criarBarraFerr() {
-        JPanel barra = new JPanel(new BorderLayout(0, 10));
-        barra.setOpaque(false);
-        barra.setBorder(new EmptyBorder(0, 0, 12, 0));
-
-        // Linha 1: busca + botão
-        JPanel linha1 = new JPanel(new BorderLayout(12, 0));
-        linha1.setOpaque(false);
-
         txtBusca = new JTextField();
-        txtBusca.setFont(MainFrame.FONT_NORMAL);
+        txtBusca.setPreferredSize(new Dimension(0, 36));
+        txtBusca.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         txtBusca.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
-            new EmptyBorder(6, 10, 6, 10)));
+            BorderFactory.createLineBorder(new Color(0xD0C9B8)),
+            BorderFactory.createEmptyBorder(4, 10, 4, 10)));
+        txtBusca.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         txtBusca.setBackground(Color.WHITE);
-        txtBusca.setToolTipText("Buscar cliente...");
+        txtBusca.setText("Pesquisar...");
+        txtBusca.setForeground(Color.GRAY);
+        txtBusca.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) {
+                if ("Pesquisar...".equals(txtBusca.getText())) {
+                    txtBusca.setText(""); txtBusca.setForeground(new Color(0x333333));
+                }
+            }
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                if (txtBusca.getText().isEmpty()) {
+                    txtBusca.setText("Pesquisar..."); txtBusca.setForeground(Color.GRAY);
+                }
+            }
+        });
         txtBusca.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e)  { filtrar(); }
             @Override public void removeUpdate(DocumentEvent e)  { filtrar(); }
@@ -130,6 +137,7 @@ public class PanelListaClientes extends JPanel {
             void filtrar() {
                 if (sorter == null) return;
                 String txt = txtBusca.getText().trim();
+                if ("Pesquisar...".equals(txt)) { sorter.setRowFilter(null); return; }
                 sorter.setRowFilter(txt.isEmpty() ? null : RowFilter.regexFilter("(?i)" + txt));
             }
         });
@@ -137,18 +145,21 @@ public class PanelListaClientes extends JPanel {
         JButton btnNovo = criarBotaoNavy("Novo cliente", 120, 34);
         btnNovo.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_CLIENTE));
 
-        linha1.add(txtBusca, BorderLayout.CENTER);
-        linha1.add(btnNovo,  BorderLayout.EAST);
+        JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
+        painelBusca.setBackground(new Color(0xF5F0E6));
+        painelBusca.add(txtBusca, BorderLayout.CENTER);
+        painelBusca.add(btnNovo, BorderLayout.EAST);
 
-        // Linha 2: chips de filtro
         JPanel linha2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         linha2.setOpaque(false);
-
         for (String tipo : new String[]{"Todos", "PF", "PJ"}) {
             linha2.add(criarChipFiltro(tipo));
         }
 
-        barra.add(linha1, BorderLayout.NORTH);
+        JPanel barra = new JPanel(new BorderLayout(0, 10));
+        barra.setOpaque(false);
+        barra.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        barra.add(painelBusca, BorderLayout.NORTH);
         barra.add(linha2, BorderLayout.SOUTH);
         return barra;
     }
