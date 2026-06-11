@@ -16,7 +16,7 @@ import java.awt.geom.Ellipse2D;
 public class PanelSelecaoMarca extends JPanel {
 
     private final MainFrame frame;
-    private final boolean   modoNovaOS;
+    public static boolean modoNovaOS = false;
 
     private String  marcaSelecionada = null;
     private JButton btnProximo;
@@ -43,12 +43,7 @@ public class PanelSelecaoMarca extends JPanel {
     };
 
     public PanelSelecaoMarca(MainFrame frame) {
-        this(frame, false);
-    }
-
-    public PanelSelecaoMarca(MainFrame frame, boolean modoNovaOS) {
-        this.frame     = frame;
-        this.modoNovaOS = modoNovaOS;
+        this.frame = frame;
         setBackground(MainFrame.COR_CREAM);
         setLayout(new BorderLayout());
         construirUI();
