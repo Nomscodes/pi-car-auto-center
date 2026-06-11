@@ -6,12 +6,31 @@ package br.com.picarauto.view;
  *
  * @author Cassiano
  */
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
@@ -157,6 +176,12 @@ public class PanelSelecaoModelo extends JPanel {
         for (String modelo : modelos)
             gradeModelos.add(criarCardModelo(modelo, corMarca[0], corMarca[1]));
 
+        if ("Jeep".equals(marcaAtual) || "Mitsubishi".equals(marcaAtual)) {
+            int cardsFaltantes = Math.max(0, 8 - modelos.length);
+            for (int i = 0; i < cardsFaltantes; i++)
+                gradeModelos.add(criarCardVazio());
+        }
+
         gradeModelos.revalidate();
         gradeModelos.repaint();
     }
@@ -239,6 +264,25 @@ public class PanelSelecaoModelo extends JPanel {
         card.add(lblNome);
         card.add(Box.createVerticalGlue());
 
+        return card;
+    }
+
+    private JPanel criarCardVazio() {
+        JPanel card = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                g2.setColor(new Color(0xd0c9b8));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        card.setOpaque(false);
+        card.setPreferredSize(new Dimension(140, 110));
         return card;
     }
 
