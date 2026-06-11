@@ -1,7 +1,7 @@
 package br.com.picarauto.view;
 
 /**
- * Tela splash — exibida 3 segundos antes do login. Sem sidebar.
+ * Tela splash — exibida 3 segundos na abertura e 2 segundos após o login.
  * Fundo navy, logo gold, barra de progresso gold animada, navegação automática.
  *
  * @author Cassiano
@@ -12,6 +12,11 @@ import java.awt.*;
 public class PanelSplash extends JPanel {
 
     private final MainFrame frame;
+
+    private JProgressBar progressBar;
+    private Timer timerNav;
+    private Timer progresso;
+    private final int[] valor = {0};
 
     public PanelSplash(MainFrame frame) {
         this.frame = frame;
@@ -35,7 +40,7 @@ public class PanelSplash extends JPanel {
         lblSub.setForeground(new Color(0x8899bb));
         lblSub.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JProgressBar progressBar = new JProgressBar(0, 100) {
+        progressBar = new JProgressBar(0, 100) {
             @Override public void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -71,19 +76,31 @@ public class PanelSplash extends JPanel {
 
         add(conteudo);
 
-        // Timer de navegação: 3000ms dispara uma vez e vai para LOGIN
-        Timer timerNav = new Timer(3000, e -> frame.mostrarTela(MainFrame.TELA_LOGIN));
+        // Timer de navegação inicial: 3000ms (dispara uma vez) → LOGIN
+        timerNav = new Timer(3000, e -> frame.mostrarTela(MainFrame.TELA_LOGIN));
         timerNav.setRepeats(false);
         timerNav.start();
 
-        // Timer de progresso: 30ms × 100 ticks = 3000ms, incrementa progressBar
-        final int[] valor = {0};
-        Timer progresso = new Timer(30, null);
+        // Timer de progresso: 30ms × 100 ticks = 3000ms
+        progresso = new Timer(30, null);
         progresso.addActionListener(e -> {
             valor[0] += 1;
             progressBar.setValue(valor[0]);
             if (valor[0] >= 100) progresso.stop();
         });
         progresso.start();
+    }
+
+    /**
+     * Reinicia a animação da barra de progresso. Chamado pelo MainFrame antes de
+     * exibir TELA_SPLASH (garante que a barra começa do zero a cada exibição).
+     * O timerNav inicial (→ LOGIN) já disparou e não será reiniciado; a navegação
+     * pós-login é responsabilidade de quem chamou mostrarTela(TELA_SPLASH).
+     */
+    public void reiniciar() {
+        if (progresso != null) progresso.stop();
+        valor[0] = 0;
+        if (progressBar != null) progressBar.setValue(0);
+        if (progresso != null) progresso.start();
     }
 }
