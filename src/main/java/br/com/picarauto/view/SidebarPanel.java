@@ -12,11 +12,18 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SidebarPanel extends JPanel {
 
     private final MainFrame frame;
     private final String    telaAtiva;
+
+    private JLabel lblNomeUsuario;
+    private JPanel avatarPanel;
+
+    private static final List<SidebarPanel> INSTANCIAS = new ArrayList<>();
 
     private static final Object[][] ITENS = {
         {"⊞", "Dashboard",       MainFrame.TELA_DASHBOARD,      "PRINCIPAL"},
@@ -37,6 +44,18 @@ public class SidebarPanel extends JPanel {
         setPreferredSize(new Dimension(200, 0));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         construirUI();
+        INSTANCIAS.add(this);
+    }
+
+    public static void atualizarTodas() {
+        for (SidebarPanel s : INSTANCIAS) s.atualizarUsuario();
+    }
+
+    public void atualizarUsuario() {
+        String usuario = MainFrame.getUsuarioLogado();
+        if (usuario == null || usuario.trim().isEmpty()) usuario = "Godofredo Silva";
+        if (lblNomeUsuario != null) lblNomeUsuario.setText(usuario);
+        if (avatarPanel   != null) avatarPanel.repaint();
     }
 
     public void setItemAtivo(String tela) {}
@@ -169,15 +188,16 @@ public class SidebarPanel extends JPanel {
     private void adicionarUsuario() {
         String usuario = MainFrame.getUsuarioLogado();
         if (usuario == null || usuario.trim().isEmpty()) usuario = "Godofredo Silva";
-        final String nome = usuario;
 
         JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         userPanel.setOpaque(false);
         userPanel.setMaximumSize(new Dimension(200, 52));
         userPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel avatar = new JPanel() {
+        avatarPanel = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
+                String nome = MainFrame.getUsuarioLogado();
+                if (nome == null || nome.trim().isEmpty()) nome = "Godofredo Silva";
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(MainFrame.COR_GOLD);
@@ -192,15 +212,15 @@ public class SidebarPanel extends JPanel {
                 g2.dispose();
             }
         };
-        avatar.setOpaque(false);
-        avatar.setPreferredSize(new Dimension(28, 28));
+        avatarPanel.setOpaque(false);
+        avatarPanel.setPreferredSize(new Dimension(28, 28));
 
-        JLabel lblNome = new JLabel(nome);
-        lblNome.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblNome.setForeground(new Color(0xaabbcc));
+        lblNomeUsuario = new JLabel(usuario);
+        lblNomeUsuario.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblNomeUsuario.setForeground(new Color(0xaabbcc));
 
-        userPanel.add(avatar);
-        userPanel.add(lblNome);
+        userPanel.add(avatarPanel);
+        userPanel.add(lblNomeUsuario);
         add(userPanel);
     }
 }
