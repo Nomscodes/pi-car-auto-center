@@ -30,22 +30,22 @@ public class PanelSelecaoModelo extends JPanel {
 
     private static final Map<String, String[]> MODELOS_POR_MARCA = new HashMap<>();
     static {
-        MODELOS_POR_MARCA.put("Chevrolet",  new String[]{"Onix", "Tracker", "Cruze", "S10", "Spin", "Montana"});
-        MODELOS_POR_MARCA.put("Volkswagen", new String[]{"Gol", "Polo", "T-Cross", "Virtus", "Nivus", "Amarok"});
-        MODELOS_POR_MARCA.put("Fiat",       new String[]{"Argo", "Pulse", "Cronos", "Toro", "Strada", "Mobi"});
-        MODELOS_POR_MARCA.put("Ford",       new String[]{"Ka", "EcoSport", "Ranger", "Territory", "Bronco"});
-        MODELOS_POR_MARCA.put("Toyota",     new String[]{"Corolla", "Hilux", "SW4", "Yaris", "RAV4"});
-        MODELOS_POR_MARCA.put("Honda",      new String[]{"Civic", "HR-V", "City", "Fit", "CR-V"});
-        MODELOS_POR_MARCA.put("Hyundai",    new String[]{"HB20", "Creta", "Tucson", "Santa Fe", "Elantra"});
-        MODELOS_POR_MARCA.put("Renault",    new String[]{"Kwid", "Sandero", "Logan", "Duster", "Captur"});
-        MODELOS_POR_MARCA.put("Nissan",     new String[]{"Kicks", "Frontier", "Versa", "Sentra"});
-        MODELOS_POR_MARCA.put("Jeep",       new String[]{"Renegade", "Compass", "Commander", "Wrangler"});
-        MODELOS_POR_MARCA.put("Peugeot",    new String[]{"208", "2008", "308", "3008", "5008"});
-        MODELOS_POR_MARCA.put("Citroën",   new String[]{"C3", "C4 Cactus", "C5 Aircross"});
-        MODELOS_POR_MARCA.put("Mitsubishi", new String[]{"Eclipse Cross", "Outlander", "L200"});
-        MODELOS_POR_MARCA.put("Kia",        new String[]{"Sportage", "Sorento", "Stinger", "Soul"});
-        MODELOS_POR_MARCA.put("Subaru",     new String[]{"Impreza", "Forester", "Outback", "WRX"});
-        MODELOS_POR_MARCA.put("Mercedes",   new String[]{"Classe A", "Classe C", "GLA", "GLC", "Sprinter"});
+        MODELOS_POR_MARCA.put("Chevrolet",    new String[]{"Onix", "Tracker", "Cruze", "S10", "Spin", "Montana", "Onix Plus", "Equinox"});
+        MODELOS_POR_MARCA.put("Volkswagen",   new String[]{"Gol", "Polo", "T-Cross", "Virtus", "Nivus", "Saveiro", "Tiguan", "Jetta"});
+        MODELOS_POR_MARCA.put("Hyundai",      new String[]{"HB20", "Creta", "Tucson", "HB20S", "Santa Fe", "Azera", "i30", "Venue"});
+        MODELOS_POR_MARCA.put("Toyota",       new String[]{"Corolla", "Hilux", "Yaris", "SW4", "RAV4", "Camry", "Etios", "Corolla Cross"});
+        MODELOS_POR_MARCA.put("Ford",         new String[]{"Ka", "EcoSport", "Ranger", "Territory", "Bronco Sport", "Maverick", "Edge", "Fusion"});
+        MODELOS_POR_MARCA.put("Fiat",         new String[]{"Argo", "Pulse", "Toro", "Strada", "Cronos", "Mobi", "Fastback", "Doblo"});
+        MODELOS_POR_MARCA.put("Honda",        new String[]{"Civic", "HR-V", "CR-V", "Fit", "City", "WR-V", "Accord", "Pilot"});
+        MODELOS_POR_MARCA.put("Renault",      new String[]{"Kwid", "Sandero", "Duster", "Logan", "Captur", "Oroch", "Master", "Zoe"});
+        MODELOS_POR_MARCA.put("Nissan",       new String[]{"Kicks", "Frontier", "Versa", "Sentra", "March", "Leaf", "Murano", "Pathfinder"});
+        MODELOS_POR_MARCA.put("Jeep",         new String[]{"Compass", "Renegade", "Commander", "Wrangler", "Gladiator", "Grand Cherokee"});
+        MODELOS_POR_MARCA.put("Peugeot",      new String[]{"208", "2008", "3008", "408", "308", "Expert", "Landtrek", "e-208"});
+        MODELOS_POR_MARCA.put("Citroën",      new String[]{"C3", "C4 Cactus", "Aircross", "Berlingo", "Jumper", "C5", "C4", "Spacetourer"});
+        MODELOS_POR_MARCA.put("Mitsubishi",   new String[]{"Eclipse Cross", "Outlander", "L200", "ASX", "Pajero", "Galant"});
+        MODELOS_POR_MARCA.put("Kia",          new String[]{"Sportage", "Sorento", "Stinger", "Carnival", "Picanto", "Soul", "Cerato", "EV6"});
+        MODELOS_POR_MARCA.put("Subaru",       new String[]{"Forester", "Outback", "Impreza", "XV", "Legacy", "BRZ", "WRX", "Ascent"});
+        MODELOS_POR_MARCA.put("Mercedes-Benz",new String[]{"Classe A", "Classe C", "GLA", "GLC", "Sprinter", "Actros", "CLA", "EQC"});
     }
 
     public static void setMarcaSelecionada(String marca, boolean novaOS) {
