@@ -139,7 +139,7 @@ public class PanelLogin extends JPanel {
         java.net.URL url = getClass().getResource("/images/logo.png");
         if (url != null) {
             Image scaled = new ImageIcon(url).getImage()
-                .getScaledInstance(220, 110, Image.SCALE_SMOOTH);
+                .getScaledInstance(260, 130, Image.SCALE_SMOOTH);
             return new JLabel(new ImageIcon(scaled), SwingConstants.CENTER);
         }
         JLabel lbl = new JLabel("AV CAR", SwingConstants.CENTER);
@@ -176,7 +176,10 @@ public class PanelLogin extends JPanel {
         if (usuario.equals("admin") && senha.equals("admin")) {
             MainFrame.setUsuarioLogado("Godofredo Silva");
             lblErro.setText(" ");
-            frame.mostrarTela(MainFrame.TELA_DASHBOARD);
+            frame.mostrarTela(MainFrame.TELA_SPLASH);
+            Timer t = new Timer(2000, e -> frame.mostrarTela(MainFrame.TELA_DASHBOARD));
+            t.setRepeats(false);
+            t.start();
         } else {
             lblErro.setText("Usuário ou senha incorretos.");
             txtSenha.setText("");
