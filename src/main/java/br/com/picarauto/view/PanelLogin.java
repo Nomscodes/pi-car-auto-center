@@ -1,13 +1,14 @@
 package br.com.picarauto.view;
 
 /**
+ * Tela de login. Sem sidebar.
+ * Card centralizado (320×400px), fundo cream, sem header navy.
  *
  * @author Cassiano
  */
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 
 public class PanelLogin extends JPanel {
@@ -19,135 +20,143 @@ public class PanelLogin extends JPanel {
 
     public PanelLogin(MainFrame frame) {
         this.frame = frame;
-        setBackground(MainFrame.COR_NAVY);
+        setBackground(MainFrame.COR_CREAM);
         setLayout(new GridBagLayout());
         construirUI();
     }
 
     private void construirUI() {
-        JPanel card = new JPanel(new BorderLayout()) {
+        JPanel card = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_CREAM);
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 16, 16));
+                g2.setColor(Color.WHITE);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 12, 12));
+                g2.setColor(MainFrame.COR_BORDER);
+                g2.setStroke(new BasicStroke(1f));
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1f, getHeight() - 1f, 12, 12));
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
         card.setOpaque(false);
-        card.setPreferredSize(new Dimension(400, 460));
+        card.setPreferredSize(new Dimension(320, 400));
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBorder(new EmptyBorder(36, 36, 36, 36));
 
-        JPanel corpo = new JPanel(new GridBagLayout());
-        corpo.setOpaque(false);
-        corpo.setBorder(new EmptyBorder(32, 40, 32, 40));
+        // --- Logo ---
+        JLabel lblAV = new JLabel("AV CAR", SwingConstants.CENTER);
+        lblAV.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblAV.setForeground(MainFrame.COR_NAVY);
+        lblAV.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0; gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(4, 0, 4, 0);
-        gbc.weightx = 1.0;
+        JLabel lblAuto = new JLabel("AUTO CENTER", SwingConstants.CENTER);
+        lblAuto.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblAuto.setForeground(MainFrame.COR_MUTED);
+        lblAuto.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Logo
-        JLabel logo = new JLabel("AV") {
+        // Divisor gold 40px
+        JPanel divider = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_NAVY);
-                g2.fill(new RoundRectangle2D.Float(0, 0, 80, 80, 16, 16));
-                g2.setColor(MainFrame.COR_GOLD);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 24));
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString("AV", (80-fm.stringWidth("AV"))/2, (80+fm.getAscent()-fm.getDescent())/2);
-                g2.dispose();
+                g.setColor(MainFrame.COR_GOLD);
+                g.fillRect(0, 0, getWidth(), getHeight());
             }
         };
-        logo.setPreferredSize(new Dimension(80, 80));
-        logo.setHorizontalAlignment(SwingConstants.CENTER);
+        divider.setOpaque(false);
+        divider.setMaximumSize(new Dimension(40, 2));
+        divider.setPreferredSize(new Dimension(40, 2));
+        divider.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblTitulo = new JLabel("AV CAR AUTO CENTER", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblTitulo.setForeground(MainFrame.COR_NAVY);
+        // --- Campos ---
+        JLabel lblUsuarioLabel = criarLabel("Usuário");
+        lblUsuarioLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblSub = new JLabel("Acesso restrito a colaboradores", SwingConstants.CENTER);
-        lblSub.setFont(MainFrame.FONT_SMALL);
-        lblSub.setForeground(new Color(0x888888));
+        txtUsuario = criarCampo();
+        txtUsuario.setAlignmentX(Component.LEFT_ALIGNMENT);
+        txtUsuario.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
 
-        JLabel lblUsuario = new JLabel("Usuário");
-        lblUsuario.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lblUsuario.setForeground(new Color(0x555555));
-
-        txtUsuario = new JTextField();
-        txtUsuario.setFont(MainFrame.FONT_NORMAL);
-        txtUsuario.setPreferredSize(new Dimension(320, 38));
-        txtUsuario.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0xd0cbc0), 1),
-            new EmptyBorder(6, 10, 6, 10)));
-
-        JLabel lblSenha = new JLabel("Senha");
-        lblSenha.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lblSenha.setForeground(new Color(0x555555));
+        JLabel lblSenhaLabel = criarLabel("Senha");
+        lblSenhaLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         txtSenha = new JPasswordField();
-        txtSenha.setFont(MainFrame.FONT_NORMAL);
-        txtSenha.setPreferredSize(new Dimension(320, 38));
-        txtSenha.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0xd0cbc0), 1),
-            new EmptyBorder(6, 10, 6, 10)));
+        estilizarInput(txtSenha);
+        txtSenha.setAlignmentX(Component.LEFT_ALIGNMENT);
+        txtSenha.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         txtSenha.addActionListener(e -> realizarLogin());
 
         lblErro = new JLabel(" ", SwingConstants.CENTER);
         lblErro.setFont(MainFrame.FONT_SMALL);
-        lblErro.setForeground(new Color(0xcc0000));
+        lblErro.setForeground(new Color(0xcc2222));
+        lblErro.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        // --- Botão Entrar ---
         JButton btnEntrar = new JButton("Entrar") {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(getModel().isRollover() ? new Color(0x223060) : MainFrame.COR_NAVY);
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
-                g2.setColor(MainFrame.COR_GOLD);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.setColor(Color.WHITE);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2,
-                    (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                g2.drawString(getText(),
+                    (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
-        btnEntrar.setPreferredSize(new Dimension(320, 42));
-        btnEntrar.setBorderPainted(false);
+        btnEntrar.setOpaque(true);
         btnEntrar.setContentAreaFilled(false);
+        btnEntrar.setBorderPainted(false);
         btnEntrar.setFocusPainted(false);
         btnEntrar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnEntrar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        btnEntrar.setPreferredSize(new Dimension(248, 40));
+        btnEntrar.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnEntrar.addActionListener(e -> realizarLogin());
 
-        JLabel lblRodape = new JLabel("SENAI FATESG · PI 2026/1", SwingConstants.CENTER);
-        lblRodape.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        lblRodape.setForeground(new Color(0x888888));
+        // --- Montagem ---
+        card.add(lblAV);
+        card.add(Box.createVerticalStrut(4));
+        card.add(lblAuto);
+        card.add(Box.createVerticalStrut(14));
+        card.add(divider);
+        card.add(Box.createVerticalStrut(28));
+        card.add(lblUsuarioLabel);
+        card.add(Box.createVerticalStrut(5));
+        card.add(txtUsuario);
+        card.add(Box.createVerticalStrut(14));
+        card.add(lblSenhaLabel);
+        card.add(Box.createVerticalStrut(5));
+        card.add(txtSenha);
+        card.add(Box.createVerticalStrut(10));
+        card.add(lblErro);
+        card.add(Box.createVerticalStrut(6));
+        card.add(btnEntrar);
 
-        gbc.gridy = 0; gbc.insets = new Insets(0, 0, 12, 0);
-        gbc.anchor = GridBagConstraints.CENTER;
-        corpo.add(logo, gbc);
-        gbc.gridy = 1; gbc.insets = new Insets(0, 0, 4, 0);
-        corpo.add(lblTitulo, gbc);
-        gbc.gridy = 2; gbc.insets = new Insets(0, 0, 20, 0);
-        corpo.add(lblSub, gbc);
-        gbc.gridy = 3; gbc.insets = new Insets(0, 0, 4, 0);
-        corpo.add(lblUsuario, gbc);
-        gbc.gridy = 4; gbc.insets = new Insets(0, 0, 12, 0);
-        corpo.add(txtUsuario, gbc);
-        gbc.gridy = 5; gbc.insets = new Insets(0, 0, 4, 0);
-        corpo.add(lblSenha, gbc);
-        gbc.gridy = 6; gbc.insets = new Insets(0, 0, 6, 0);
-        corpo.add(txtSenha, gbc);
-        gbc.gridy = 7; gbc.insets = new Insets(0, 0, 10, 0);
-        corpo.add(lblErro, gbc);
-        gbc.gridy = 8; gbc.insets = new Insets(0, 0, 16, 0);
-        corpo.add(btnEntrar, gbc);
-        gbc.gridy = 9; gbc.insets = new Insets(0, 0, 0, 0);
-        corpo.add(lblRodape, gbc);
-
-        card.add(corpo, BorderLayout.CENTER);
         add(card);
+    }
+
+    private JLabel criarLabel(String texto) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lbl.setForeground(new Color(0x444444));
+        return lbl;
+    }
+
+    private JTextField criarCampo() {
+        JTextField f = new JTextField();
+        estilizarInput(f);
+        return f;
+    }
+
+    private void estilizarInput(JTextField f) {
+        f.setFont(MainFrame.FONT_NORMAL);
+        f.setBackground(Color.WHITE);
+        f.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
+            new EmptyBorder(6, 10, 6, 10)));
+        f.setPreferredSize(new Dimension(248, 38));
     }
 
     private void realizarLogin() {
