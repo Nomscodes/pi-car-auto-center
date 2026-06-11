@@ -3,7 +3,7 @@ package br.com.picarauto.view;
 /**
  * Sidebar de navegação reutilizável — presente em todas as telas internas.
  * Largura fixa 200px, fundo navy. Botão "Nova OS" no topo (gold).
- * Itens agrupados em PRINCIPAL, CADASTROS e CONFIG com highlight do item ativo.
+ * Ícones em Segoe UI Symbol; username dinâmico com avatar no rodapé.
  *
  * @author Cassiano
  */
@@ -18,17 +18,16 @@ public class SidebarPanel extends JPanel {
     private final MainFrame frame;
     private final String    telaAtiva;
 
-    // {icone-texto, label, constante TELA_*, seção}
     private static final Object[][] ITENS = {
-        {"▪", "Dashboard",       MainFrame.TELA_DASHBOARD,      "PRINCIPAL"},
+        {"⊞", "Dashboard",       MainFrame.TELA_DASHBOARD,      "PRINCIPAL"},
         {"≡", "Ordens de Serv.", MainFrame.TELA_LISTA_OS,       "PRINCIPAL"},
-        {"●", "Clientes",        MainFrame.TELA_LISTA_CLIENTES, "CADASTROS"},
-        {"◎", "Veículos",   MainFrame.TELA_MARCA,          "CADASTROS"},
-        {"▣", "Peças",      MainFrame.TELA_PECA,           "CADASTROS"},
-        {"★", "Colaboradores",   MainFrame.TELA_COLABORADOR,    "CADASTROS"},
-        {"◈", "Fornecedores",    MainFrame.TELA_FORNECEDOR,     "CADASTROS"},
+        {"♟", "Clientes",        MainFrame.TELA_LISTA_CLIENTES, "CADASTROS"},
+        {"▣", "Veículos",   MainFrame.TELA_MARCA,          "CADASTROS"},
+        {"⚙", "Peças",      MainFrame.TELA_PECA,           "CADASTROS"},
+        {"◈", "Colaboradores",   MainFrame.TELA_COLABORADOR,    "CADASTROS"},
+        {"◫", "Fornecedores",    MainFrame.TELA_FORNECEDOR,     "CADASTROS"},
         {"◆", "Marcas/Modelos",  MainFrame.TELA_MARCAS_MOD,     "CONFIG"},
-        {"✶", "Serviços",   MainFrame.TELA_SERVICOS,       "CONFIG"},
+        {"◧", "Serviços",   MainFrame.TELA_SERVICOS,       "CONFIG"},
     };
 
     public SidebarPanel(MainFrame frame, String telaAtiva) {
@@ -40,13 +39,11 @@ public class SidebarPanel extends JPanel {
         construirUI();
     }
 
-    /** Mantido para compatibilidade — highlight fixado no construtor. */
     public void setItemAtivo(String tela) {}
 
     private void construirUI() {
         add(Box.createRigidArea(new Dimension(0, 12)));
 
-        // Botão Nova OS
         JPanel wrapOS = new JPanel(new BorderLayout());
         wrapOS.setOpaque(false);
         wrapOS.setMaximumSize(new Dimension(200, 56));
@@ -55,7 +52,6 @@ public class SidebarPanel extends JPanel {
         wrapOS.add(criarBotaoNovaOS(), BorderLayout.CENTER);
         add(wrapOS);
 
-        // Itens agrupados por seção
         String secaoAtual = "";
         for (Object[] item : ITENS) {
             String secao = (String) item[3];
@@ -68,6 +64,8 @@ public class SidebarPanel extends JPanel {
         }
 
         add(Box.createVerticalGlue());
+        adicionarDivisor();
+        adicionarUsuario();
     }
 
     private JButton criarBotaoNovaOS() {
@@ -92,7 +90,10 @@ public class SidebarPanel extends JPanel {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(176, 40));
-        btn.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_OS));
+        btn.addActionListener(e -> {
+            PanelSelecaoMarca.modoNovaOS = true;
+            frame.mostrarTela(MainFrame.TELA_MARCA);
+        });
         return btn;
     }
 
@@ -108,6 +109,7 @@ public class SidebarPanel extends JPanel {
 
     private void adicionarItem(String icone, String label, String tela) {
         boolean ativo = tela.equals(telaAtiva);
+        Color   cor   = ativo ? MainFrame.COR_GOLD : MainFrame.COR_MUTED;
 
         JPanel item = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0)) {
             private boolean hover = false;
@@ -138,13 +140,70 @@ public class SidebarPanel extends JPanel {
                 super.paintComponent(g);
             }
         };
-        item.setBorder(new EmptyBorder(7, 16, 7, 8));
+        item.setBorder(new EmptyBorder(7, 16, 7, 4));
 
-        JLabel lbl = new JLabel(icone + "  " + label);
-        lbl.setFont(new Font("Segoe UI", ativo ? Font.BOLD : Font.PLAIN, 12));
-        lbl.setForeground(ativo ? MainFrame.COR_GOLD : MainFrame.COR_MUTED);
+        JLabel lblIcon = new JLabel(icone + " ");
+        lblIcon.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 14));
+        lblIcon.setForeground(cor);
 
-        item.add(lbl);
+        JLabel lblText = new JLabel(label);
+        lblText.setFont(new Font("Segoe UI", ativo ? Font.BOLD : Font.PLAIN, 12));
+        lblText.setForeground(cor);
+
+        item.add(lblIcon);
+        item.add(lblText);
         add(item);
+    }
+
+    private void adicionarDivisor() {
+        JPanel d = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                g.setColor(new Color(0x2a3a5a));
+                g.fillRect(12, 0, getWidth() - 24, 1);
+            }
+        };
+        d.setOpaque(false);
+        d.setMaximumSize(new Dimension(200, 1));
+        d.setPreferredSize(new Dimension(200, 1));
+        d.setAlignmentX(Component.LEFT_ALIGNMENT);
+        add(d);
+    }
+
+    private void adicionarUsuario() {
+        String usuario = MainFrame.getUsuarioLogado();
+        if (usuario == null || usuario.trim().isEmpty()) usuario = "Godofredo Silva";
+        final String nome = usuario;
+
+        JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
+        userPanel.setOpaque(false);
+        userPanel.setMaximumSize(new Dimension(200, 52));
+        userPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel avatar = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(MainFrame.COR_GOLD);
+                g2.fillOval(0, 0, 28, 28);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                String init = nome.substring(0, 1).toUpperCase();
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(init,
+                    (28 - fm.stringWidth(init)) / 2,
+                    (28 + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        avatar.setOpaque(false);
+        avatar.setPreferredSize(new Dimension(28, 28));
+
+        JLabel lblNome = new JLabel(nome);
+        lblNome.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblNome.setForeground(new Color(0xaabbcc));
+
+        userPanel.add(avatar);
+        userPanel.add(lblNome);
+        add(userPanel);
     }
 }
