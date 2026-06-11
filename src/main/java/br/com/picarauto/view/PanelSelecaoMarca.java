@@ -1,37 +1,45 @@
 package br.com.picarauto.view;
 
 /**
+ * Seleção de marca do veículo — grid 4 colunas com círculos coloridos.
+ * Toda a lógica de seleção e modoNovaOS foi preservada.
  *
  * @author Cassiano
  */
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 
 public class PanelSelecaoMarca extends JPanel {
 
     private final MainFrame frame;
-    private final boolean modoNovaOS;
+    private final boolean   modoNovaOS;
 
-    private String marcaSelecionada = null;
+    private String  marcaSelecionada = null;
     private JButton btnProximo;
-    private JLabel lblMarcaSel;
+    private JLabel  lblMarcaSel;
 
+    // Cada entrada: {sigla, corFundo, corTexto, nome}
     public static final Object[][] MARCAS = {
-        {"GM",  new Color(0xFFD700), new Color(0x1a1a1a), "Chevrolet"},
-        {"VW",  new Color(0x001e50), Color.WHITE,          "Volkswagen"},
-        {"FI",  new Color(0xc8102e), Color.WHITE,          "Fiat"},
-        {"FO",  new Color(0x003da5), Color.WHITE,          "Ford"},
-        {"TO",  new Color(0xeb0a1e), Color.WHITE,          "Toyota"},
-        {"HO",  new Color(0xe40521), Color.WHITE,          "Honda"},
-        {"HY",  new Color(0x002c5f), Color.WHITE,          "Hyundai"},
-        {"RN",  new Color(0xefdf00), new Color(0x333333),  "Renault"},
-        {"NI",  new Color(0xc3002f), Color.WHITE,          "Nissan"},
-        {"MB",  new Color(0x1c1c1c), new Color(0xc0c0c0),  "Mercedes"},
-        {"BMW", new Color(0x0066b2), Color.WHITE,          "BMW"},
-        {"JE",  new Color(0x006a4e), Color.WHITE,          "Jeep"},
+        {"GM",   new Color(0xFFD700), new Color(0x1a1a1a), "Chevrolet"},
+        {"VW",   new Color(0x001e50), Color.WHITE,          "Volkswagen"},
+        {"FI",   new Color(0xc8102e), Color.WHITE,          "Fiat"},
+        {"FO",   new Color(0x003da5), Color.WHITE,          "Ford"},
+        {"TO",   new Color(0xeb0a1e), Color.WHITE,          "Toyota"},
+        {"HO",   new Color(0xe40521), Color.WHITE,          "Honda"},
+        {"HY",   new Color(0x002c5f), Color.WHITE,          "Hyundai"},
+        {"RN",   new Color(0xefdf00), new Color(0x333333),  "Renault"},
+        {"NI",   new Color(0xc3002f), Color.WHITE,          "Nissan"},
+        {"JP",   new Color(0x006a4e), Color.WHITE,          "Jeep"},
+        {"PG",   new Color(0x1f3c88), Color.WHITE,          "Peugeot"},
+        {"CT",   new Color(0xc41a1a), Color.WHITE,          "Citroën"},
+        {"MI",   new Color(0xce1126), Color.WHITE,          "Mitsubishi"},
+        {"KI",   new Color(0x05141f), Color.WHITE,          "Kia"},
+        {"SU",   new Color(0x003399), Color.WHITE,          "Subaru"},
+        {"MB",   new Color(0x1c1c1c), new Color(0xc0c0c0),  "Mercedes"},
     };
 
     public PanelSelecaoMarca(MainFrame frame) {
@@ -39,7 +47,7 @@ public class PanelSelecaoMarca extends JPanel {
     }
 
     public PanelSelecaoMarca(MainFrame frame, boolean modoNovaOS) {
-        this.frame = frame;
+        this.frame     = frame;
         this.modoNovaOS = modoNovaOS;
         setBackground(MainFrame.COR_CREAM);
         setLayout(new BorderLayout());
@@ -47,39 +55,48 @@ public class PanelSelecaoMarca extends JPanel {
     }
 
     private void construirUI() {
-        add(criarHeader(), BorderLayout.NORTH);
-        add(criarGrade(),  BorderLayout.CENTER);
-        add(criarRodape(), BorderLayout.SOUTH);
+        add(criarTopbar(),  BorderLayout.NORTH);
+
+        JPanel inner = new JPanel(new BorderLayout());
+        inner.setBackground(MainFrame.COR_CREAM);
+        inner.add(criarScrollGrade(), BorderLayout.CENTER);
+        inner.add(new SidebarPanel(frame, MainFrame.TELA_MARCA), BorderLayout.EAST);
+        inner.add(criarRodape(), BorderLayout.SOUTH);
+
+        add(inner, BorderLayout.CENTER);
     }
 
-    private JPanel criarHeader() {
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(MainFrame.COR_NAVY);
-        header.setBorder(new EmptyBorder(14, 20, 14, 20));
+    // ── Topbar ────────────────────────────────────────────────────────────────
+    private JPanel criarTopbar() {
+        JPanel bar = new JPanel(new BorderLayout());
+        bar.setBackground(MainFrame.COR_NAVY);
+        bar.setPreferredSize(new Dimension(0, 48));
+        bar.setBorder(new EmptyBorder(0, 20, 0, 20));
 
-        JLabel lblTitulo = new JLabel("Selecionar marca do veículo");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblTitulo.setForeground(MainFrame.COR_GOLD);
+        JLabel lbl = new JLabel("AV CAR AUTO CENTER  —  Selecionar Marca");
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lbl.setForeground(Color.WHITE);
 
         JButton btnVoltar = criarBotaoVoltar();
         btnVoltar.addActionListener(e -> frame.mostrarTela(
             modoNovaOS ? MainFrame.TELA_LISTA_OS : MainFrame.TELA_DASHBOARD));
 
-        header.add(lblTitulo, BorderLayout.WEST);
-        header.add(btnVoltar, BorderLayout.EAST);
-        return header;
+        bar.add(lbl,       BorderLayout.WEST);
+        bar.add(btnVoltar, BorderLayout.EAST);
+        return bar;
     }
 
-    private JScrollPane criarGrade() {
+    // ── Grade ─────────────────────────────────────────────────────────────────
+    private JScrollPane criarScrollGrade() {
         JPanel instrucao = new JPanel(new FlowLayout(FlowLayout.LEFT));
         instrucao.setOpaque(false);
-        instrucao.setBorder(new EmptyBorder(12, 20, 0, 20));
+        instrucao.setBorder(new EmptyBorder(16, 20, 0, 20));
         JLabel lbl = new JLabel("Clique na marca do veículo:");
         lbl.setFont(MainFrame.FONT_NORMAL);
         lbl.setForeground(new Color(0x555555));
         instrucao.add(lbl);
 
-        JPanel grade = new JPanel(new GridLayout(3, 4, 20, 20));
+        JPanel grade = new JPanel(new GridLayout(4, 4, 20, 20));
         grade.setOpaque(false);
         grade.setBorder(new EmptyBorder(12, 20, 12, 20));
 
@@ -107,35 +124,32 @@ public class PanelSelecaoMarca extends JPanel {
     private JPanel criarCardMarca(String sigla, Color bgLogo, Color fgLogo, String nome) {
         JPanel card = new JPanel() {
             private boolean hover = false;
-
             {
                 setOpaque(false);
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                 setLayout(new GridBagLayout());
-
                 addMouseListener(new MouseAdapter() {
                     @Override public void mouseEntered(MouseEvent e) { hover = true;  repaint(); }
                     @Override public void mouseExited (MouseEvent e) { hover = false; repaint(); }
                     @Override public void mouseClicked(MouseEvent e) { selecionarMarca(nome); }
                 });
             }
-
-            @Override
-            protected void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 boolean sel = nome.equals(marcaSelecionada);
-                int cx = getWidth() / 2, cy = getHeight() / 2 - 8;
-                int r = Math.min(Math.min(getWidth(), getHeight()) / 2 - 10, 52);
+                int cx = getWidth() / 2, cy = getHeight() / 2 - 10;
+                int r  = Math.min(Math.min(getWidth(), getHeight()) / 2 - 10, 44);
 
                 if (sel) {
-                    g2.setColor(new Color(0xc9a86c33, true));
+                    g2.setColor(new Color(201, 168, 108, 40));
                     g2.fill(new Ellipse2D.Float(cx - r - 6, cy - r - 6, (r + 6) * 2, (r + 6) * 2));
                     g2.setColor(MainFrame.COR_GOLD);
                     g2.setStroke(new BasicStroke(2.5f));
                     g2.draw(new Ellipse2D.Float(cx - r - 4, cy - r - 4, (r + 4) * 2, (r + 4) * 2));
                 } else if (hover) {
-                    g2.setColor(new Color(0x1a274422, true));
+                    g2.setColor(new Color(0x1a2744, false));
+                    g2.setColor(new Color(26, 39, 68, 22));
                     g2.fill(new Ellipse2D.Float(cx - r - 4, cy - r - 4, (r + 4) * 2, (r + 4) * 2));
                 }
 
@@ -143,21 +157,21 @@ public class PanelSelecaoMarca extends JPanel {
                 g2.fill(new Ellipse2D.Float(cx - r, cy - r, r * 2, r * 2));
 
                 g2.setColor(fgLogo);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, sigla.length() > 2 ? 13 : 16));
+                g2.setFont(new Font("Segoe UI", Font.BOLD, sigla.length() > 2 ? 12 : 15));
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(sigla, cx - fm.stringWidth(sigla) / 2, cy + fm.getAscent() / 2 - 2);
 
                 g2.setColor(sel ? MainFrame.COR_NAVY : new Color(0x333333));
-                g2.setFont(new Font("Segoe UI", sel ? Font.BOLD : Font.PLAIN, 12));
+                g2.setFont(new Font("Segoe UI", sel ? Font.BOLD : Font.PLAIN, 11));
                 fm = g2.getFontMetrics();
-                g2.drawString(nome, cx - fm.stringWidth(nome) / 2, cy + r + 20);
-
+                g2.drawString(nome, cx - fm.stringWidth(nome) / 2, cy + r + 18);
                 g2.dispose();
             }
         };
         return card;
     }
 
+    // ── Rodapé ────────────────────────────────────────────────────────────────
     private JPanel criarRodape() {
         JPanel rodape = new JPanel(new BorderLayout());
         rodape.setBackground(MainFrame.COR_CREAM_ALT);
@@ -168,8 +182,7 @@ public class PanelSelecaoMarca extends JPanel {
         lblMarcaSel.setForeground(new Color(0x888888));
 
         btnProximo = new JButton("Próximo: selecionar modelo") {
-            @Override
-            protected void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 Color bg = !isEnabled() ? new Color(0xcccccc)
@@ -180,14 +193,16 @@ public class PanelSelecaoMarca extends JPanel {
                 g2.setColor(isEnabled() ? MainFrame.COR_GOLD : new Color(0x999999));
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                g2.drawString(getText(),
+                    (getWidth() - fm.stringWidth(getText())) / 2,
                     (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
         btnProximo.setPreferredSize(new Dimension(260, 36));
-        btnProximo.setBorderPainted(false);
+        btnProximo.setOpaque(false);
         btnProximo.setContentAreaFilled(false);
+        btnProximo.setBorderPainted(false);
         btnProximo.setFocusPainted(false);
         btnProximo.setEnabled(false);
         btnProximo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -201,6 +216,7 @@ public class PanelSelecaoMarca extends JPanel {
         return rodape;
     }
 
+    // ── Lógica ────────────────────────────────────────────────────────────────
     private void selecionarMarca(String nome) {
         marcaSelecionada = nome;
         lblMarcaSel.setText("Marca selecionada: " + nome);
@@ -212,26 +228,24 @@ public class PanelSelecaoMarca extends JPanel {
 
     private JButton criarBotaoVoltar() {
         JButton btn = new JButton("← Voltar") {
-            @Override
-            protected void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(new Color(0x1e3060));
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
                 g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD : MainFrame.COR_MUTED);
-                g2.setStroke(new BasicStroke(0.8f));
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 6, 6);
                 g2.setFont(MainFrame.FONT_SMALL);
-                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD : MainFrame.COR_MUTED);
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                g2.drawString(getText(),
+                    (getWidth() - fm.stringWidth(getText())) / 2,
                     (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
         btn.setPreferredSize(new Dimension(80, 28));
-        btn.setBorderPainted(false);
+        btn.setOpaque(false);
         btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return btn;
