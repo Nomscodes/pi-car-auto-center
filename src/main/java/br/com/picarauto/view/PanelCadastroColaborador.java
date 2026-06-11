@@ -1,25 +1,40 @@
 package br.com.picarauto.view;
 
 /**
- * Formulário de cadastro de colaborador — grid 2 colunas, JComboBox de função.
+ * Lista e cadastro de colaboradores — busca em tempo real e JRadioButton de função.
  *
  * @author Cassiano
  */
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.*;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class PanelCadastroColaborador extends JPanel {
 
     private final MainFrame frame;
 
-    private JTextField    txtNome, txtCPF, txtNasc, txtTelefone, txtEmail, txtEndereco;
-    private JComboBox<String> cmbFuncao;
+    private JTextField    txtBusca;
+    private JTable        tabela;
+    private DefaultTableModel modelo;
+    private TableRowSorter<DefaultTableModel> sorter;
+
+    private static final String[] COLUNAS = {"Nome", "CPF", "Função", "Telefone", ""};
 
     private static final String[] FUNCOES = {
-        "Selecione...", "Mecânico", "Eletricista", "Funileiro", "Pintor",
+        "Mecânico", "Eletricista", "Funileiro", "Pintor",
         "Borracheiro", "Auxiliar", "Lavador", "Recepcionista"
+    };
+
+    private static final Object[][] DADOS_MOCK = {
+        {"João Mecânico",     "123.456.789-00", "Mecânico",    "(47) 99111-2222"},
+        {"Pedro Eletricista", "987.654.321-00", "Eletricista", "(47) 98222-3333"},
+        {"Carlos Funileiro",  "321.654.987-00", "Funileiro",   "(47) 99444-5555"},
+        {"Maria Pintora",     "456.123.789-00", "Pintor",      "(47) 97555-7777"},
+        {"Luiz Borracheiro",  "789.321.456-00", "Borracheiro", "(47) 99666-8888"},
     };
 
     public PanelCadastroColaborador(MainFrame frame) {
@@ -34,7 +49,7 @@ public class PanelCadastroColaborador extends JPanel {
 
         JPanel inner = new JPanel(new BorderLayout());
         inner.setBackground(MainFrame.COR_CREAM);
-        inner.add(criarScrollConteudo(), BorderLayout.CENTER);
+        inner.add(criarConteudo(), BorderLayout.CENTER);
         inner.add(new SidebarPanel(frame, MainFrame.TELA_COLABORADOR), BorderLayout.EAST);
 
         add(inner, BorderLayout.CENTER);
@@ -47,7 +62,7 @@ public class PanelCadastroColaborador extends JPanel {
         bar.setPreferredSize(new Dimension(0, 48));
         bar.setBorder(new EmptyBorder(0, 20, 0, 20));
 
-        JLabel lbl = new JLabel("AV CAR AUTO CENTER  —  Cadastro de Colaborador");
+        JLabel lbl = new JLabel("AV CAR AUTO CENTER  —  Colaboradores");
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lbl.setForeground(Color.WHITE);
 
@@ -83,20 +98,105 @@ public class PanelCadastroColaborador extends JPanel {
     }
 
     // ── Conteúdo ──────────────────────────────────────────────────────────────
-    private JScrollPane criarScrollConteudo() {
-        JPanel corpo = new JPanel();
-        corpo.setBackground(MainFrame.COR_CREAM);
-        corpo.setLayout(new BoxLayout(corpo, BoxLayout.Y_AXIS));
-        corpo.setBorder(new EmptyBorder(24, 24, 24, 24));
+    private JPanel criarConteudo() {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(MainFrame.COR_CREAM);
+        p.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        txtNome     = criarCampo(); txtCPF      = criarCampo();
-        txtNasc     = criarCampo(); txtTelefone = criarCampo();
-        txtEmail    = criarCampo(); txtEndereco = criarCampo();
-        cmbFuncao   = criarCombo(FUNCOES);
+        p.add(criarBarraFerr(), BorderLayout.NORTH);
+        p.add(criarScrollTabela(), BorderLayout.CENTER);
+        return p;
+    }
 
-        JPanel grid = new JPanel(new GridLayout(4, 2, 14, 10));
+    private JPanel criarBarraFerr() {
+        JPanel barra = new JPanel(new BorderLayout(12, 0));
+        barra.setOpaque(false);
+        barra.setBorder(new EmptyBorder(0, 0, 14, 0));
+
+        txtBusca = new JTextField();
+        txtBusca.setFont(MainFrame.FONT_NORMAL);
+        txtBusca.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
+            new EmptyBorder(6, 10, 6, 10)));
+        txtBusca.setBackground(Color.WHITE);
+        txtBusca.setToolTipText("Buscar colaborador...");
+        txtBusca.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e)  { filtrar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { filtrar(); }
+            @Override public void changedUpdate(DocumentEvent e) { filtrar(); }
+            void filtrar() {
+                if (sorter == null) return;
+                String txt = txtBusca.getText().trim();
+                sorter.setRowFilter(txt.isEmpty() ? null : RowFilter.regexFilter("(?i)" + txt));
+            }
+        });
+
+        JButton btnNovo = criarBotaoNavy("Novo colaborador", 150, 34);
+        btnNovo.addActionListener(e -> abrirFormNovoColaborador());
+
+        barra.add(txtBusca, BorderLayout.CENTER);
+        barra.add(btnNovo,  BorderLayout.EAST);
+        return barra;
+    }
+
+    private JScrollPane criarScrollTabela() {
+        modelo = new DefaultTableModel(COLUNAS, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        for (Object[] row : DADOS_MOCK) modelo.addRow(row);
+
+        tabela = new JTable(modelo);
+        sorter = new TableRowSorter<>(modelo);
+        tabela.setRowSorter(sorter);
+        tabela.setFont(MainFrame.FONT_NORMAL);
+        tabela.setRowHeight(40);
+        tabela.setShowGrid(false);
+        tabela.setIntercellSpacing(new Dimension(0, 0));
+        tabela.setBackground(Color.WHITE);
+        tabela.setSelectionBackground(new Color(0xe8e3d8));
+        tabela.setSelectionForeground(MainFrame.COR_NAVY);
+        tabela.setFillsViewportHeight(true);
+        tabela.setDefaultEditor(Object.class, null);
+
+        JTableHeader header = tabela.getTableHeader();
+        header.setBackground(MainFrame.COR_CREAM_ALT);
+        header.setForeground(new Color(0x444444));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, MainFrame.COR_BORDER));
+        header.setReorderingAllowed(false);
+
+        tabela.getColumnModel().getColumn(4).setPreferredWidth(60);
+        tabela.getColumnModel().getColumn(4).setCellRenderer(new EditarRenderer());
+
+        JScrollPane scroll = new JScrollPane(tabela);
+        scroll.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1));
+        scroll.getViewport().setBackground(Color.WHITE);
+        return scroll;
+    }
+
+    // ── Diálogo de cadastro ───────────────────────────────────────────────────
+    private void abrirFormNovoColaborador() {
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+            "Novo Colaborador", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(460, 500);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel form = new JPanel();
+        form.setBackground(MainFrame.COR_CREAM);
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBorder(new EmptyBorder(20, 24, 20, 24));
+
+        JTextField txtNome     = criarCampo();
+        JTextField txtCPF      = criarCampo();
+        JTextField txtNasc     = criarCampo();
+        JTextField txtTelefone = criarCampo();
+        JTextField txtEmail    = criarCampo();
+        JTextField txtEndereco = criarCampo();
+
+        JPanel grid = new JPanel(new GridLayout(3, 2, 14, 10));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
 
         grid.add(criarGrupo("Nome completo", txtNome));
         grid.add(criarGrupo("CPF",           txtCPF));
@@ -104,34 +204,65 @@ public class PanelCadastroColaborador extends JPanel {
         grid.add(criarGrupo("Telefone",      txtTelefone));
         grid.add(criarGrupo("E-mail",        txtEmail));
         grid.add(criarGrupo("Endereço",     txtEndereco));
-        grid.add(criarGrupoCombo("Função",   cmbFuncao));
-        grid.add(new JPanel() {{ setOpaque(false); }});
 
-        corpo.add(grid);
-        corpo.add(Box.createVerticalStrut(24));
-        corpo.add(criarRodapeAcoes());
+        // JRadioButton 2×4 para Função
+        JPanel funcaoGrid = new JPanel(new GridLayout(4, 2, 8, 6));
+        funcaoGrid.setBackground(MainFrame.COR_CREAM);
+        funcaoGrid.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1), "Função",
+            TitledBorder.LEFT, TitledBorder.TOP,
+            new Font("Segoe UI", Font.BOLD, 11), MainFrame.COR_NAVY));
 
-        JScrollPane scroll = new JScrollPane(corpo);
+        ButtonGroup grupo = new ButtonGroup();
+        JRadioButton[] radios = new JRadioButton[FUNCOES.length];
+        for (int i = 0; i < FUNCOES.length; i++) {
+            radios[i] = new JRadioButton(FUNCOES[i]);
+            radios[i].setFont(MainFrame.FONT_NORMAL);
+            radios[i].setForeground(MainFrame.COR_NAVY);
+            radios[i].setBackground(MainFrame.COR_CREAM);
+            radios[i].setOpaque(true);
+            grupo.add(radios[i]);
+            funcaoGrid.add(radios[i]);
+        }
+        radios[0].setSelected(true);
+
+        JPanel funcaoWrap = new JPanel(new BorderLayout());
+        funcaoWrap.setOpaque(false);
+        funcaoWrap.setAlignmentX(Component.LEFT_ALIGNMENT);
+        funcaoWrap.add(funcaoGrid, BorderLayout.CENTER);
+
+        // Botões
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rodape.setOpaque(false);
+        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
+        btnCanc.addActionListener(e -> dialog.dispose());
+
+        JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
+        btnSalv.addActionListener(e -> {
+            String nome = txtNome.getText().trim();
+            if (!nome.isEmpty()) {
+                String funcao = "";
+                for (JRadioButton r : radios) if (r.isSelected()) { funcao = r.getText(); break; }
+                modelo.addRow(new Object[]{nome, txtCPF.getText().trim(), funcao, txtTelefone.getText().trim()});
+            }
+            dialog.dispose();
+        });
+
+        rodape.add(btnCanc);
+        rodape.add(btnSalv);
+
+        form.add(grid);
+        form.add(Box.createVerticalStrut(14));
+        form.add(funcaoWrap);
+        form.add(Box.createVerticalStrut(14));
+        form.add(rodape);
+
+        JScrollPane scroll = new JScrollPane(form);
         scroll.setBorder(null);
-        scroll.setOpaque(false);
-        scroll.getViewport().setOpaque(false);
-        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        return scroll;
-    }
-
-    private JPanel criarRodapeAcoes() {
-        JPanel p = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        p.setOpaque(false);
-        p.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JButton btnCancelar = criarBotaoOutline("Cancelar", 110, 36);
-        btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_DASHBOARD));
-
-        JButton btnSalvar = criarBotaoGold("Salvar colaborador", 160, 36);
-
-        p.add(btnCancelar);
-        p.add(btnSalvar);
-        return p;
+        dialog.add(scroll);
+        dialog.setVisible(true);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -151,23 +282,6 @@ public class PanelCadastroColaborador extends JPanel {
         return g;
     }
 
-    private JPanel criarGrupoCombo(String label, JComboBox<String> combo) {
-        JPanel g = new JPanel();
-        g.setOpaque(false);
-        g.setLayout(new BoxLayout(g, BoxLayout.Y_AXIS));
-        JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lbl.setForeground(new Color(0x444444));
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        combo.setAlignmentX(Component.LEFT_ALIGNMENT);
-        combo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-        combo.setFont(MainFrame.FONT_NORMAL);
-        g.add(lbl);
-        g.add(Box.createVerticalStrut(4));
-        g.add(combo);
-        return g;
-    }
-
     private JTextField criarCampo() {
         JTextField f = new JTextField();
         f.setFont(MainFrame.FONT_NORMAL);
@@ -179,34 +293,25 @@ public class PanelCadastroColaborador extends JPanel {
         return f;
     }
 
-    private JComboBox<String> criarCombo(String[] itens) {
-        JComboBox<String> c = new JComboBox<>(itens);
-        c.setFont(MainFrame.FONT_NORMAL);
-        c.setBackground(Color.WHITE);
-        c.setPreferredSize(new Dimension(0, 34));
-        return c;
-    }
-
-    private JButton criarBotaoOutline(String texto, int w, int h) {
+    private JButton criarBotaoNavy(String texto, int w, int h) {
         JButton btn = new JButton(texto) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_NAVY);
-                g2.setStroke(new java.awt.BasicStroke(1.5f));
-                g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
-                g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                g2.setColor(getModel().isRollover() ? new Color(0x223060) : MainFrame.COR_NAVY);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
                     (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
-        btn.setOpaque(false);
+        btn.setOpaque(true);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
-        btn.setForeground(MainFrame.COR_NAVY);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(w, h));
         return btn;
@@ -234,5 +339,42 @@ public class PanelCadastroColaborador extends JPanel {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(w, h));
         return btn;
+    }
+
+    private JButton criarBotaoOutline(String texto, int w, int h) {
+        JButton btn = new JButton(texto) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setStroke(new java.awt.BasicStroke(1.5f));
+                g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btn.setOpaque(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setForeground(MainFrame.COR_NAVY);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(w, h));
+        return btn;
+    }
+
+    static class EditarRenderer extends DefaultTableCellRenderer {
+        @Override public Component getTableCellRendererComponent(
+                JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+            JLabel lbl = new JLabel("Editar", SwingConstants.CENTER);
+            lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
+            lbl.setForeground(MainFrame.COR_NAVY);
+            lbl.setOpaque(true);
+            lbl.setBackground(sel ? t.getSelectionBackground() : Color.WHITE);
+            return lbl;
+        }
     }
 }
