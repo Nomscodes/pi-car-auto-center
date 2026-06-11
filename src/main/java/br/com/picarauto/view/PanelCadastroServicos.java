@@ -106,7 +106,7 @@ public class PanelCadastroServicos extends JPanel {
     private JPanel criarConteudo() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(MainFrame.COR_CREAM);
-        p.setBorder(new EmptyBorder(20, 20, 20, 20));
+        p.setBorder(new EmptyBorder(16, 16, 16, 16));
 
         p.add(criarBarraFerr(), BorderLayout.NORTH);
         p.add(criarScrollTabela(), BorderLayout.CENTER);
@@ -116,7 +116,7 @@ public class PanelCadastroServicos extends JPanel {
     private JPanel criarBarraFerr() {
         JPanel barra = new JPanel(new BorderLayout(0, 10));
         barra.setOpaque(false);
-        barra.setBorder(new EmptyBorder(0, 0, 14, 0));
+        barra.setBorder(new EmptyBorder(0, 0, 12, 0));
 
         // Toggle Internos / Externos
         JPanel abas = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -203,9 +203,9 @@ public class PanelCadastroServicos extends JPanel {
         sorter = new TableRowSorter<>(modelo);
         tabela.setRowSorter(sorter);
         tabela.setFont(MainFrame.FONT_NORMAL);
-        tabela.setRowHeight(40);
+        tabela.setRowHeight(32);
         tabela.setShowGrid(false);
-        tabela.setIntercellSpacing(new Dimension(0, 0));
+        tabela.setIntercellSpacing(new Dimension(12, 0));
         tabela.setBackground(Color.WHITE);
         tabela.setSelectionBackground(new Color(0xe8e3d8));
         tabela.setSelectionForeground(MainFrame.COR_NAVY);
