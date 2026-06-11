@@ -8,30 +8,35 @@ package br.com.picarauto.model;
  *
  * @author Caio4breu
  */
+import br.com.picarauto.model.base.BaseModel;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Entity
+@Table(name = "itemPedidoServicoExterno")
 public class ItemPedidoServicoExternoModel extends BaseModel implements IItemServicoOS {
 
+    @Column(name = "valorItem", nullable = false)
     private Double valorItem;
+
+    @Column(name = "garantia", nullable = false)
     private Integer garantia;
+
+    @Column(name = "observacoes", length = 500)
     private String observacoes;
-    private Integer idServicoExterno;
 
-    // Campo em memória — não é coluna do banco
-    // Populado pelo service antes de usar na view ou no decorator
-    private Integer idOS;
+    @Column(name = "idServicoExterno", nullable = false)
+    private Long idServicoExterno;
 
-    @Override
-    public Integer getId() { return super.getId(); }
+    @Column(name = "idOS", nullable = false)
+    private Long idOS;
 
     @Override
     public String getDescricao() { return observacoes; }
-    public Double getValorItem() { return valorItem; }
-    public void setValorItem(Double valorItem) { this.valorItem = valorItem; }
-    public Integer getGarantia() { return garantia; }
-    public void setGarantia(Integer garantia) { this.garantia = garantia; }
-    public String getObservacoes() { return observacoes; }
-    public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
-    public Integer getIdServicoExterno() { return idServicoExterno; }
-    public void setIdServicoExterno(Integer idServicoExterno) { this.idServicoExterno = idServicoExterno; }
-    public Integer getIdOS() { return idOS; }
-    public void setIdOS(Integer idOS) { this.idOS = idOS; }
+
+    @Override
+    public Long getId() { return super.getId(); }
 }

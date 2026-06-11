@@ -1,31 +1,33 @@
 package br.com.picarauto.model;
 
-import java.util.Date;
-
 /**
- * 
+ *
  * @author Caio4breu
  */
+import br.com.picarauto.model.base.BaseModel;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import java.time.LocalDate;
+
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Entity
+@Table(name = "itemPedidoPeca")
 public class ItemPedidoPecaModel extends BaseModel {
 
+    @Column(name = "quantidade", nullable = false)
     private int quantidade;
-    private Date dataEntrega;
-    private Integer codigoNacional;
-    private Integer idFornecedor;
-    private Integer idOS;
 
-    public int getQuantidade() { return quantidade; }
-    public void setQuantidade(int quantidade) { this.quantidade = quantidade; }
+    @Column(name = "dataEntrega")
+    private LocalDate dataEntrega;       // NULL até entrega confirmada
 
-    public Date getDataEntrega() { return dataEntrega; }
-    public void setDataEntrega(Date dataEntrega) { this.dataEntrega = dataEntrega; }
+    @Column(name = "codigoNacional", nullable = false)
+    private Long codigoNacional;
 
-    public Integer getCodigoNacional() { return codigoNacional; }
-    public void setCodigoNacional(Integer codigoNacional) { this.codigoNacional = codigoNacional; }
+    @Column(name = "idFornecedor", nullable = false)
+    private Long idFornecedor;
 
-    public Integer getIdFornecedor() { return idFornecedor; }
-    public void setIdFornecedor(Integer idFornecedor) { this.idFornecedor = idFornecedor; }
-
-    public Integer getIdOS() { return idOS; }
-    public void setIdOS(Integer idOS) { this.idOS = idOS; }
+    @Column(name = "idOS", nullable = false)
+    private Long idOS;
 }

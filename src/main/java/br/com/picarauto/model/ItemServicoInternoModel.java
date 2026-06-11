@@ -8,25 +8,32 @@ package br.com.picarauto.model;
  *
  * @author Caio4breu
  */
+import br.com.picarauto.model.base.BaseModel;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Entity
+@Table(name = "itemServicoInterno")
 public class ItemServicoInternoModel extends BaseModel implements IItemServicoOS {
 
+    @Column(name = "valorItem", nullable = false)
     private double valorItem;
+
+    @Column(name = "garantia", nullable = false)
     private int garantia;
+
+    @Column(name = "observacoes", length = 500, nullable = false)
     private String observacoes;
-    private Integer idOS;
+
+    @Column(name = "idOS", nullable = false)
+    private Long idOS;
 
     @Override
-    public Integer getId() { return super.getId(); }
+    public Long getId() { return super.getId(); }
 
     @Override
     public String getDescricao() { return observacoes; }
-
-    public double getValorItem() { return valorItem; }
-    public void setValorItem(double valorItem) { this.valorItem = valorItem; }
-    public int getGarantia() { return garantia; }
-    public void setGarantia(int garantia) { this.garantia = garantia; }
-    public String getObservacoes() { return observacoes; }
-    public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
-    public Integer getIdOS() { return idOS; }
-    public void setIdOS(Integer idOS) { this.idOS = idOS; }
 }

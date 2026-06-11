@@ -4,22 +4,27 @@ package br.com.picarauto.model;
  *
  * @author Caio4breu
  */
+import br.com.picarauto.model.base.BaseModel;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Entity
+@Table(name = "pessoa")
+@Inheritance(strategy = InheritanceType.JOINED)  // ← tabelas separadas com FK
 public abstract class PessoaModel extends BaseModel {
 
+    @Column(name = "nomeCompleto", nullable = false, length = 150)
     private String nomeCompleto;
+
+    @Column(name = "telefone", nullable = false, unique = true, length = 20)
     private String telefone;
+
+    @Column(name = "email", nullable = false, unique = true, length = 150)
     private String email;
+
+    @Column(name = "endereco", nullable = false, length = 255)
     private String endereco;
-
-    public String getNomeCompleto() { return nomeCompleto; }
-    public void setNomeCompleto(String nomeCompleto) { this.nomeCompleto = nomeCompleto; }
-
-    public String getTelefone() { return telefone; }
-    public void setTelefone(String telefone) { this.telefone = telefone; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getEndereco() { return endereco; }
-    public void setEndereco(String endereco) { this.endereco = endereco; }
 }

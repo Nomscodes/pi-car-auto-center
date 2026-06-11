@@ -1,40 +1,26 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package br.com.picarauto.model;
 
 /**
  *
  * @author Gabriel
  */
-public class ModeloModel extends BaseModel{
+import br.com.picarauto.model.base.BaseModel;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Entity
+@Table(name = "modelo")
+public class ModeloModel extends BaseModel {
+
+    @Column(name = "nomeModelo", nullable = false, length = 200)
     private String nomeModelo;
+
+    @Column(name = "anoModelo", nullable = false)
     private Integer anoModelo;
-    private Integer idMarca;
 
-    public String getNomeModelo() {
-        return nomeModelo;
-    }
-
-    public void setNomeModelo(String nomeModelo) {
-        this.nomeModelo = nomeModelo;
-    }
-
-    public Integer getAnoModelo() {
-        return anoModelo;
-    }
-
-    public void setAnoModelo(Integer anoModelo) {
-        this.anoModelo = anoModelo;
-    }
-
-    public Integer getIdMarca() {
-        return idMarca;
-    }
-
-    public void setIdMarca(Integer idMarca) {
-        this.idMarca = idMarca;
-    }
+    @Column(name = "idMarca", nullable = false)
+    private Long idMarca;
 }

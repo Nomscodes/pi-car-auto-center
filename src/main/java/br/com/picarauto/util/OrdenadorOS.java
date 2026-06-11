@@ -2,7 +2,9 @@ package br.com.picarauto.util;
 
 import br.com.picarauto.model.OrdemServicoModel;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Classe abstrata que define o algoritmo de ordenação de OS.
@@ -15,14 +17,35 @@ import java.util.List;
  * @author Caio4breu
  */
 public abstract class OrdenadorOS {
+
+    /**
+     * Direção da ordenação.
+     * ASC = crescente (padrão), DESC = decrescente.
+     */
+    public enum Direcao {
+        ASC, DESC
+    }
+
+    /**
+     * Ordena as OS da fila usando Insertion Sort em ordem crescente (ASC).
+     * Atalho para {@link #ordenar(FilaOS, Direcao)} com {@code Direcao.ASC}.
+     *
+     * @param fila a FilaOS com as ordens de serviço a ordenar
+     * @return lista de OS ordenadas de forma crescente pelo critério da subclasse
+     */
+    public List<OrdemServicoModel> ordenar(FilaOS fila) {
+        return ordenar(fila, Direcao.ASC);
+    }
+
     /**
      * Ordena as OS da fila usando Insertion Sort e retorna uma lista ordenada.
      * A fila original não é alterada — o Iterator é usado apenas para leitura.
      *
-     * @param fila a FilaOS com as ordens de serviço a ordenar
-     * @return lista de OS ordenadas pelo critério da subclasse
+     * @param fila    a FilaOS com as ordens de serviço a ordenar
+     * @param direcao {@code ASC} para crescente, {@code DESC} para decrescente
+     * @return lista de OS ordenadas pelo critério da subclasse na direção escolhida
      */
-    public List<OrdemServicoModel> ordenar(FilaOS fila) {
+    public List<OrdemServicoModel> ordenar(FilaOS fila, Direcao direcao) {
         // Copia os elementos da fila para uma lista usando o Iterator
         // sem modificar a fila original
         List<OrdemServicoModel> lista = new ArrayList<>();
@@ -38,8 +61,9 @@ public abstract class OrdenadorOS {
             OrdemServicoModel atual = lista.get(i); // elemento a ser inserido na posição correta
             int j = i - 1;
 
-            // Empurra os elementos maiores que "atual" uma posição para a direita
-            while (j >= 0 && comparar(lista.get(j), atual) > 0) {
+            // Para DESC, invertemos o sinal da comparação — o algoritmo em si não muda,
+            // apenas o critério de "quem vem antes" é espelhado.
+            while (j >= 0 && comparacaoComDirecao(lista.get(j), atual, direcao) > 0) {
                 lista.set(j + 1, lista.get(j));
                 j--;
             }
@@ -52,6 +76,45 @@ public abstract class OrdenadorOS {
     }
 
     /**
+     * Aplica a direção sobre o resultado bruto de {@link #comparar}.
+     * ASC não altera nada; DESC inverte o sinal.
+     */
+    private int comparacaoComDirecao(OrdemServicoModel a, OrdemServicoModel b, Direcao direcao) {
+        int resultado = comparar(a, b);
+        return direcao == Direcao.DESC ? -resultado : resultado;
+    }
+
+    /**
+     * Agrupa as OS da fila por status, preservando a ordem de inserção dos grupos.
+     * Dentro de cada grupo as OS ficam na ordem de chegada na fila (FIFO).
+     * Não altera a fila original.
+     *
+     * A ordem dos grupos no mapa segue a declaração do enum StatusOrdemServico:
+     * ORCAMENTO → EXECUCAO → PAGAMENTO → FINALIZADO.
+     *
+     * @param fila a FilaOS com as ordens de serviço a agrupar
+     * @return mapa de status → lista de OS, com grupos na ordem do enum
+     */
+    public Map<OrdemServicoModel.StatusOrdemServico, List<OrdemServicoModel>> agruparPorStatus(FilaOS fila) {
+        // LinkedHashMap preserva a ordem de inserção das chaves.
+        // Populamos com todos os status do enum primeiro para garantir
+        // que a ordem sempre seja ORCAMENTO → EXECUCAO → PAGAMENTO → FINALIZADO,
+        // mesmo que algum grupo esteja vazio.
+        Map<OrdemServicoModel.StatusOrdemServico, List<OrdemServicoModel>> grupos = new LinkedHashMap<>();
+        for (OrdemServicoModel.StatusOrdemServico status : OrdemServicoModel.StatusOrdemServico.values()) {
+            grupos.put(status, new ArrayList<>());
+        }
+
+        for (OrdemServicoModel os : fila) {
+            if (os.getStatus() != null) {
+                grupos.get(os.getStatus()).add(os);
+            }
+        }
+
+        return grupos;
+    }
+
+    /**
      * Define o critério de comparação entre duas OS.
      * Implementado por cada subclasse com seu próprio critério.
      *
@@ -60,4 +123,51 @@ public abstract class OrdenadorOS {
      * @return valor negativo se a vem antes de b, positivo se b vem antes de a, zero se iguais
      */
     protected abstract int comparar(OrdemServicoModel a, OrdemServicoModel b);
+
+    /**
+     * Busca Binária na lista já ordenada por data de abertura.
+     *
+     * Pré-requisito: a lista deve estar ordenada pela data de abertura —
+     * exatamente o que o OrdenadorPorData.ordenar() garante.
+     * A busca binária só funciona em estrutura ordenada: ela descarta metade
+     * dos elementos a cada comparação, chegando ao resultado em O(log n).
+     * Em 500 OS são no máximo 9 comparações em vez de 500.
+     *
+     * Retorna a primeira OS encontrada com aquela data, ou null se não existir.
+     *
+     * @param listaOrdenada lista retornada por OrdenadorPorData.ordenar()
+     * @param data          data de abertura a buscar
+     * @return OS encontrada ou null
+     */
+    public OrdemServicoModel buscarBinariaPorData(
+            List<OrdemServicoModel> listaOrdenada,
+            java.time.LocalDate data) {
+
+        if (listaOrdenada == null || listaOrdenada.isEmpty() || data == null) return null;
+
+        int inicio = 0;
+        int fim = listaOrdenada.size() - 1;
+
+        while (inicio <= fim) {
+            int meio = (inicio + fim) / 2;                  // posição do elemento do meio
+            OrdemServicoModel osMeio = listaOrdenada.get(meio);
+
+            if (osMeio.getDataAbertura() == null) {
+                fim = meio - 1;                             // OS sem data ficam no fim — descarta a direita
+                continue;
+            }
+
+            int comparacao = osMeio.getDataAbertura().compareTo(data);
+
+            if (comparacao == 0) {
+                return osMeio;                              // achou a data — retorna
+            } else if (comparacao < 0) {
+                inicio = meio + 1;                          // data do meio é anterior — descarta a esquerda
+            } else {
+                fim = meio - 1;                             // data do meio é posterior — descarta a direita
+            }
+        }
+
+        return null; // data não encontrada na lista
+    }
 }

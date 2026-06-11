@@ -1,15 +1,15 @@
 package br.com.picarauto.repository;
 
-import br.com.picarauto.model.PecaModel;
-import java.util.List;
-
 /**
  *
  * @author Caio4breu
  */
-public interface IPecaRepository extends IGenericRepository<PecaModel> {
+import br.com.picarauto.model.PecaModel;
+import java.util.Optional;
+import org.springframework.stereotype.Repository;
 
-    PecaModel findByCodigoNacional(Integer codigoNacional);
-    List<PecaModel> findAllByAtivoTrue();
+@Repository
+public interface IPecaRepository extends IGenericRepository<PecaModel> {
+    Optional<PecaModel> findByCodigoNacional(Integer codigoNacional);
     boolean existsByCodigoNacional(Integer codigoNacional);
 }

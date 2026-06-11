@@ -1,13 +1,5 @@
 package br.com.picarauto.repository;
 
-import br.com.picarauto.model.ItemServicoInternoModel;
-import br.com.picarauto.model.exception.BusinessException;
-import br.com.picarauto.util.ConexaoBanco;
-import java.sql.*;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Repository para a tabela de relacionamento {@code servicosItens}.
  *
@@ -18,90 +10,73 @@ import java.util.List;
  *
  * @author Caio4breu
  */
+import br.com.picarauto.model.ItemServicoInternoModel;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import java.time.LocalDate;
+import java.util.List;
+import org.springframework.stereotype.Repository;
+
+@Repository
 public class ServicosItensRepository implements IServicosItensRepository {
 
+    @PersistenceContext
+    private EntityManager em;
+
     @Override
-    public void save(Integer idServicoInterno, Integer idItemServicoInterno, LocalDate dataExecucao) {
-        String sql = "INSERT INTO servicosItens (idServicoInterno, idItemServicoInterno, dataExecucao) VALUES (?, ?, ?)";
-        try (Connection conn = ConexaoBanco.getConexao();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idServicoInterno);
-            ps.setInt(2, idItemServicoInterno);
-            ps.setDate(3, Date.valueOf(dataExecucao));
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            BusinessException.handleSQLException(e, "vínculo serviço-item");
-        }
+    public void save(Long idServicoInterno, Long idItemServicoInterno, LocalDate dataExecucao) {
+        em.createNativeQuery("""
+                INSERT INTO servicosItens (idServicoInterno, idItemServicoInterno, dataExecucao)
+                VALUES (:idServico, :idItem, :dataExecucao)
+                """)
+                .setParameter("idServico", idServicoInterno)
+                .setParameter("idItem", idItemServicoInterno)
+                .setParameter("dataExecucao", dataExecucao)
+                .executeUpdate();
     }
 
     @Override
-    public List<ItemServicoInternoModel> findAllByIdServicoInterno(Integer idServicoInterno) {
-        // Retorna os itens de OS vinculados a um serviço do catálogo
-        String sql = """
-                SELECT i.* FROM itemServicoInterno i
-                JOIN servicosItens si ON si.idItemServicoInterno = i.idItemServicoInterno
-                WHERE si.idServicoInterno = ?
-                ORDER BY i.idItemServicoInterno ASC
-                """;
-        List<ItemServicoInternoModel> list = new ArrayList<>();
-        try (Connection conn = ConexaoBanco.getConexao();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idServicoInterno);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                ItemServicoInternoModel item = new ItemServicoInternoModel();
-                item.setId(rs.getInt("idItemServicoInterno"));
-                item.setAtivo(true);
-                item.setValorItem(rs.getDouble("valorItem"));
-                item.setGarantia(rs.getInt("garantia"));
-                item.setObservacoes(rs.getString("observacoes"));
-                item.setIdOS(rs.getInt("idOS"));
-                list.add(item);
-            }
-            return list;
-        } catch (SQLException e) {
-            throw new BusinessException("Erro ao buscar itens por serviço interno.", e);
-        }
+    public List<ItemServicoInternoModel> findAllByIdServicoInterno(Long idServicoInterno) {
+        return em.createQuery("""
+                SELECT i FROM ItemServicoInternoModel i
+                JOIN servicosItens si ON si.idItemServicoInterno = i.id
+                WHERE si.idServicoInterno = :idServico
+                ORDER BY i.id ASC
+                """, ItemServicoInternoModel.class)
+                .setParameter("idServico", idServicoInterno)
+                .getResultList();
     }
 
     @Override
-    public List<Integer> findIdServicoInternoByIdItemServicoInterno(Integer idItemServicoInterno) {
-        String sql = "SELECT idServicoInterno FROM servicosItens WHERE idItemServicoInterno = ?";
-        List<Integer> ids = new ArrayList<>();
-        try (Connection conn = ConexaoBanco.getConexao();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idItemServicoInterno);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) ids.add(rs.getInt("idServicoInterno"));
-            return ids;
-        } catch (SQLException e) {
-            throw new BusinessException("Erro ao buscar serviços por item.", e);
-        }
+    public List<Long> findIdServicoInternoByIdItemServicoInterno(Long idItemServicoInterno) {
+        return em.createNativeQuery("""
+                SELECT idServicoInterno FROM servicosItens
+                WHERE idItemServicoInterno = :idItem
+                """)
+                .setParameter("idItem", idItemServicoInterno)
+                .getResultList();
     }
 
     @Override
-    public boolean existsByServicoInternoAndItemServicoInterno(Integer idServicoInterno, Integer idItemServicoInterno) {
-        String sql = "SELECT 1 FROM servicosItens WHERE idServicoInterno = ? AND idItemServicoInterno = ?";
-        try (Connection conn = ConexaoBanco.getConexao();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idServicoInterno);
-            ps.setInt(2, idItemServicoInterno);
-            return ps.executeQuery().next();
-        } catch (SQLException e) {
-            throw new BusinessException("Erro ao verificar vínculo serviço-item.", e);
-        }
+    public boolean existsByServicoInternoAndItemServicoInterno(Long idServicoInterno, Long idItemServicoInterno) {
+        Number count = (Number) em.createNativeQuery("""
+                SELECT COUNT(1) FROM servicosItens
+                WHERE idServicoInterno = :idServico AND idItemServicoInterno = :idItem
+                """)
+                .setParameter("idServico", idServicoInterno)
+                .setParameter("idItem", idItemServicoInterno)
+                .getSingleResult();
+        return count.longValue() > 0;
     }
 
     @Override
-    public void delete(Integer idServicoInterno, Integer idItemServicoInterno) {
-        String sql = "DELETE FROM servicosItens WHERE idServicoInterno = ? AND idItemServicoInterno = ?";
-        try (Connection conn = ConexaoBanco.getConexao();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idServicoInterno);
-            ps.setInt(2, idItemServicoInterno);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new BusinessException("Erro ao remover vínculo serviço-item.", e);
-        }
+    public void delete(Long idServicoInterno, Long idItemServicoInterno) {
+        em.createNativeQuery("""
+                DELETE FROM servicosItens
+                WHERE idServicoInterno = :idServico AND idItemServicoInterno = :idItem
+                """)
+                .setParameter("idServico", idServicoInterno)
+                .setParameter("idItem", idItemServicoInterno)
+                .executeUpdate();
     }
 }

@@ -4,21 +4,29 @@ package br.com.picarauto.model;
  *
  * @author Caio4breu
  */
-public class VeiculoModel extends BaseModel {
-    private String placa;
-    private String cor;
-    private String chassi;
-    private Integer idModelo;
-    private Integer idCliente;
+import br.com.picarauto.model.base.BaseModel;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-    public String getPlaca() { return placa; }
-    public void setPlaca(String placa) { this.placa = placa; }
-    public String getCor() { return cor; }
-    public void setCor(String cor) { this.cor = cor; }
-    public String getChassi() { return chassi; }
-    public void setChassi(String chassi) { this.chassi = chassi; }
-    public Integer getIdModelo() { return idModelo; }
-    public void setIdModelo(Integer idModelo) { this.idModelo = idModelo; }
-    public Integer getIdCliente() { return idCliente; }
-    public void setIdCliente(Integer idCliente) { this.idCliente = idCliente; }
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Entity
+@Table(name = "veiculo")
+public class VeiculoModel extends BaseModel {
+
+    @Column(name = "placa", nullable = false, unique = true, length = 8)
+    private String placa;
+
+    @Column(name = "cor", nullable = false, length = 50)
+    private String cor;
+
+    @Column(name = "chassi", nullable = false, unique = true, length = 17)
+    private String chassi;
+
+    @Column(name = "idModelo", nullable = false)
+    private Long idModelo;
+
+    @Column(name = "idCliente", nullable = false)
+    private Long idCliente;
 }

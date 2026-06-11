@@ -4,20 +4,24 @@ package br.com.picarauto.model;
  *
  * @author Caio4breu
  */
-import java.util.Date;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import java.time.LocalDate;
 
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Entity
+@Table(name = "pessoaFisica")
+@PrimaryKeyJoinColumn(name = "idCliente")  // ← FK que liga pessoaFisica → cliente
 public class PessoaFisicaModel extends ClienteModel {
 
+    @Column(name = "cpf", nullable = false, unique = true, length = 11)
     private String cpf;
+
+    @Column(name = "rg", nullable = false, unique = true, length = 20)
     private String rg;
-    private Date dataNascimento;
 
-    public String getCpf() { return cpf; }
-    public void setCpf(String cpf) { this.cpf = cpf; }
-
-    public String getRg() { return rg; }
-    public void setRg(String rg) { this.rg = rg; }
-
-    public Date getDataNascimento() { return dataNascimento; }
-    public void setDataNascimento(Date dataNascimento) { this.dataNascimento = dataNascimento; }
+    @Column(name = "dataNascimento", nullable = false)
+    private LocalDate dataNascimento;
 }

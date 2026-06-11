@@ -228,3 +228,4 @@ git commit -m "feat(client): add new form"
 ## 📄 Licença
 
 Projeto desenvolvido para fins acadêmicos — SENAI FATESG 2026/1.
+----------------------

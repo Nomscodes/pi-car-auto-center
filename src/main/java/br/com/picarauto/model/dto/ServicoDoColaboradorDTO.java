@@ -1,42 +1,21 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package br.com.picarauto.model.dto;
 
 import java.time.LocalDate;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 /**
  *
  * @author Gabriel
  */
+@Data
+@EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor
+@AllArgsConstructor
 public class ServicoDoColaboradorDTO extends BaseDTO {
-
-    private Integer idColaborador;
-    private Integer idServicoInterno;
+    private Long idColaborador;
+    private Long idServicoInterno;
     private LocalDate dataServico;
-
-    public Integer getIdColaborador() {
-        return idColaborador;
-    }
-
-    public void setIdColaborador(Integer idColaborador) {
-        this.idColaborador = idColaborador;
-    }
-
-    public Integer getIdServicoInterno() {
-        return idServicoInterno;
-    }
-
-    public void setIdServicoInterno(Integer idServicoInterno) {
-        this.idServicoInterno = idServicoInterno;
-    }
-
-    public LocalDate getDataServico() {
-        return dataServico;
-    }
-
-    public void setDataServico(LocalDate dataServico) {
-        this.dataServico = dataServico;
-    }
 }

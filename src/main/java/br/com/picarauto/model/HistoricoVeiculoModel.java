@@ -1,52 +1,71 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package br.com.picarauto.model;
 
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 /**
+ * Representa o histórico de proprietários de um veículo ao longo do tempo.
+ *
+ * Tabela com chave composta (idPessoa + idVeiculo + dataInicio).
+ * Não estende BaseModel pois não possui PK serial, ativo nem data_hora_criacao.
+ * O acesso é feito exclusivamente via {@link br.com.picarauto.repository.HistoricoVeiculoRepository}
+ * usando EntityManager com queries nativas.
  *
  * @author Gabriel
  */
-public class HistoricoVeiculoModel extends BaseModel {
+@Data
+@EqualsAndHashCode
+@Entity
+@Table(name = "historicoVeiculo")
+@IdClass(HistoricoVeiculoModel.ChaveComposta.class)
+public class HistoricoVeiculoModel {
 
-    private Integer idPessoa;  
-    private Integer idVeiculo; 
+    @Id
+    @Column(name = "idPessoa", nullable = false)
+    private Long idPessoa;
+
+    @Id
+    @Column(name = "idVeiculo", nullable = false)
+    private Long idVeiculo;
+
+    @Id
+    @Column(name = "dataInicio", nullable = false)
     private LocalDate dataInicio;
+
+    @Column(name = "dataFim")
     private LocalDate dataFim;
 
-    public Integer getIdPessoa() {
-        return idPessoa;
-    }
+    /**
+     * Classe auxiliar que representa a chave composta.
+     * Necessária para o JPA identificar registros unicamente.
+     */
+    public static class ChaveComposta implements java.io.Serializable {
+        private Long idPessoa;
+        private Long idVeiculo;
+        private LocalDate dataInicio;
 
-    public void setIdPessoa(Integer idPessoa) {
-        this.idPessoa = idPessoa;
-    }
+        public ChaveComposta() {}
 
-    public Integer getIdVeiculo() {
-        return idVeiculo;
-    }
+        public ChaveComposta(Long idPessoa, Long idVeiculo, LocalDate dataInicio) {
+            this.idPessoa   = idPessoa;
+            this.idVeiculo  = idVeiculo;
+            this.dataInicio = dataInicio;
+        }
 
-    public void setIdVeiculo(Integer idVeiculo) {
-        this.idVeiculo = idVeiculo;
-    }
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ChaveComposta that)) return false;
+            return java.util.Objects.equals(idPessoa, that.idPessoa)
+                && java.util.Objects.equals(idVeiculo, that.idVeiculo)
+                && java.util.Objects.equals(dataInicio, that.dataInicio);
+        }
 
-    public LocalDate getDataInicio() {
-        return dataInicio;
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(idPessoa, idVeiculo, dataInicio);
+        }
     }
-
-    public void setDataInicio(LocalDate dataInicio) {
-        this.dataInicio = dataInicio;
-    }
-
-    public LocalDate getDataFim() {
-        return dataFim;
-    }
-
-    public void setDataFim(LocalDate dataFim) {
-        this.dataFim = dataFim;
-    } 
 }
-

@@ -4,12 +4,18 @@ package br.com.picarauto.model;
  *
  * @author Caio4breu
  */
-import java.util.Date;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import java.time.LocalDate;
 
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Entity
+@Table(name = "cliente")
+@PrimaryKeyJoinColumn(name = "idPessoa")  // ← FK que liga cliente → pessoa
 public class ClienteModel extends PessoaModel {
 
-    private Date dataCadastro;
-
-    public Date getDataCadastro() { return dataCadastro; }
-    public void setDataCadastro(Date dataCadastro) { this.dataCadastro = dataCadastro; }
+    @Column(name = "dataCadastro", nullable = false)
+    private LocalDate dataCadastro;
 }

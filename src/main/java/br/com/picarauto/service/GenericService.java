@@ -1,32 +1,36 @@
 package br.com.picarauto.service;
 
-import br.com.picarauto.model.BaseModel;
+/**
+ *
+ * @author Caio4breu
+ */
+import br.com.picarauto.model.base.BaseModel;
 import br.com.picarauto.model.exception.BusinessException;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IGenericRepository;
 import br.com.picarauto.validation.IGenericValidation;
+import org.springframework.dao.DataAccessException;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 public abstract class GenericService<E extends BaseModel, R extends IGenericRepository<E>, V extends IGenericValidation<E, R>>
         implements IGenericService<E, R, V> {
 
-    protected R repository;
-    protected V validation;
+    protected final R repository;
+    protected final V validation;
 
-    public GenericService(R repository, V validation) {
+    protected GenericService(R repository, V validation) {
         this.repository = repository;
         this.validation = validation;
     }
 
     @Override
-    public E findByIdActive(Integer id) {
+    @Transactional(readOnly = true)
+    public E findByIdActive(Long id) {
         try {
-            E entity = repository.findByIdAndAtivoTrue(id);
-            if (entity == null) {
-                throw new BusinessException("Registro não encontrado ou inativo.");
-            }
-            return entity;
+            return repository.findByIdAndAtivoTrue(id)
+                    .orElseThrow(() -> new BusinessException("O registro com o ID informado não foi encontrado ou está inativo."));
         } catch (BusinessException be) {
             throw be;
         } catch (Exception e) {
@@ -35,53 +39,58 @@ public abstract class GenericService<E extends BaseModel, R extends IGenericRepo
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<E> findAllActive() {
         try {
             return repository.findAllByAtivoTrue();
+        } catch (BusinessException be) {
+            throw be;
         } catch (Exception e) {
             throw new BusinessException("Erro ao listar registros em " + getEntityName(), e);
         }
     }
 
     @Override
+    @Transactional
     public E insert(E entity) {
         try {
             validation.validateFieldsInsert(entity);
             validation.validateInsert(entity);
-            entity.onCreate();
             beforeInsert(entity);
-
             E savedEntity = repository.save(entity);
-
             afterInsert(savedEntity, entity);
             return savedEntity;
         } catch (BusinessException | FieldValidationException | RuleValidationException be) {
             throw be;
+        } catch (DataAccessException dae) {
+            throw new BusinessException("Falha de persistência ao inserir " + getEntityName(), dae);
         } catch (Exception e) {
             throw new BusinessException("Erro inesperado ao inserir em " + getEntityName(), e);
         }
     }
 
     @Override
+    @Transactional
     public E update(E entity) {
         try {
             validation.validateFieldsUpdate(entity);
             validation.validateUpdate(entity);
             beforeUpdate(entity);
-
             E savedEntity = repository.save(entity);
-
             afterUpdate(savedEntity, entity);
             return savedEntity;
         } catch (BusinessException | FieldValidationException | RuleValidationException be) {
             throw be;
+        } catch (DataAccessException dae) {
+            throw new BusinessException("Erro de integridade ao atualizar " + getEntityName(), dae);
         } catch (Exception e) {
             throw new BusinessException("Erro inesperado ao atualizar em " + getEntityName(), e);
         }
     }
 
     @Override
-    public void delete(Integer id) {
+    @Transactional
+    public void delete(Long id) {
         try {
             validation.validateDelete(id);
             E entity = findByIdActive(id);
@@ -100,7 +109,6 @@ public abstract class GenericService<E extends BaseModel, R extends IGenericRepo
         return this.getClass().getSimpleName().replace("Service", "");
     }
 
-    // Hooks
     protected void beforeInsert(E entity) {}
     protected void afterInsert(E entity, E old) {}
     protected void beforeUpdate(E entity) {}

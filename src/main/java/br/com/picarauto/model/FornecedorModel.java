@@ -1,50 +1,29 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package br.com.picarauto.model;
 
 /**
  *
  * @author Gabriel
  */
-public class FornecedorModel extends BaseModel{
-    
+import br.com.picarauto.model.base.BaseModel;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Entity
+@Table(name = "fornecedor")
+public class FornecedorModel extends BaseModel {
+
+    @Column(name = "nomeFornecedor", nullable = false, length = 200)
     private String nomeFornecedor;
-    private String cnpj;
-    private String telefone;
+
+    @Column(name = "cnpj", unique = true, length = 14)
+    private String cnpj;                // nullable — fornecedor pode não ter CNPJ
+
+    @Column(name = "telefone", nullable = false, length = 20)
+    private String telefone;            // obrigatório mas não único
+
+    @Column(name = "email", nullable = false, length = 150)
     private String email;
-
-    public String getNomeFornecedor() {
-        return nomeFornecedor;
-    }
-
-    public void setNomeFornecedor(String nomeFornecedor) {
-        this.nomeFornecedor = nomeFornecedor;
-    }
-
-    public String getCnpj() {
-        return cnpj;
-    }
-
-    public void setCnpj(String cnpj) {
-        this.cnpj = cnpj;
-    }
-
-    public String getTelefone() {
-        return telefone;
-    }
-
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
 }
