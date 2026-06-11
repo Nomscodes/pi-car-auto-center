@@ -17,6 +17,7 @@ public class MainFrame extends JFrame {
     public static final Color COR_CREAM_ALT = new Color(0xeae5d8);
     public static final Color COR_MUTED     = new Color(0x8899bb);
     public static final Color COR_CARD_BG   = new Color(0x223060);
+    public static final Color COR_BORDER    = new Color(0xd0c9b8);
 
     public static final Font FONT_TITLE  = new Font("Segoe UI", Font.BOLD,   18);
     public static final Font FONT_MEDIUM = new Font("Segoe UI", Font.BOLD,   13);
