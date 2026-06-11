@@ -27,6 +27,7 @@ public class MainFrame extends JFrame {
     private final CardLayout cardLayout;
     private final JPanel     painelPrincipal;
     private PanelSelecaoModelo selecaoModelo;
+    private PanelSplash splash;
 
     private static MainFrame instancia;
     public static MainFrame getInstance() { return instancia; }
@@ -65,7 +66,7 @@ public class MainFrame extends JFrame {
         painelPrincipal = new JPanel(cardLayout);
 
         PanelLogin               login              = new PanelLogin(this);
-        PanelSplash              splash             = new PanelSplash(this);
+        splash                                      = new PanelSplash(this);
         PanelDashboard           dashboard          = new PanelDashboard(this);
         PanelSelecaoMarca        selecaoMarca       = new PanelSelecaoMarca(this);
         selecaoModelo                               = new PanelSelecaoModelo(this);
@@ -102,6 +103,7 @@ public class MainFrame extends JFrame {
 
     public void mostrarTela(String nomeTela) {
         if (TELA_MODELO.equals(nomeTela)) selecaoModelo.carregarModelos();
+        if (TELA_SPLASH.equals(nomeTela) && splash != null) splash.reiniciar();
         cardLayout.show(painelPrincipal, nomeTela);
         SidebarPanel.atualizarTodas();
     }
