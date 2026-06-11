@@ -28,7 +28,10 @@ public class MainFrame extends JFrame {
     private final JPanel     painelPrincipal;
     private PanelSelecaoModelo selecaoModelo;
 
-    private static String usuarioLogado = "admin";
+    private static MainFrame instancia;
+    public static MainFrame getInstance() { return instancia; }
+
+    private static String usuarioLogado = "";
 
     public static String getUsuarioLogado() { return usuarioLogado; }
     public static void setUsuarioLogado(String usuario) { usuarioLogado = usuario; }
@@ -50,6 +53,7 @@ public class MainFrame extends JFrame {
     public static final String TELA_MARCAS_MOD     = "MARCAS_MOD";
 
     public MainFrame() {
+        instancia = this;
         setTitle("AV CAR AUTO CENTER — Sistema de Controle de Oficina");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1024, 680);
@@ -93,12 +97,13 @@ public class MainFrame extends JFrame {
         painelPrincipal.add(marcasModelos,      TELA_MARCAS_MOD);
 
         add(painelPrincipal);
-        mostrarTela(TELA_LOGIN);
+        mostrarTela(TELA_SPLASH);
     }
 
     public void mostrarTela(String nomeTela) {
         if (TELA_MODELO.equals(nomeTela)) selecaoModelo.carregarModelos();
         cardLayout.show(painelPrincipal, nomeTela);
+        SidebarPanel.atualizarTodas();
     }
 
     public void adicionarTela(JPanel painel, String nomeTela) {
