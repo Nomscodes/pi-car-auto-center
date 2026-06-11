@@ -26,8 +26,17 @@ public class MainFrame extends JFrame {
 
     private final CardLayout cardLayout;
     private final JPanel     painelPrincipal;
-    private PanelSelecaoModelo selecaoModelo;
-    private PanelSplash splash;
+    private PanelSelecaoModelo   selecaoModelo;
+    private PanelSplash          splash;
+    private PanelCadastroVeiculo cadastroVeiculo;
+
+    private String marcaSelecionada  = "";
+    private String modeloSelecionado = "";
+
+    public String getMarcaSelecionada()              { return marcaSelecionada; }
+    public void   setMarcaSelecionada(String marca)  { this.marcaSelecionada  = marca  != null ? marca  : ""; }
+    public String getModeloSelecionado()             { return modeloSelecionado; }
+    public void   setModeloSelecionado(String modelo){ this.modeloSelecionado = modelo != null ? modelo : ""; }
 
     private static MainFrame instancia;
     public static MainFrame getInstance() { return instancia; }
@@ -74,7 +83,7 @@ public class MainFrame extends JFrame {
         PanelComposicaoOS        composicaoOS       = new PanelComposicaoOS(this);
         PanelListaClientes       listaClientes      = new PanelListaClientes(this);
         PanelCadastroCliente     cadastroCliente    = new PanelCadastroCliente(this);
-        PanelCadastroVeiculo     cadastroVeiculo    = new PanelCadastroVeiculo(this);
+        cadastroVeiculo                             = new PanelCadastroVeiculo(this);
         PanelCadastroPeca        cadastroPeca       = new PanelCadastroPeca(this);
         PanelCadastroColaborador cadastroColab      = new PanelCadastroColaborador(this);
         PanelCadastroFornecedor  cadastroFornecedor = new PanelCadastroFornecedor(this);
@@ -102,8 +111,9 @@ public class MainFrame extends JFrame {
     }
 
     public void mostrarTela(String nomeTela) {
-        if (TELA_MODELO.equals(nomeTela)) selecaoModelo.carregarModelos();
+        if (TELA_MODELO.equals(nomeTela))  selecaoModelo.carregarModelos();
         if (TELA_SPLASH.equals(nomeTela) && splash != null) splash.reiniciar();
+        if (TELA_VEICULO.equals(nomeTela)) cadastroVeiculo.preencherSelecoes();
         cardLayout.show(painelPrincipal, nomeTela);
         SidebarPanel.atualizarTodas();
     }

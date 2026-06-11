@@ -6,14 +6,35 @@ package br.com.picarauto.view;
  *
  * @author Cassiano
  */
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
+import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
+import javax.imageio.ImageIO;
 
 public class PanelSelecaoModelo extends JPanel {
 
@@ -30,22 +51,37 @@ public class PanelSelecaoModelo extends JPanel {
 
     private static final Map<String, String[]> MODELOS_POR_MARCA = new HashMap<>();
     static {
-        MODELOS_POR_MARCA.put("Chevrolet",  new String[]{"Onix", "Tracker", "Cruze", "S10", "Spin", "Montana"});
-        MODELOS_POR_MARCA.put("Volkswagen", new String[]{"Gol", "Polo", "T-Cross", "Virtus", "Nivus", "Amarok"});
-        MODELOS_POR_MARCA.put("Fiat",       new String[]{"Argo", "Pulse", "Cronos", "Toro", "Strada", "Mobi"});
-        MODELOS_POR_MARCA.put("Ford",       new String[]{"Ka", "EcoSport", "Ranger", "Territory", "Bronco"});
-        MODELOS_POR_MARCA.put("Toyota",     new String[]{"Corolla", "Hilux", "SW4", "Yaris", "RAV4"});
-        MODELOS_POR_MARCA.put("Honda",      new String[]{"Civic", "HR-V", "City", "Fit", "CR-V"});
-        MODELOS_POR_MARCA.put("Hyundai",    new String[]{"HB20", "Creta", "Tucson", "Santa Fe", "Elantra"});
-        MODELOS_POR_MARCA.put("Renault",    new String[]{"Kwid", "Sandero", "Logan", "Duster", "Captur"});
-        MODELOS_POR_MARCA.put("Nissan",     new String[]{"Kicks", "Frontier", "Versa", "Sentra"});
-        MODELOS_POR_MARCA.put("Jeep",       new String[]{"Renegade", "Compass", "Commander", "Wrangler"});
-        MODELOS_POR_MARCA.put("Peugeot",    new String[]{"208", "2008", "308", "3008", "5008"});
-        MODELOS_POR_MARCA.put("Citroën",   new String[]{"C3", "C4 Cactus", "C5 Aircross"});
-        MODELOS_POR_MARCA.put("Mitsubishi", new String[]{"Eclipse Cross", "Outlander", "L200"});
-        MODELOS_POR_MARCA.put("Kia",        new String[]{"Sportage", "Sorento", "Stinger", "Soul"});
-        MODELOS_POR_MARCA.put("Subaru",     new String[]{"Impreza", "Forester", "Outback", "WRX"});
-        MODELOS_POR_MARCA.put("Mercedes",   new String[]{"Classe A", "Classe C", "GLA", "GLC", "Sprinter"});
+        MODELOS_POR_MARCA.put("Chevrolet",    new String[]{"Onix", "Tracker", "Cruze", "S10", "Spin", "Montana", "Onix Plus", "Equinox"});
+        MODELOS_POR_MARCA.put("Volkswagen",   new String[]{"Gol", "Polo", "T-Cross", "Virtus", "Nivus", "Saveiro", "Tiguan", "Jetta"});
+        MODELOS_POR_MARCA.put("Hyundai",      new String[]{"HB20", "Creta", "Tucson", "HB20S", "Santa Fe", "Azera", "i30", "Venue"});
+        MODELOS_POR_MARCA.put("Toyota",       new String[]{"Corolla", "Hilux", "Yaris", "SW4", "RAV4", "Camry", "Etios", "Corolla Cross"});
+        MODELOS_POR_MARCA.put("Ford",         new String[]{"Ka", "EcoSport", "Ranger", "Territory", "Bronco Sport", "Maverick", "Edge", "Fusion"});
+        MODELOS_POR_MARCA.put("Fiat",         new String[]{"Argo", "Pulse", "Toro", "Strada", "Cronos", "Mobi", "Fastback", "Doblo"});
+        MODELOS_POR_MARCA.put("Honda",        new String[]{"Civic", "HR-V", "CR-V", "Fit", "City", "WR-V", "Accord", "Pilot"});
+        MODELOS_POR_MARCA.put("Renault",      new String[]{"Kwid", "Sandero", "Duster", "Logan", "Captur", "Oroch", "Master", "Zoe"});
+        MODELOS_POR_MARCA.put("Nissan",       new String[]{"Kicks", "Frontier", "Versa", "Sentra", "March", "Leaf", "Murano", "Pathfinder"});
+        MODELOS_POR_MARCA.put("Jeep",         new String[]{"Compass", "Renegade", "Commander", "Wrangler", "Gladiator", "Grand Cherokee"});
+        MODELOS_POR_MARCA.put("Peugeot",      new String[]{"208", "2008", "3008", "408", "308", "Expert", "Landtrek", "e-208"});
+        MODELOS_POR_MARCA.put("Citroën",      new String[]{"C3", "C4 Cactus", "Aircross", "Berlingo", "Jumper", "C5", "C4", "Spacetourer"});
+        MODELOS_POR_MARCA.put("Mitsubishi",   new String[]{"Eclipse Cross", "Outlander", "L200", "ASX", "Pajero", "Galant"});
+        MODELOS_POR_MARCA.put("Kia",          new String[]{"Sportage", "Sorento", "Stinger", "Carnival", "Picanto", "Soul", "Cerato", "EV6"});
+        MODELOS_POR_MARCA.put("Subaru",       new String[]{"Forester", "Outback", "Impreza", "XV", "Legacy", "BRZ", "WRX", "Ascent"});
+        MODELOS_POR_MARCA.put("Mercedes-Benz",new String[]{"Classe A", "Classe C", "GLA", "GLC", "Sprinter", "Actros", "CLA", "EQC"});
+    }
+
+    // Mapeamento para nomes de arquivo que não seguem a conversão padrão
+    // Chave = nome.toLowerCase().replace(" ","").replace("/","-")
+    private static final Map<String, String> ARQUIVO_OVERRIDE = new HashMap<>();
+    static {
+        ARQUIVO_OVERRIDE.put("hilux",        "hillux");       // typo no arquivo
+        ARQUIVO_OVERRIDE.put("broncosport",  "bronco");       // "Bronco Sport" → bronco.png
+        ARQUIVO_OVERRIDE.put("nivus",        "nirvus");       // typo no arquivo
+        ARQUIVO_OVERRIDE.put("t-cross",      "t-cross");      // hifens preservados
+        ARQUIVO_OVERRIDE.put("onixplus",     "onixplus");     // "Onix Plus" → onixplus.png
+        ARQUIVO_OVERRIDE.put("corollacross", "corollacross"); // "Corolla Cross" → corollacross.png
+        ARQUIVO_OVERRIDE.put("toro",         "toro");
+        ARQUIVO_OVERRIDE.put("pulse",        "pulse");
+        ARQUIVO_OVERRIDE.put("argo",         "argo");
     }
 
     public static void setMarcaSelecionada(String marca, boolean novaOS) {
@@ -134,11 +170,18 @@ public class PanelSelecaoModelo extends JPanel {
         if (gradeModelos == null) return;
 
         gradeModelos.removeAll();
+        frame.setModeloSelecionado("");
         String[]  modelos  = MODELOS_POR_MARCA.getOrDefault(marcaAtual, new String[]{});
         Color[]   corMarca = getMarcaCor(marcaAtual);
 
         for (String modelo : modelos)
             gradeModelos.add(criarCardModelo(modelo, corMarca[0], corMarca[1]));
+
+        if ("Jeep".equals(marcaAtual) || "Mitsubishi".equals(marcaAtual)) {
+            int cardsFaltantes = Math.max(0, 8 - modelos.length);
+            for (int i = 0; i < cardsFaltantes; i++)
+                gradeModelos.add(criarCardVazio());
+        }
 
         gradeModelos.revalidate();
         gradeModelos.repaint();
@@ -151,54 +194,113 @@ public class PanelSelecaoModelo extends JPanel {
     }
 
     private JPanel criarCardModelo(String nome, Color bgCor, Color fgCor) {
+        final ImageIcon fotoIcon = carregarFotoModelo(nome);
+
         JPanel card = new JPanel() {
             private boolean hover = false;
             {
                 setOpaque(false);
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                setLayout(new GridBagLayout());
+                setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
                 addMouseListener(new MouseAdapter() {
                     @Override public void mouseEntered(MouseEvent e) { hover = true;  repaint(); }
                     @Override public void mouseExited (MouseEvent e) { hover = false; repaint(); }
-                    @Override public void mouseClicked(MouseEvent e) { selecionarModelo(nome); }
+                    @Override public void mouseClicked(MouseEvent e) {
+                        selecionarModelo(nome);
+                        if (e.getClickCount() == 2) navegarParaVeiculo();
+                    }
                 });
             }
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 boolean sel = nome.equals(modeloSelecionado);
-                int cx = getWidth() / 2, cy = getHeight() / 2 - 10;
-                int r  = Math.min(Math.min(getWidth(), getHeight()) / 2 - 12, 40);
-
-                if (sel) {
-                    g2.setColor(new Color(201, 168, 108, 40));
-                    g2.fill(new Ellipse2D.Float(cx - r - 6, cy - r - 6, (r + 6) * 2, (r + 6) * 2));
-                    g2.setColor(MainFrame.COR_GOLD);
-                    g2.setStroke(new BasicStroke(2.5f));
-                    g2.draw(new Ellipse2D.Float(cx - r - 4, cy - r - 4, (r + 4) * 2, (r + 4) * 2));
-                } else if (hover) {
-                    g2.setColor(new Color(26, 39, 68, 22));
-                    g2.fill(new Ellipse2D.Float(cx - r - 4, cy - r - 4, (r + 4) * 2, (r + 4) * 2));
-                }
-
-                g2.setColor(sel ? bgCor : new Color(
-                    bgCor.getRed(), bgCor.getGreen(), bgCor.getBlue(), 200));
-                g2.fill(new Ellipse2D.Float(cx - r, cy - r, r * 2, r * 2));
-
-                String inicial = nome.substring(0, Math.min(3, nome.length())).toUpperCase();
-                g2.setColor(fgCor);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(inicial, cx - fm.stringWidth(inicial) / 2, cy + fm.getAscent() / 2 - 2);
-
-                g2.setColor(sel ? MainFrame.COR_NAVY : new Color(0x333333));
-                g2.setFont(new Font("Segoe UI", sel ? Font.BOLD : Font.PLAIN, 11));
-                fm = g2.getFontMetrics();
-                g2.drawString(nome, cx - fm.stringWidth(nome) / 2, cy + r + 18);
+                g2.setColor(sel ? new Color(255, 250, 240) : Color.WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                Color bdrColor = sel   ? MainFrame.COR_GOLD
+                               : hover ? new Color(0xc9a86c)
+                                       : new Color(0xd0c9b8);
+                g2.setColor(bdrColor);
+                g2.setStroke(new BasicStroke(sel ? 2f : 1f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
                 g2.dispose();
+                super.paintComponent(g);
             }
         };
+        card.setPreferredSize(new Dimension(140, 110));
+
+        JLabel lblFoto;
+        if (fotoIcon != null) {
+            lblFoto = new JLabel(fotoIcon, SwingConstants.CENTER);
+        } else {
+            lblFoto = new JLabel() {
+                @Override public Dimension getPreferredSize() { return new Dimension(110, 70); }
+                @Override public Dimension getMinimumSize()   { return getPreferredSize(); }
+                @Override public Dimension getMaximumSize()   { return getPreferredSize(); }
+                @Override protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    int cx = getWidth() / 2, cy = getHeight() / 2;
+                    g2.setColor(bgCor);
+                    g2.fillOval(cx - 26, cy - 26, 52, 52);
+                    g2.setColor(fgCor);
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                    String ini = nome.substring(0, Math.min(3, nome.length())).toUpperCase();
+                    FontMetrics fm = g2.getFontMetrics();
+                    g2.drawString(ini, cx - fm.stringWidth(ini) / 2, cy + fm.getAscent() / 2 - 1);
+                    g2.dispose();
+                }
+            };
+        }
+        lblFoto.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel lblNome = new JLabel(nome, SwingConstants.CENTER);
+        lblNome.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblNome.setForeground(new Color(0x444444));
+        lblNome.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        card.add(Box.createVerticalGlue());
+        card.add(lblFoto);
+        card.add(Box.createVerticalStrut(5));
+        card.add(lblNome);
+        card.add(Box.createVerticalGlue());
+
         return card;
+    }
+
+    private JPanel criarCardVazio() {
+        JPanel card = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                g2.setColor(new Color(0xd0c9b8));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        card.setOpaque(false);
+        card.setPreferredSize(new Dimension(140, 110));
+        return card;
+    }
+
+    private ImageIcon carregarFotoModelo(String nome) {
+        String chave = nome.toLowerCase().replace(" ", "").replace("/", "-");
+        String fileBase = ARQUIVO_OVERRIDE.getOrDefault(chave, chave);
+        java.net.URL url = getClass().getResource("/images/" + fileBase + ".png");
+        if (url != null) {
+            try {
+                BufferedImage bi = ImageIO.read(url);
+                if (bi != null) {
+                    Image scaled = bi.getScaledInstance(110, 70, Image.SCALE_SMOOTH);
+                    return new ImageIcon(scaled);
+                }
+            } catch (java.io.IOException ignored) {}
+        }
+        return null;
     }
 
     // ── Rodapé ────────────────────────────────────────────────────────────────
@@ -235,8 +337,7 @@ public class PanelSelecaoModelo extends JPanel {
         btnProximo.setFocusPainted(false);
         btnProximo.setEnabled(false);
         btnProximo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnProximo.addActionListener(e -> frame.mostrarTela(
-            modoNovaOS ? MainFrame.TELA_COMPOSICAO : MainFrame.TELA_VEICULO));
+        btnProximo.addActionListener(e -> navegarParaVeiculo());
 
         rodape.add(lblModeloSel, BorderLayout.WEST);
         rodape.add(btnProximo,   BorderLayout.EAST);
@@ -244,8 +345,14 @@ public class PanelSelecaoModelo extends JPanel {
     }
 
     // ── Lógica ────────────────────────────────────────────────────────────────
+    private void navegarParaVeiculo() {
+        if (modeloSelecionado == null) return;
+        frame.mostrarTela(modoNovaOS ? MainFrame.TELA_COMPOSICAO : MainFrame.TELA_VEICULO);
+    }
+
     private void selecionarModelo(String nome) {
         modeloSelecionado = nome;
+        frame.setModeloSelecionado(nome);
         lblModeloSel.setText("Modelo selecionado: " + nome);
         lblModeloSel.setForeground(MainFrame.COR_NAVY);
         btnProximo.setEnabled(true);
