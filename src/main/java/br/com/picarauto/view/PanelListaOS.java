@@ -106,18 +106,28 @@ public class PanelListaOS extends JPanel {
     }
 
     private JPanel criarBarraFerr() {
-        JPanel barra = new JPanel(new BorderLayout(12, 0));
-        barra.setOpaque(false);
-        barra.setBorder(new EmptyBorder(0, 0, 12, 0));
-
-        // Busca
         txtBusca = new JTextField();
-        txtBusca.setFont(MainFrame.FONT_NORMAL);
+        txtBusca.setPreferredSize(new Dimension(0, 36));
+        txtBusca.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         txtBusca.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
-            new EmptyBorder(6, 10, 6, 10)));
+            BorderFactory.createLineBorder(new Color(0xD0C9B8)),
+            BorderFactory.createEmptyBorder(4, 10, 4, 10)));
+        txtBusca.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         txtBusca.setBackground(Color.WHITE);
-        txtBusca.setToolTipText("Buscar OS...");
+        txtBusca.setText("Pesquisar...");
+        txtBusca.setForeground(Color.GRAY);
+        txtBusca.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) {
+                if ("Pesquisar...".equals(txtBusca.getText())) {
+                    txtBusca.setText(""); txtBusca.setForeground(new Color(0x333333));
+                }
+            }
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                if (txtBusca.getText().isEmpty()) {
+                    txtBusca.setText("Pesquisar..."); txtBusca.setForeground(Color.GRAY);
+                }
+            }
+        });
         txtBusca.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e)  { filtrar(); }
             @Override public void removeUpdate(DocumentEvent e)  { filtrar(); }
@@ -125,11 +135,11 @@ public class PanelListaOS extends JPanel {
             void filtrar() {
                 if (sorter == null) return;
                 String txt = txtBusca.getText().trim();
+                if ("Pesquisar...".equals(txt)) { sorter.setRowFilter(null); return; }
                 sorter.setRowFilter(txt.isEmpty() ? null : RowFilter.regexFilter("(?i)" + txt));
             }
         });
 
-        // Combo ordenação
         String[] opcoes = {
             "Ordenar por...",
             "Cliente A → Z", "Cliente Z → A",
@@ -142,7 +152,6 @@ public class PanelListaOS extends JPanel {
         cmbOrdem.setBackground(Color.WHITE);
         cmbOrdem.setPreferredSize(new Dimension(200, 34));
 
-        // Botão Nova OS
         JButton btnNova = criarBotaoNavy("Nova OS", 110, 34);
         btnNova.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_COMPOSICAO));
 
@@ -151,9 +160,12 @@ public class PanelListaOS extends JPanel {
         direita.add(cmbOrdem);
         direita.add(btnNova);
 
-        barra.add(txtBusca, BorderLayout.CENTER);
-        barra.add(direita,  BorderLayout.EAST);
-        return barra;
+        JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
+        painelBusca.setBackground(new Color(0xF5F0E6));
+        painelBusca.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        painelBusca.add(txtBusca, BorderLayout.CENTER);
+        painelBusca.add(direita, BorderLayout.EAST);
+        return painelBusca;
     }
 
     private JScrollPane criarScrollTabela() {
