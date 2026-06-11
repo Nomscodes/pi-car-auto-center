@@ -9,50 +9,57 @@ import org.springframework.stereotype.Component;
  * Utilitário de acesso ao contexto da aplicação.
  *
  * Padrão de Projeto: Singleton
- * Garante que apenas uma instância do contexto Spring seja acessível
- * em toda a aplicação, centralizando o ponto de acesso a qualquer bean
- * gerenciado — services, repositories, validators — sem necessidade de
+ * Garante que apenas uma instância de ContextoAplicacao exista em toda a
+ * aplicação, centralizando o ponto de acesso a qualquer bean gerenciado
+ * pelo Spring — services, repositories, validators — sem necessidade de
  * injeção de dependência em classes fora do ciclo Spring (ex: views Swing).
  *
- * O Spring chama setContexto() uma única vez na inicialização, populando
- * o atributo estático privado. A partir daí, qualquer classe do sistema
- * pode obter um bean via ContextoAplicacao.getBean().
+ * Os três elementos do padrão estão presentes:
+ *   1. Atributo estático privado (instancia) — controla a instância da classe
+ *   2. Construtor privado — ninguém instancia com new de fora
+ *   3. Método estático getInstancia() — único ponto de acesso, aciona o new
+ *
+ * O Spring chama setApplicationContext() uma única vez na inicialização,
+ * populando o atributo contextoSpring. A partir daí, qualquer classe pode
+ * chamar ContextoAplicacao.getBean(ClienteService.class) para obter um bean.
  *
  * @author Cassiano
  */
 @Component
 public class ContextoAplicacao implements ApplicationContextAware {
 
-    // Instância estática — ponto único de acesso, igual ao ConexaoBanco anterior
-    private static ApplicationContext instancia = null;
+    // 1. Atributo estático privado — controla a instância desta classe (Singleton)
+    private static ContextoAplicacao instancia;
 
-    // Construtor privado — ninguém cria ContextoAplicacao com new
+    // Contexto do Spring armazenado separadamente (populado via setApplicationContext)
+    private static ApplicationContext contextoSpring;
+
+    // 2. Construtor privado — ninguém cria ContextoAplicacao com new
     private ContextoAplicacao() {}
 
     /**
-     * Chamado automaticamente pelo Spring uma única vez na inicialização.
-     * Popula a instância estática com o contexto ativo.
+     * 3. Método estático que controla o new — ponto único de acesso.
+     * Cria a instância na primeira chamada (lazy initialization).
      */
-    @Override
-    public void setApplicationContext(ApplicationContext contexto) throws BeansException {
-        instancia = contexto;
-    }
-
-    /**
-     * Retorna o contexto Spring ativo.
-     * Lança IllegalStateException se chamado antes da inicialização do Spring.
-     */
-    public static ApplicationContext getInstancia() {
+    public static ContextoAplicacao getInstancia() {
         if (instancia == null) {
-            throw new IllegalStateException(
-                "Contexto da aplicação ainda não foi inicializado pelo Spring."
-            );
+            instancia = new ContextoAplicacao();
         }
         return instancia;
     }
 
     /**
+     * Chamado automaticamente pelo Spring uma única vez na inicialização.
+     * Popula o contexto Spring para uso posterior via getBean().
+     */
+    @Override
+    public void setApplicationContext(ApplicationContext contexto) throws BeansException {
+        contextoSpring = contexto;
+    }
+
+    /**
      * Atalho para obter qualquer bean gerenciado pelo Spring.
+     * Lança IllegalStateException se chamado antes da inicialização do Spring.
      *
      * Uso: ContextoAplicacao.getBean(ClienteService.class)
      *
@@ -60,6 +67,11 @@ public class ContextoAplicacao implements ApplicationContextAware {
      * @return Instância gerenciada pelo Spring
      */
     public static <T> T getBean(Class<T> tipo) {
-        return getInstancia().getBean(tipo);
+        if (contextoSpring == null) {
+            throw new IllegalStateException(
+                "Contexto da aplicação ainda não foi inicializado pelo Spring."
+            );
+        }
+        return contextoSpring.getBean(tipo);
     }
 }
