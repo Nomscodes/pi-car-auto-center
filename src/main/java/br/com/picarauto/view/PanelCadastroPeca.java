@@ -10,6 +10,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class PanelCadastroPeca extends JPanel {
 
@@ -17,6 +19,7 @@ public class PanelCadastroPeca extends JPanel {
     private JTextField    txtBusca;
     private JTable        tabela;
     private DefaultTableModel modelo;
+    private TableRowSorter<DefaultTableModel> sorter;
 
     private static final String[] COLUNAS = {"Código", "Nome", "Fornecedor", "Preço Custo", "Preço Venda", "Estoque", ""};
 
@@ -112,6 +115,16 @@ public class PanelCadastroPeca extends JPanel {
             new EmptyBorder(6, 10, 6, 10)));
         txtBusca.setBackground(Color.WHITE);
         txtBusca.setToolTipText("Buscar peça...");
+        txtBusca.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e)  { filtrar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { filtrar(); }
+            @Override public void changedUpdate(DocumentEvent e) { filtrar(); }
+            void filtrar() {
+                if (sorter == null) return;
+                String txt = txtBusca.getText().trim();
+                sorter.setRowFilter(txt.isEmpty() ? null : RowFilter.regexFilter("(?i)" + txt));
+            }
+        });
 
         JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         direita.setOpaque(false);
@@ -134,6 +147,8 @@ public class PanelCadastroPeca extends JPanel {
         for (Object[] row : DADOS_MOCK) modelo.addRow(row);
 
         tabela = new JTable(modelo);
+        sorter = new TableRowSorter<>(modelo);
+        tabela.setRowSorter(sorter);
         tabela.setFont(MainFrame.FONT_NORMAL);
         tabela.setRowHeight(40);
         tabela.setShowGrid(false);
