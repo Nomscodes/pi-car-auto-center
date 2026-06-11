@@ -75,13 +75,13 @@ public class PanelListaOS extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_GOLD);
-                g2.fillOval(0, 0, 30, 30);
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2.setColor(MainFrame.COR_NAVY);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
-                String i = MainFrame.getUsuarioLogado().substring(0, 1).toUpperCase();
+                g2.fillOval(0, 0, 30, 30);
+                String car = new String(Character.toChars(0x1F697));
+                g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(i, (30 - fm.stringWidth(i)) / 2, (30 + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(car, (30 - fm.stringWidth(car)) / 2, (30 + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
@@ -153,7 +153,7 @@ public class PanelListaOS extends JPanel {
         cmbOrdem.setPreferredSize(new Dimension(200, 34));
 
         JButton btnNova = criarBotaoNavy("Nova OS", 110, 34);
-        btnNova.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_COMPOSICAO));
+        btnNova.addActionListener(e -> abrirDialogNovaOS());
 
         JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         direita.setOpaque(false);
@@ -211,6 +211,121 @@ public class PanelListaOS extends JPanel {
         scroll.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1));
         scroll.getViewport().setBackground(Color.WHITE);
         return scroll;
+    }
+
+    // ── Dialog Nova OS ────────────────────────────────────────────────────────
+    private void abrirDialogNovaOS() {
+        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this),
+            "Nova Ordem de Serviço", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dlg.setSize(500, 340);
+        dlg.setLocationRelativeTo(this);
+
+        JTextField txtCliente  = criarCampoDlg();
+        JTextField txtColab    = criarCampoDlg();
+        JTextField txtMarca    = criarCampoDlg();
+        JTextField txtModelo   = criarCampoDlg();
+        JTextField txtPlaca    = criarCampoDlg();
+
+        JPanel grid = new JPanel(new java.awt.GridLayout(3, 2, 14, 10));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
+        grid.add(criarGrupoDlg("Cliente",              txtCliente));
+        grid.add(criarGrupoDlg("Colaborador",          txtColab));
+        grid.add(criarGrupoDlg("Marca",                txtMarca));
+        grid.add(criarGrupoDlg("Modelo",               txtModelo));
+        grid.add(criarGrupoDlg("Placa",                txtPlaca));
+        grid.add(new JPanel() {{ setOpaque(false); }});
+
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rodape.setOpaque(false);
+        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JButton btnCanc = new JButton("Cancelar") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setStroke(new java.awt.BasicStroke(1.5f));
+                g2.draw(new java.awt.geom.RoundRectangle2D.Float(1, 1, getWidth()-2, getHeight()-2, 8, 8));
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                FontMetrics fm2 = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth()-fm2.stringWidth(getText()))/2, (getHeight()+fm2.getAscent()-fm2.getDescent())/2);
+                g2.dispose();
+            }
+        };
+        btnCanc.setOpaque(false); btnCanc.setContentAreaFilled(false); btnCanc.setBorderPainted(false);
+        btnCanc.setFocusPainted(false); btnCanc.setForeground(MainFrame.COR_NAVY);
+        btnCanc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnCanc.setPreferredSize(new Dimension(100, 34));
+        btnCanc.addActionListener(e -> dlg.dispose());
+
+        JButton btnSalv = new JButton("Salvar") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD.darker() : MainFrame.COR_GOLD);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                FontMetrics fm2 = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth()-fm2.stringWidth(getText()))/2, (getHeight()+fm2.getAscent()-fm2.getDescent())/2);
+                g2.dispose();
+            }
+        };
+        btnSalv.setOpaque(true); btnSalv.setContentAreaFilled(false); btnSalv.setBorderPainted(false);
+        btnSalv.setFocusPainted(false);
+        btnSalv.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnSalv.setPreferredSize(new Dimension(100, 34));
+        btnSalv.addActionListener(e -> {
+            String cliente = txtCliente.getText().trim();
+            String veiculo = (txtMarca.getText().trim() + " " + txtModelo.getText().trim()).trim();
+            if (veiculo.isEmpty()) veiculo = "-";
+            int num = modelo.getRowCount() + 1;
+            String numOS = "#" + String.format("%04d", num);
+            String data = new java.text.SimpleDateFormat("dd/MM/yyyy").format(new java.util.Date());
+            modelo.insertRow(0, new Object[]{numOS, cliente, veiculo, data, "Aberta", "R$ 0,00", ""});
+            dlg.dispose();
+        });
+
+        rodape.add(btnCanc);
+        rodape.add(btnSalv);
+
+        JPanel form = new JPanel();
+        form.setBackground(MainFrame.COR_CREAM);
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBorder(new EmptyBorder(20, 24, 20, 24));
+        form.add(grid);
+        form.add(Box.createVerticalStrut(14));
+        form.add(rodape);
+
+        dlg.add(form);
+        dlg.setVisible(true);
+    }
+
+    private JPanel criarGrupoDlg(String label, JTextField campo) {
+        JPanel g = new JPanel();
+        g.setOpaque(false);
+        g.setLayout(new BoxLayout(g, BoxLayout.Y_AXIS));
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lbl.setForeground(new Color(0x444444));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        campo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        campo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        g.add(lbl); g.add(Box.createVerticalStrut(4)); g.add(campo);
+        return g;
+    }
+
+    private JTextField criarCampoDlg() {
+        JTextField f = new JTextField();
+        f.setFont(MainFrame.FONT_NORMAL);
+        f.setBackground(Color.WHITE);
+        f.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
+            new EmptyBorder(6, 10, 6, 10)));
+        f.setPreferredSize(new Dimension(0, 34));
+        return f;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

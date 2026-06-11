@@ -22,6 +22,9 @@ public class PanelMarcasModelos extends JPanel {
     private JTable     tabela;
     private DefaultTableModel modelo;
     private TableRowSorter<DefaultTableModel> sorter;
+    private JComboBox<String> cmbOrdenar;
+    private JButton btnAbaMarcas;
+    private JButton btnAbaModelos;
 
     private static final String[] COLUNAS_MARCAS  = {"Marca", "Modelos cadastrados", ""};
     private static final String[] COLUNAS_MODELOS = {"Modelo", "Marca", "Ano", ""};
@@ -89,13 +92,13 @@ public class PanelMarcasModelos extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_GOLD);
-                g2.fillOval(0, 0, 30, 30);
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2.setColor(MainFrame.COR_NAVY);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
-                String i = MainFrame.getUsuarioLogado().substring(0, 1).toUpperCase();
+                g2.fillOval(0, 0, 30, 30);
+                String car = new String(Character.toChars(0x1F697));
+                g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(i, (30 - fm.stringWidth(i)) / 2, (30 + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(car, (30 - fm.stringWidth(car)) / 2, (30 + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
@@ -123,9 +126,19 @@ public class PanelMarcasModelos extends JPanel {
         JPanel abas = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         abas.setOpaque(false);
 
-        JButton[] btns = { criarBotaoAba("Marcas"), criarBotaoAba("Modelos") };
-        btns[0].addActionListener(e -> { abaMarcas = true;  recarregarTabela(); btns[0].repaint(); btns[1].repaint(); });
-        btns[1].addActionListener(e -> { abaMarcas = false; recarregarTabela(); btns[0].repaint(); btns[1].repaint(); });
+        btnAbaMarcas  = criarBotaoAba("Marcas");
+        btnAbaModelos = criarBotaoAba("Modelos");
+        btnAbaMarcas.addActionListener(e -> {
+            abaMarcas = true;  recarregarTabela();
+            if (cmbOrdenar != null) cmbOrdenar.setSelectedIndex(0);
+            btnAbaMarcas.repaint(); btnAbaModelos.repaint();
+        });
+        btnAbaModelos.addActionListener(e -> {
+            abaMarcas = false; recarregarTabela();
+            if (cmbOrdenar != null) cmbOrdenar.setSelectedIndex(0);
+            btnAbaMarcas.repaint(); btnAbaModelos.repaint();
+        });
+        JButton[] btns = { btnAbaMarcas, btnAbaModelos };
         abas.add(btns[0]);
         abas.add(btns[1]);
 
@@ -152,36 +165,46 @@ public class PanelMarcasModelos extends JPanel {
             }
         });
         txtBusca.getDocument().addDocumentListener(new DocumentListener() {
-            @Override public void insertUpdate(DocumentEvent e)  { filtrar(); }
-            @Override public void removeUpdate(DocumentEvent e)  { filtrar(); }
-            @Override public void changedUpdate(DocumentEvent e) { filtrar(); }
-            void filtrar() {
-                if (sorter == null) return;
-                String txt = txtBusca.getText().trim();
-                if ("Pesquisar...".equals(txt)) { sorter.setRowFilter(null); return; }
-                sorter.setRowFilter(txt.isEmpty() ? null : RowFilter.regexFilter("(?i)" + txt));
-            }
+            @Override public void insertUpdate(DocumentEvent e)  { aplicarFiltros(); }
+            @Override public void removeUpdate(DocumentEvent e)  { aplicarFiltros(); }
+            @Override public void changedUpdate(DocumentEvent e) { aplicarFiltros(); }
         });
 
-        JButton btnNova = criarBotaoNavy("Nova marca", 120, 34);
-        btnNova.addActionListener(e -> {
-            String novaMarca = JOptionPane.showInputDialog(this,
-                "Nome da nova marca:", "Nova marca", JOptionPane.PLAIN_MESSAGE);
-            if (novaMarca != null && !novaMarca.isBlank()) {
-                modelo.addRow(new Object[]{novaMarca.trim(), "—"});
-            }
-        });
+        JButton btnNovaMarca  = criarBotaoNavy("Nova marca",  120, 34);
+        JButton btnNovoModelo = criarBotaoNavy("Novo modelo", 130, 34);
+        btnNovaMarca.addActionListener(e -> abrirFormNovaMarca());
+        btnNovoModelo.addActionListener(e -> abrirFormNovoModelo());
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        btnPanel.setOpaque(false);
+        btnPanel.add(btnNovaMarca);
+        btnPanel.add(btnNovoModelo);
 
         JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
         painelBusca.setBackground(new Color(0xF5F0E6));
         painelBusca.add(txtBusca, BorderLayout.CENTER);
-        painelBusca.add(btnNova, BorderLayout.EAST);
+        painelBusca.add(btnPanel, BorderLayout.EAST);
+
+        cmbOrdenar = new JComboBox<>(new String[]{"Padrão", "A-Z", "Z-A"});
+        cmbOrdenar.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        cmbOrdenar.setBackground(Color.WHITE);
+        cmbOrdenar.setPreferredSize(new Dimension(160, 32));
+        cmbOrdenar.addActionListener(e -> aplicarFiltros());
+
+        JPanel filtroRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 4));
+        filtroRow.setOpaque(false);
+        filtroRow.add(cmbOrdenar);
+
+        JPanel meio = new JPanel(new BorderLayout(0, 6));
+        meio.setOpaque(false);
+        meio.add(painelBusca, BorderLayout.NORTH);
+        meio.add(filtroRow, BorderLayout.SOUTH);
 
         JPanel barra = new JPanel(new BorderLayout(0, 10));
         barra.setOpaque(false);
         barra.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
         barra.add(abas, BorderLayout.NORTH);
-        barra.add(painelBusca, BorderLayout.SOUTH);
+        barra.add(meio, BorderLayout.SOUTH);
         return barra;
     }
 
@@ -212,6 +235,22 @@ public class PanelMarcasModelos extends JPanel {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(100, 34));
         return btn;
+    }
+
+    private void aplicarFiltros() {
+        if (sorter == null) return;
+        String sel = cmbOrdenar == null ? "Padrão" : (String) cmbOrdenar.getSelectedItem();
+        if (sel == null) sel = "Padrão";
+        String txt = txtBusca.getText().trim();
+        boolean hasText = !txt.isEmpty() && !"Pesquisar...".equals(txt);
+
+        sorter.setSortKeys(java.util.Collections.emptyList());
+        if ("A-Z".equals(sel))
+            sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
+        else if ("Z-A".equals(sel))
+            sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
+
+        sorter.setRowFilter(hasText ? RowFilter.regexFilter("(?i)" + txt) : null);
     }
 
     private JScrollPane criarScrollTabela() {
@@ -258,7 +297,225 @@ public class PanelMarcasModelos extends JPanel {
         for (Object[] row : dados) modelo.addRow(row);
     }
 
+    // ── Diálogos de cadastro ──────────────────────────────────────────────────
+    private void abrirFormNovaMarca() {
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+            "Nova Marca", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(420, 220);
+        dialog.setLocationRelativeTo(this);
+
+        JTextField txtNome  = criarCampo();
+        JTextField txtSigla = criarCampo();
+
+        JPanel grid = new JPanel(new GridLayout(1, 2, 14, 0));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        grid.add(criarGrupo("Nome da marca", txtNome));
+        grid.add(criarGrupo("Sigla (ex.: GM)", txtSigla));
+
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rodape.setOpaque(false);
+        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
+        btnCanc.addActionListener(e -> dialog.dispose());
+
+        JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
+        btnSalv.addActionListener(e -> {
+            String nome = txtNome.getText().trim();
+            if (!nome.isEmpty()) {
+                abaMarcas = true;
+                recarregarTabela();
+                btnAbaMarcas.repaint();
+                btnAbaModelos.repaint();
+                modelo.addRow(new Object[]{nome, "—"});
+            }
+            dialog.dispose();
+        });
+
+        rodape.add(btnCanc);
+        rodape.add(btnSalv);
+
+        JPanel form = new JPanel();
+        form.setBackground(MainFrame.COR_CREAM);
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBorder(new EmptyBorder(20, 24, 20, 24));
+        form.add(grid);
+        form.add(Box.createVerticalStrut(14));
+        form.add(rodape);
+
+        dialog.add(form);
+        dialog.setVisible(true);
+    }
+
+    private void abrirFormNovoModelo() {
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+            "Novo Modelo", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(440, 280);
+        dialog.setLocationRelativeTo(this);
+
+        // Populate marca combo from static data
+        String[] marcasDisp = new String[DADOS_MARCAS.length];
+        for (int i = 0; i < DADOS_MARCAS.length; i++)
+            marcasDisp[i] = (String) DADOS_MARCAS[i][0];
+
+        JComboBox<String> cmbMarca = new JComboBox<>(marcasDisp);
+        cmbMarca.setFont(MainFrame.FONT_NORMAL);
+        cmbMarca.setBackground(Color.WHITE);
+        cmbMarca.setPreferredSize(new Dimension(0, 34));
+        cmbMarca.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+
+        // Pre-select brand from selected row when on Marcas tab
+        if (abaMarcas && tabela.getSelectedRow() >= 0) {
+            int modelRow = tabela.convertRowIndexToModel(tabela.getSelectedRow());
+            cmbMarca.setSelectedItem(modelo.getValueAt(modelRow, 0));
+        }
+
+        JTextField txtNome = criarCampo();
+        JTextField txtAno  = criarCampo();
+
+        JPanel grupoMarca = new JPanel();
+        grupoMarca.setOpaque(false);
+        grupoMarca.setLayout(new BoxLayout(grupoMarca, BoxLayout.Y_AXIS));
+        JLabel lblMarca = new JLabel("Marca");
+        lblMarca.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblMarca.setForeground(new Color(0x444444));
+        lblMarca.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cmbMarca.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grupoMarca.add(lblMarca);
+        grupoMarca.add(Box.createVerticalStrut(4));
+        grupoMarca.add(cmbMarca);
+
+        JPanel gridTop = new JPanel(new GridLayout(1, 2, 14, 0));
+        gridTop.setOpaque(false);
+        gridTop.setAlignmentX(Component.LEFT_ALIGNMENT);
+        gridTop.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        gridTop.add(criarGrupo("Nome do modelo", txtNome));
+        gridTop.add(grupoMarca);
+
+        JPanel gridBot = new JPanel(new GridLayout(1, 2, 14, 0));
+        gridBot.setOpaque(false);
+        gridBot.setAlignmentX(Component.LEFT_ALIGNMENT);
+        gridBot.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        gridBot.add(criarGrupo("Ano (ex.: 2020–2026)", txtAno));
+        gridBot.add(new JPanel() {{ setOpaque(false); }});
+
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rodape.setOpaque(false);
+        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
+        btnCanc.addActionListener(e -> dialog.dispose());
+
+        JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
+        btnSalv.addActionListener(e -> {
+            String nome = txtNome.getText().trim();
+            if (!nome.isEmpty()) {
+                String marca = (String) cmbMarca.getSelectedItem();
+                abaMarcas = false;
+                recarregarTabela();
+                btnAbaMarcas.repaint();
+                btnAbaModelos.repaint();
+                modelo.addRow(new Object[]{nome, marca != null ? marca : "", txtAno.getText().trim()});
+            }
+            dialog.dispose();
+        });
+
+        rodape.add(btnCanc);
+        rodape.add(btnSalv);
+
+        JPanel form = new JPanel();
+        form.setBackground(MainFrame.COR_CREAM);
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBorder(new EmptyBorder(20, 24, 20, 24));
+        form.add(gridTop);
+        form.add(Box.createVerticalStrut(10));
+        form.add(gridBot);
+        form.add(Box.createVerticalStrut(14));
+        form.add(rodape);
+
+        dialog.add(form);
+        dialog.setVisible(true);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+    private JPanel criarGrupo(String label, JTextField campo) {
+        JPanel g = new JPanel();
+        g.setOpaque(false);
+        g.setLayout(new BoxLayout(g, BoxLayout.Y_AXIS));
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lbl.setForeground(new Color(0x444444));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        campo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        campo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        g.add(lbl);
+        g.add(Box.createVerticalStrut(4));
+        g.add(campo);
+        return g;
+    }
+
+    private JTextField criarCampo() {
+        JTextField f = new JTextField();
+        f.setFont(MainFrame.FONT_NORMAL);
+        f.setBackground(Color.WHITE);
+        f.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
+            new EmptyBorder(6, 10, 6, 10)));
+        f.setPreferredSize(new Dimension(0, 34));
+        return f;
+    }
+
+    private JButton criarBotaoGold(String texto, int w, int h) {
+        JButton btn = new JButton(texto) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD.darker() : MainFrame.COR_GOLD);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btn.setOpaque(true);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(w, h));
+        return btn;
+    }
+
+    private JButton criarBotaoOutline(String texto, int w, int h) {
+        JButton btn = new JButton(texto) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setStroke(new java.awt.BasicStroke(1.5f));
+                g2.draw(new java.awt.geom.RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btn.setOpaque(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setForeground(MainFrame.COR_NAVY);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(w, h));
+        return btn;
+    }
+
     private JButton criarBotaoNavy(String texto, int w, int h) {
         JButton btn = new JButton(texto) {
             @Override protected void paintComponent(Graphics g) {

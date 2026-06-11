@@ -137,22 +137,23 @@ public class PanelCadastroVeiculo extends JPanel {
         cmbModelo = criarCombo(new String[]{"Selecione primeiro a marca..."});
         cmbModelo.setEnabled(false);
 
-        cmbMarca.addActionListener(e -> {
-            int idx = cmbMarca.getSelectedIndex();
-            cmbModelo.removeAllItems();
-            if (idx > 0 && idx < MODELOS.length) {
-                cmbModelo.setEnabled(true);
-                cmbModelo.addItem("Selecione o modelo...");
-                for (String m : MODELOS[idx]) cmbModelo.addItem(m);
-            } else {
-                cmbModelo.setEnabled(false);
-                cmbModelo.addItem("Selecione primeiro a marca...");
-            }
-        });
-
         grid.add(criarGrupoCombo("Marca",  cmbMarca));
         grid.add(criarGrupoCombo("Modelo", cmbModelo));
         return grid;
+    }
+
+    /** Preenche e desabilita os combos de Marca e Modelo com os valores já escolhidos. */
+    public void preencherSelecoes() {
+        String marca  = frame.getMarcaSelecionada();
+        String modelo = frame.getModeloSelecionado();
+
+        cmbMarca.removeAllItems();
+        cmbMarca.addItem(marca.isEmpty() ? "Selecione..." : marca);
+        cmbMarca.setEnabled(false);
+
+        cmbModelo.removeAllItems();
+        cmbModelo.addItem(modelo.isEmpty() ? "Selecione..." : modelo);
+        cmbModelo.setEnabled(false);
     }
 
     // ── Rodapé de ações ───────────────────────────────────────────────────────

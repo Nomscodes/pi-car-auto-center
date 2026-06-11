@@ -57,13 +57,13 @@ public class PanelDashboard extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_GOLD);
-                g2.fillOval(0, 0, 30, 30);
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2.setColor(MainFrame.COR_NAVY);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
-                String i = MainFrame.getUsuarioLogado().substring(0, 1).toUpperCase();
+                g2.fillOval(0, 0, 30, 30);
+                String car = new String(Character.toChars(0x1F697));
+                g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(i, (30 - fm.stringWidth(i)) / 2, (30 + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(car, (30 - fm.stringWidth(car)) / 2, (30 + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
