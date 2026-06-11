@@ -90,10 +90,7 @@ public class SidebarPanel extends JPanel {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(176, 40));
-        btn.addActionListener(e -> {
-            PanelSelecaoMarca.modoNovaOS = true;
-            frame.mostrarTela(MainFrame.TELA_MARCA);
-        });
+        btn.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_COMPOSICAO));
         return btn;
     }
 
