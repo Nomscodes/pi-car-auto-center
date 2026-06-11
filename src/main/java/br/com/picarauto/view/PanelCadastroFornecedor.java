@@ -1,23 +1,18 @@
 package br.com.picarauto.view;
 
 /**
+ * Formulário de cadastro de fornecedor — grid 2 colunas.
  *
  * @author Cassiano
  */
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 
 public class PanelCadastroFornecedor extends JPanel {
 
     private final MainFrame frame;
-
-    private JTextField txtNome;
-    private JTextField txtCnpj;
-    private JTextField txtTelefone;
-    private JTextField txtEmail;
 
     public PanelCadastroFornecedor(MainFrame frame) {
         this.frame = frame;
@@ -27,48 +22,86 @@ public class PanelCadastroFornecedor extends JPanel {
     }
 
     private void construirUI() {
-        add(criarHeader(),  BorderLayout.NORTH);
-        add(criarCorpo(),   BorderLayout.CENTER);
-        add(criarRodape(),  BorderLayout.SOUTH);
+        add(criarTopbar(), BorderLayout.NORTH);
+
+        JPanel inner = new JPanel(new BorderLayout());
+        inner.setBackground(MainFrame.COR_CREAM);
+        inner.add(criarScrollConteudo(), BorderLayout.CENTER);
+        inner.add(new SidebarPanel(frame, MainFrame.TELA_FORNECEDOR), BorderLayout.EAST);
+
+        add(inner, BorderLayout.CENTER);
     }
 
-    private JPanel criarHeader() {
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(MainFrame.COR_NAVY);
-        header.setBorder(new EmptyBorder(14, 20, 14, 20));
+    // ── Topbar ────────────────────────────────────────────────────────────────
+    private JPanel criarTopbar() {
+        JPanel bar = new JPanel(new BorderLayout());
+        bar.setBackground(MainFrame.COR_NAVY);
+        bar.setPreferredSize(new Dimension(0, 48));
+        bar.setBorder(new EmptyBorder(0, 20, 0, 20));
 
-        JLabel lblTitulo = new JLabel("Cadastro de fornecedor");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblTitulo.setForeground(MainFrame.COR_GOLD);
+        JLabel lbl = new JLabel("AV CAR AUTO CENTER  —  Cadastro de Fornecedor");
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lbl.setForeground(Color.WHITE);
 
-        JButton btnVoltar = criarBotaoVoltar();
-        btnVoltar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_DASHBOARD));
-
-        header.add(lblTitulo, BorderLayout.WEST);
-        header.add(btnVoltar, BorderLayout.EAST);
-        return header;
+        bar.add(lbl, BorderLayout.WEST);
+        bar.add(criarUsuarioPanel(), BorderLayout.EAST);
+        return bar;
     }
 
-    private JScrollPane criarCorpo() {
+    private JPanel criarUsuarioPanel() {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 9));
+        p.setOpaque(false);
+        JPanel av = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(MainFrame.COR_GOLD);
+                g2.fillOval(0, 0, 30, 30);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                String i = MainFrame.getUsuarioLogado().substring(0, 1).toUpperCase();
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(i, (30 - fm.stringWidth(i)) / 2, (30 + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        av.setOpaque(false);
+        av.setPreferredSize(new Dimension(30, 30));
+        JLabel nome = new JLabel(MainFrame.getUsuarioLogado());
+        nome.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        nome.setForeground(new Color(0xccddff));
+        p.add(av); p.add(nome);
+        return p;
+    }
+
+    // ── Conteúdo ──────────────────────────────────────────────────────────────
+    private JScrollPane criarScrollConteudo() {
         JPanel corpo = new JPanel();
-        corpo.setOpaque(false);
+        corpo.setBackground(MainFrame.COR_CREAM);
         corpo.setLayout(new BoxLayout(corpo, BoxLayout.Y_AXIS));
-        corpo.setBorder(new EmptyBorder(20, 20, 20, 20));
+        corpo.setBorder(new EmptyBorder(24, 24, 24, 24));
 
-        corpo.add(criarLabel("Dados do fornecedor"));
-        corpo.add(Box.createVerticalStrut(8));
-        corpo.add(criarGrid2(
-            criarGrupo("Nome do fornecedor", txtNome = criarInput("Razão social ou nome fantasia")),
-            criarGrupo("CNPJ", txtCnpj = criarInput("00.000.000/0000-00 (opcional)"))
-        ));
-        corpo.add(Box.createVerticalStrut(10));
-        corpo.add(criarGrid2(
-            criarGrupo("Telefone", txtTelefone = criarInput("(00) 00000-0000")),
-            criarGrupo("E-mail",   txtEmail    = criarInput("contato@fornecedor.com"))
-        ));
+        JTextField txtRazao    = criarCampo();
+        JTextField txtCNPJ     = criarCampo();
+        JTextField txtTelefone = criarCampo();
+        JTextField txtEmail    = criarCampo();
+        JTextField txtEndereco = criarCampo();
+        JTextField txtCidade   = criarCampo();
 
-        corpo.add(Box.createVerticalStrut(20));
-        corpo.add(criarInfoBox());
+        JPanel grid = new JPanel(new GridLayout(3, 2, 14, 10));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        grid.add(criarGrupo("Razão Social", txtRazao));
+        grid.add(criarGrupo("CNPJ",         txtCNPJ));
+        grid.add(criarGrupo("Telefone",     txtTelefone));
+        grid.add(criarGrupo("E-mail",       txtEmail));
+        grid.add(criarGrupo("Endereço",    txtEndereco));
+        grid.add(criarGrupo("Cidade",       txtCidade));
+
+        corpo.add(grid);
+        corpo.add(Box.createVerticalStrut(24));
+        corpo.add(criarRodapeAcoes());
 
         JScrollPane scroll = new JScrollPane(corpo);
         scroll.setBorder(null);
@@ -78,131 +111,82 @@ public class PanelCadastroFornecedor extends JPanel {
         return scroll;
     }
 
-    private JPanel criarInfoBox() {
-        JPanel box = new JPanel(new BorderLayout()) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(0xe6f1fb));
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
-                g2.setColor(new Color(0x85b7eb));
-                g2.setStroke(new BasicStroke(0.8f));
-                g2.draw(new RoundRectangle2D.Float(0, 0, getWidth() - 1, getHeight() - 1, 8, 8));
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        box.setOpaque(false);
-        box.setBorder(new EmptyBorder(12, 16, 12, 16));
-        box.setAlignmentX(Component.LEFT_ALIGNMENT);
+    private JPanel criarRodapeAcoes() {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        p.setOpaque(false);
+        p.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel texto = new JPanel();
-        texto.setOpaque(false);
-        texto.setLayout(new BoxLayout(texto, BoxLayout.Y_AXIS));
+        JButton btnCancelar = criarBotaoOutline("Cancelar", 110, 36);
+        btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_DASHBOARD));
 
-        JLabel lblTitulo = new JLabel("CNPJ obrigatório");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblTitulo.setForeground(new Color(0x0c447c));
+        JButton btnSalvar = criarBotaoGold("Salvar fornecedor", 150, 36);
 
-        JLabel lblDesc = new JLabel("O CNPJ é o identificador único do fornecedor.");
-        lblDesc.setFont(MainFrame.FONT_SMALL);
-        lblDesc.setForeground(new Color(0x185fa5));
-
-        JLabel lblDesc2 = new JLabel("O telefone é obrigatório mas não precisa ser único.");
-        lblDesc2.setFont(MainFrame.FONT_SMALL);
-        lblDesc2.setForeground(new Color(0x185fa5));
-
-        texto.add(lblTitulo);
-        texto.add(Box.createVerticalStrut(4));
-        texto.add(lblDesc);
-        texto.add(lblDesc2);
-
-        box.add(texto, BorderLayout.CENTER);
-        return box;
+        p.add(btnCancelar);
+        p.add(btnSalvar);
+        return p;
     }
 
-    private JLabel criarLabel(String texto) {
-        JLabel lbl = new JLabel(texto);
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lbl.setForeground(new Color(0x555555));
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        return lbl;
-    }
-
-    private JPanel criarGrid2(JPanel a, JPanel b) {
-        JPanel grid = new JPanel(new GridLayout(1, 2, 14, 0));
-        grid.setOpaque(false);
-        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        grid.add(a);
-        grid.add(b);
-        return grid;
-    }
-
+    // ── Helpers ───────────────────────────────────────────────────────────────
     private JPanel criarGrupo(String label, JTextField campo) {
-        JPanel grupo = new JPanel();
-        grupo.setOpaque(false);
-        grupo.setLayout(new BoxLayout(grupo, BoxLayout.Y_AXIS));
+        JPanel g = new JPanel();
+        g.setOpaque(false);
+        g.setLayout(new BoxLayout(g, BoxLayout.Y_AXIS));
         JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lbl.setForeground(new Color(0x555555));
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lbl.setForeground(new Color(0x444444));
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         campo.setAlignmentX(Component.LEFT_ALIGNMENT);
         campo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-        grupo.add(lbl);
-        grupo.add(Box.createVerticalStrut(4));
-        grupo.add(campo);
-        return grupo;
+        g.add(lbl);
+        g.add(Box.createVerticalStrut(4));
+        g.add(campo);
+        return g;
     }
 
-    private JTextField criarInput(String placeholder) {
-        JTextField field = new JTextField() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                if (getText().isEmpty() && !isFocusOwner()) {
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setColor(new Color(0xaaaaaa));
-                    g2.setFont(getFont().deriveFont(Font.ITALIC));
-                    g2.drawString(placeholder, 10,
-                        getHeight() / 2 + g2.getFontMetrics().getAscent() / 2 - 2);
-                    g2.dispose();
-                }
-            }
-        };
-        field.setFont(MainFrame.FONT_NORMAL);
-        field.setBackground(Color.WHITE);
-        field.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0xd0cbc0), 1),
-            new EmptyBorder(6, 10, 6, 10)
-        ));
-        field.setPreferredSize(new Dimension(0, 34));
-        return field;
+    private JTextField criarCampo() {
+        JTextField f = new JTextField();
+        f.setFont(MainFrame.FONT_NORMAL);
+        f.setBackground(Color.WHITE);
+        f.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
+            new EmptyBorder(6, 10, 6, 10)));
+        f.setPreferredSize(new Dimension(0, 34));
+        return f;
     }
 
-    private JPanel criarRodape() {
-        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 10));
-        rodape.setBackground(MainFrame.COR_CREAM_ALT);
-        rodape.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0xd0cbc0)));
-
-        JButton btnCancelar = new JButton("Cancelar");
-        btnCancelar.setFont(MainFrame.FONT_NORMAL);
-        btnCancelar.setForeground(new Color(0x666666));
-        btnCancelar.setBackground(Color.WHITE);
-        btnCancelar.setBorder(BorderFactory.createLineBorder(new Color(0xbbbbbb), 1));
-        btnCancelar.setFocusPainted(false);
-        btnCancelar.setPreferredSize(new Dimension(100, 34));
-        btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_DASHBOARD));
-
-        JButton btnSalvar = new JButton("Salvar fornecedor") {
-            @Override
-            protected void paintComponent(Graphics g) {
+    private JButton criarBotaoOutline(String texto, int w, int h) {
+        JButton btn = new JButton(texto) {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getModel().isRollover() ? new Color(0x223060) : MainFrame.COR_NAVY);
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 6, 6));
-                g2.setColor(MainFrame.COR_GOLD);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setStroke(new java.awt.BasicStroke(1.5f));
+                g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btn.setOpaque(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setForeground(MainFrame.COR_NAVY);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(w, h));
+        return btn;
+    }
+
+    private JButton criarBotaoGold(String texto, int w, int h) {
+        JButton btn = new JButton(texto) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD.darker() : MainFrame.COR_GOLD);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.setColor(MainFrame.COR_NAVY);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
@@ -210,41 +194,12 @@ public class PanelCadastroFornecedor extends JPanel {
                 g2.dispose();
             }
         };
-        btnSalvar.setPreferredSize(new Dimension(150, 34));
-        btnSalvar.setBorderPainted(false);
-        btnSalvar.setContentAreaFilled(false);
-        btnSalvar.setFocusPainted(false);
-        btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        rodape.add(btnCancelar);
-        rodape.add(btnSalvar);
-        return rodape;
-    }
-
-    private JButton criarBotaoVoltar() {
-        JButton btn = new JButton("← Voltar") {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(0x1e3060));
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 6, 6));
-                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD : MainFrame.COR_MUTED);
-                g2.setStroke(new BasicStroke(0.8f));
-                g2.draw(new RoundRectangle2D.Float(0, 0, getWidth() - 1, getHeight() - 1, 6, 6));
-                g2.setFont(MainFrame.FONT_SMALL);
-                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD : MainFrame.COR_MUTED);
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
-                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
-                g2.dispose();
-            }
-        };
-        btn.setPreferredSize(new Dimension(80, 28));
-        btn.setBorderPainted(false);
+        btn.setOpaque(true);
         btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(w, h));
         return btn;
     }
 }
