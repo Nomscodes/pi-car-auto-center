@@ -1,19 +1,60 @@
 package br.com.picarauto.view;
 
 /**
- * Composição / detalhe de uma Ordem de Serviço.
- * Card com cabeçalho, status pill, serviços, peças e total.
+ * Composição de Ordem de Serviço — formulário interativo completo.
+ * Cliente, colaborador, veículo, serviços, peças, observações e total dinâmico.
  *
  * @author Cassiano
  */
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.*;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class PanelComposicaoOS extends JPanel {
 
     private final MainFrame frame;
+
+    private static final String[] CLIENTES = {
+        "Selecione...", "Marcos Silva", "Ana Pereira", "Roberto Leal",
+        "Carla Moura", "Fábio Nunes", "Juliana Costa", "Lucas Mello"
+    };
+    private static final String[] COLABORADORES = {
+        "Selecione...", "João Mecânico", "Pedro Eletricista",
+        "Carlos Funileiro", "Maria Pintora", "Luiz Borracheiro"
+    };
+    private static final String[] MARCAS = {
+        "Selecione...", "Chevrolet", "Volkswagen", "Fiat", "Ford",
+        "Toyota", "Honda", "Hyundai", "Renault", "Nissan",
+        "Jeep", "Peugeot", "Citroën", "Mitsubishi", "Kia", "Subaru", "Mercedes"
+    };
+    private static final String[][] MODELOS = {
+        {},
+        {"Onix","Tracker","Cruze","S10","Spin","Montana"},
+        {"Gol","Polo","T-Cross","Virtus","Nivus","Amarok"},
+        {"Argo","Pulse","Cronos","Toro","Strada","Mobi"},
+        {"Ka","EcoSport","Ranger","Territory","Bronco"},
+        {"Corolla","Hilux","SW4","Yaris","RAV4"},
+        {"Civic","HR-V","City","Fit","CR-V"},
+        {"HB20","Creta","Tucson","Santa Fe","Elantra"},
+        {"Kwid","Sandero","Logan","Duster","Captur"},
+        {"Kicks","Frontier","Versa","Sentra"},
+        {"Renegade","Compass","Commander","Wrangler"},
+        {"208","2008","308","3008","5008"},
+        {"C3","C4 Cactus","C5 Aircross"},
+        {"Eclipse Cross","Outlander","L200"},
+        {"Sportage","Sorento","Stinger","Soul"},
+        {"Impreza","Forester","Outback","WRX"},
+        {"Classe A","Classe C","GLA","GLC","Sprinter"},
+    };
+
+    private JComboBox<String> cmbCliente, cmbColaborador, cmbMarca, cmbModelo, cmbStatus;
+    private JTextField        txtPlaca, txtData;
+    private DefaultTableModel modeloServicos, modeloPecas;
+    private JLabel            lblTotal;
 
     public PanelComposicaoOS(MainFrame frame) {
         this.frame = frame;
@@ -40,7 +81,7 @@ public class PanelComposicaoOS extends JPanel {
         bar.setPreferredSize(new Dimension(0, 48));
         bar.setBorder(new EmptyBorder(0, 20, 0, 20));
 
-        JLabel lbl = new JLabel("AV CAR AUTO CENTER  —  Composição da OS");
+        JLabel lbl = new JLabel("AV CAR AUTO CENTER  —  Nova Ordem de Serviço");
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lbl.setForeground(Color.WHITE);
 
@@ -57,37 +98,29 @@ public class PanelComposicaoOS extends JPanel {
         JPanel p = new JPanel();
         p.setBackground(MainFrame.COR_CREAM);
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setBorder(new EmptyBorder(24, 24, 24, 24));
+        p.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Cabeçalho da OS
-        p.add(criarCabecalho());
-        p.add(Box.createVerticalStrut(16));
-
-        // Info row: colaborador + telefone
-        p.add(criarInfoRow());
+        p.add(criarLabelSecao("Dados da OS"));
+        p.add(Box.createVerticalStrut(10));
+        p.add(criarCardDados());
         p.add(Box.createVerticalStrut(20));
 
-        // Seção serviços
         p.add(criarLabelSecao("Serviços"));
-        p.add(Box.createVerticalStrut(8));
-        p.add(criarTabelaItens(new String[][]{
-            {"Troca de Óleo",              "Interno", "1", "R$ 80,00"},
-            {"Filtro de Óleo",             "Interno", "1", "R$ 45,00"},
-            {"Alinhamento/Balanceamento",  "Externo", "1", "R$ 120,00"},
-        }));
+        p.add(Box.createVerticalStrut(10));
+        p.add(criarCardServicos());
         p.add(Box.createVerticalStrut(20));
 
-        // Seção peças
         p.add(criarLabelSecao("Peças Utilizadas"));
-        p.add(Box.createVerticalStrut(8));
-        p.add(criarTabelaItens(new String[][]{
-            {"Óleo Motor 5W30 1L", "—", "4", "R$ 32,00"},
-            {"Filtro de Óleo OC90", "—", "1", "R$ 28,50"},
-        }));
+        p.add(Box.createVerticalStrut(10));
+        p.add(criarCardPecas());
         p.add(Box.createVerticalStrut(20));
 
-        // Total
-        p.add(criarRodapeTotal());
+        p.add(criarLabelSecao("Observações"));
+        p.add(Box.createVerticalStrut(10));
+        p.add(criarCardObservacoes());
+        p.add(Box.createVerticalStrut(24));
+
+        p.add(criarRodapeAcoes());
 
         JScrollPane scroll = new JScrollPane(p);
         scroll.setBorder(null);
@@ -97,167 +130,239 @@ public class PanelComposicaoOS extends JPanel {
         return scroll;
     }
 
-    // Cabeçalho: número, cliente, veículo, data, status, botão editar status
-    private JPanel criarCabecalho() {
-        JPanel card = criarCardBase();
-        card.setLayout(new BorderLayout(12, 0));
-        card.setBorder(new EmptyBorder(18, 20, 18, 20));
-
-        JPanel esq = new JPanel();
-        esq.setOpaque(false);
-        esq.setLayout(new BoxLayout(esq, BoxLayout.Y_AXIS));
-
-        JLabel lblNum = new JLabel("OS #0042");
-        lblNum.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblNum.setForeground(MainFrame.COR_NAVY);
-
-        JLabel lblCliente = new JLabel("Cliente: Marcos Silva");
-        lblCliente.setFont(MainFrame.FONT_NORMAL);
-        lblCliente.setForeground(new Color(0x444444));
-
-        JLabel lblVeiculo = new JLabel("Veículo: Chevrolet Onix 2022  —  Placa: ABC-1234");
-        lblVeiculo.setFont(MainFrame.FONT_NORMAL);
-        lblVeiculo.setForeground(new Color(0x444444));
-
-        JLabel lblData = new JLabel("Abertura: 08/06/2026");
-        lblData.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblData.setForeground(MainFrame.COR_MUTED);
-
-        esq.add(lblNum);
-        esq.add(Box.createVerticalStrut(6));
-        esq.add(lblCliente);
-        esq.add(Box.createVerticalStrut(2));
-        esq.add(lblVeiculo);
-        esq.add(Box.createVerticalStrut(4));
-        esq.add(lblData);
-
-        JPanel dir = new JPanel();
-        dir.setOpaque(false);
-        dir.setLayout(new BoxLayout(dir, BoxLayout.Y_AXIS));
-
-        JLabel pill = PanelDashboard.criarStatusPill("Andamento");
-        pill.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-        JButton btnStatus = criarBotaoNavy("Editar status", 130, 32);
-        btnStatus.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-        dir.add(pill);
-        dir.add(Box.createVerticalStrut(10));
-        dir.add(btnStatus);
-
-        card.add(esq, BorderLayout.CENTER);
-        card.add(dir, BorderLayout.EAST);
-        return card;
-    }
-
-    // Info row: colaborador e telefone
-    private JPanel criarInfoRow() {
-        JPanel row = new JPanel(new GridLayout(1, 2, 16, 0));
-        row.setOpaque(false);
-
-        row.add(criarInfoChip("Colaborador", "João Mecânico"));
-        row.add(criarInfoChip("Telefone do cliente", "(47) 99123-4567"));
-        return row;
-    }
-
-    private JPanel criarInfoChip(String label, String valor) {
-        JPanel p = criarCardBase();
-        p.setBorder(new EmptyBorder(12, 16, 12, 16));
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-
-        JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        lbl.setForeground(new Color(0x888888));
-
-        JLabel val = new JLabel(valor);
-        val.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        val.setForeground(MainFrame.COR_NAVY);
-
-        p.add(lbl);
-        p.add(Box.createVerticalStrut(4));
-        p.add(val);
-        return p;
-    }
-
-    // Tabela de itens (serviços ou peças)
-    private JPanel criarTabelaItens(String[][] dados) {
+    private JPanel criarCardDados() {
         JPanel card = criarCardBase();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(new EmptyBorder(0, 0, 0, 0));
+        card.setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        // Header
-        JPanel header = new JPanel(new GridLayout(1, 4));
-        header.setOpaque(false);
-        header.setBackground(MainFrame.COR_CREAM_ALT);
-        header.setBorder(new EmptyBorder(8, 16, 8, 16));
+        cmbCliente     = criarCombo(CLIENTES);
+        cmbColaborador = criarCombo(COLABORADORES);
+        cmbMarca       = criarCombo(MARCAS);
+        cmbModelo      = criarCombo(new String[]{"Selecione primeiro a marca..."});
+        cmbModelo.setEnabled(false);
+        cmbStatus      = criarCombo(new String[]{"Aberta", "Em Andamento", "Concluída"});
+        txtPlaca       = criarCampo();
+        txtData        = criarCampo();
+        txtData.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
-        for (String col : new String[]{"Descrição", "Tipo", "Qtd", "Valor"}) {
-            JLabel h = new JLabel(col);
-            h.setFont(new Font("Segoe UI", Font.BOLD, 11));
-            h.setForeground(new Color(0x444444));
-            header.add(h);
-        }
+        cmbMarca.addActionListener(e -> {
+            int idx = cmbMarca.getSelectedIndex();
+            cmbModelo.removeAllItems();
+            if (idx > 0 && idx < MODELOS.length) {
+                cmbModelo.setEnabled(true);
+                cmbModelo.addItem("Selecione o modelo...");
+                for (String m : MODELOS[idx]) cmbModelo.addItem(m);
+            } else {
+                cmbModelo.setEnabled(false);
+                cmbModelo.addItem("Selecione primeiro a marca...");
+            }
+        });
 
-        card.add(header);
+        JPanel row1 = criarGridRow(2);
+        row1.add(criarGrupoCombo("Cliente",      cmbCliente));
+        row1.add(criarGrupoCombo("Colaborador",  cmbColaborador));
 
-        for (String[] row : dados) {
-            JPanel linha = new JPanel(new GridLayout(1, 4));
-            linha.setOpaque(false);
-            linha.setBorder(new EmptyBorder(10, 16, 10, 16));
+        JPanel row2 = criarGridRow(2);
+        row2.add(criarGrupoCombo("Marca",  cmbMarca));
+        row2.add(criarGrupoCombo("Modelo", cmbModelo));
 
-            JLabel lNome = new JLabel(row[0]);
-            lNome.setFont(MainFrame.FONT_NORMAL);
-            lNome.setForeground(new Color(0x333333));
+        JPanel row3 = criarGridRow(3);
+        row3.add(criarGrupoCampo("Placa",          txtPlaca));
+        row3.add(criarGrupoCampo("Data Abertura",   txtData));
+        row3.add(criarGrupoCombo("Status",          cmbStatus));
 
-            JLabel lTipo = new JLabel(row[1]);
-            lTipo.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-            lTipo.setForeground(MainFrame.COR_MUTED);
-
-            JLabel lQtd = new JLabel(row[2]);
-            lQtd.setFont(MainFrame.FONT_NORMAL);
-            lQtd.setForeground(new Color(0x444444));
-
-            JLabel lVal = new JLabel(row[3]);
-            lVal.setFont(new Font("Segoe UI", Font.BOLD, 12));
-            lVal.setForeground(MainFrame.COR_NAVY);
-
-            linha.add(lNome); linha.add(lTipo); linha.add(lQtd); linha.add(lVal);
-            card.add(criarDivisorLinha());
-            card.add(linha);
-        }
+        card.add(row1);
+        card.add(Box.createVerticalStrut(12));
+        card.add(row2);
+        card.add(Box.createVerticalStrut(12));
+        card.add(row3);
         return card;
     }
 
-    // Rodapé com total e botões
-    private JPanel criarRodapeTotal() {
+    private JPanel criarCardServicos() {
+        JPanel card = criarCardBase();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+
+        modeloServicos = new DefaultTableModel(new String[]{"Serviço", "Tipo", "Valor"}, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        modeloServicos.addRow(new Object[]{"Troca de Óleo", "Interno", "R$ 80,00"});
+        modeloServicos.addRow(new Object[]{"Alinhamento",   "Externo", "R$ 60,00"});
+
+        JScrollPane scrollServ = new JScrollPane(criarTabela(modeloServicos));
+        scrollServ.setBorder(null);
+        scrollServ.getViewport().setBackground(Color.WHITE);
+        scrollServ.setAlignmentX(Component.LEFT_ALIGNMENT);
+        scrollServ.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
+
+        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+        toolbar.setOpaque(false);
+        toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        toolbar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+
+        JButton btnAdd = criarBotaoNavy("+ Adicionar serviço", 160, 32);
+        btnAdd.addActionListener(e -> adicionarServico());
+        toolbar.add(btnAdd);
+
+        card.add(scrollServ);
+        card.add(toolbar);
+        return card;
+    }
+
+    private JPanel criarCardPecas() {
+        JPanel card = criarCardBase();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+
+        modeloPecas = new DefaultTableModel(new String[]{"Peça", "Qtd", "Valor Unit.", "Total"}, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        modeloPecas.addRow(new Object[]{"Óleo Motor 5W30", "4", "R$ 32,00", "R$ 128,00"});
+        modeloPecas.addRow(new Object[]{"Filtro de Óleo",  "1", "R$ 28,50", "R$ 28,50"});
+
+        JScrollPane scrollPec = new JScrollPane(criarTabela(modeloPecas));
+        scrollPec.setBorder(null);
+        scrollPec.getViewport().setBackground(Color.WHITE);
+        scrollPec.setAlignmentX(Component.LEFT_ALIGNMENT);
+        scrollPec.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
+
+        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+        toolbar.setOpaque(false);
+        toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        toolbar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+
+        JButton btnAdd = criarBotaoNavy("+ Adicionar peça", 150, 32);
+        btnAdd.addActionListener(e -> adicionarPeca());
+        toolbar.add(btnAdd);
+
+        card.add(scrollPec);
+        card.add(toolbar);
+        return card;
+    }
+
+    private JPanel criarCardObservacoes() {
+        JPanel card = criarCardBase();
+        card.setLayout(new BorderLayout());
+        card.setBorder(new EmptyBorder(12, 16, 12, 16));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JTextArea txtObs = new JTextArea(3, 0);
+        txtObs.setFont(MainFrame.FONT_NORMAL);
+        txtObs.setBackground(Color.WHITE);
+        txtObs.setBorder(null);
+        txtObs.setLineWrap(true);
+        txtObs.setWrapStyleWord(true);
+        txtObs.setForeground(new Color(0x444444));
+        card.add(txtObs, BorderLayout.CENTER);
+        return card;
+    }
+
+    private JPanel criarRodapeAcoes() {
         JPanel p = new JPanel(new BorderLayout(16, 0));
         p.setOpaque(false);
+        p.setAlignmentX(Component.LEFT_ALIGNMENT);
+        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
 
-        JPanel esq = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        esq.setOpaque(false);
-        esq.add(criarBotaoOutline("Imprimir OS", 130, 36));
-        esq.add(criarBotaoNavy("Adicionar item", 140, 36));
+        JPanel totalPanel = new JPanel();
+        totalPanel.setOpaque(false);
+        totalPanel.setLayout(new BoxLayout(totalPanel, BoxLayout.Y_AXIS));
 
-        JPanel dir = new JPanel();
-        dir.setOpaque(false);
-        dir.setLayout(new BoxLayout(dir, BoxLayout.Y_AXIS));
+        JLabel lblTotalLabel = new JLabel("Total estimado");
+        lblTotalLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblTotalLabel.setForeground(new Color(0x666666));
 
-        JLabel lblLabel = new JLabel("Total da OS");
-        lblLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblLabel.setForeground(new Color(0x666666));
-        lblLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-        JLabel lblTotal = new JLabel("R$ 385,50");
+        lblTotal = new JLabel("R$ 296,50");
         lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTotal.setForeground(MainFrame.COR_NAVY);
-        lblTotal.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
-        dir.add(lblLabel);
-        dir.add(lblTotal);
+        totalPanel.add(lblTotalLabel);
+        totalPanel.add(lblTotal);
 
-        p.add(esq, BorderLayout.WEST);
-        p.add(dir, BorderLayout.EAST);
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        btnPanel.setOpaque(false);
+
+        JButton btnCancelar = criarBotaoOutline("Cancelar", 110, 38);
+        btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_OS));
+
+        JButton btnSalvar = criarBotaoGold("Salvar OS", 140, 38);
+        btnSalvar.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "OS salva com sucesso!", "Sucesso",
+                JOptionPane.INFORMATION_MESSAGE);
+            frame.mostrarTela(MainFrame.TELA_LISTA_OS);
+        });
+
+        btnPanel.add(btnCancelar);
+        btnPanel.add(btnSalvar);
+
+        p.add(totalPanel, BorderLayout.WEST);
+        p.add(btnPanel,   BorderLayout.EAST);
         return p;
+    }
+
+    // ── Ações ─────────────────────────────────────────────────────────────────
+    private void adicionarServico() {
+        JTextField txtNome   = new JTextField(20);
+        JComboBox<String> cb = new JComboBox<>(new String[]{"Interno", "Externo"});
+        JTextField txtValor  = new JTextField("R$ 0,00", 10);
+
+        JPanel form = new JPanel(new GridLayout(3, 2, 8, 8));
+        form.add(new JLabel("Serviço:")); form.add(txtNome);
+        form.add(new JLabel("Tipo:"));   form.add(cb);
+        form.add(new JLabel("Valor:"));  form.add(txtValor);
+
+        if (JOptionPane.showConfirmDialog(this, form, "Adicionar Serviço",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+            String nome = txtNome.getText().trim();
+            if (!nome.isEmpty()) {
+                modeloServicos.addRow(new Object[]{nome, cb.getSelectedItem(), txtValor.getText().trim()});
+                recalcularTotal();
+            }
+        }
+    }
+
+    private void adicionarPeca() {
+        JTextField txtNome  = new JTextField(20);
+        JTextField txtQtd   = new JTextField("1", 5);
+        JTextField txtValor = new JTextField("R$ 0,00", 10);
+
+        JPanel form = new JPanel(new GridLayout(3, 2, 8, 8));
+        form.add(new JLabel("Peça:"));        form.add(txtNome);
+        form.add(new JLabel("Quantidade:"));  form.add(txtQtd);
+        form.add(new JLabel("Valor Unit.:"));  form.add(txtValor);
+
+        if (JOptionPane.showConfirmDialog(this, form, "Adicionar Peça",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+            String nome = txtNome.getText().trim();
+            if (!nome.isEmpty()) {
+                int qtd = 1;
+                try { qtd = Integer.parseInt(txtQtd.getText().trim()); } catch (NumberFormatException ignored) {}
+                String valorStr = txtValor.getText().trim();
+                double valor = 0;
+                try {
+                    valor = Double.parseDouble(valorStr.replace("R$","").replace(".","").replace(",",".").trim());
+                } catch (NumberFormatException ignored) {}
+                String total = String.format("R$ %.2f", valor * qtd).replace(".", ",");
+                modeloPecas.addRow(new Object[]{nome, qtd, valorStr, total});
+                recalcularTotal();
+            }
+        }
+    }
+
+    private void recalcularTotal() {
+        double total = 0;
+        for (int i = 0; i < modeloServicos.getRowCount(); i++) {
+            try {
+                total += Double.parseDouble(modeloServicos.getValueAt(i, 2).toString()
+                    .replace("R$","").replace(".","").replace(",",".").trim());
+            } catch (NumberFormatException ignored) {}
+        }
+        for (int i = 0; i < modeloPecas.getRowCount(); i++) {
+            try {
+                total += Double.parseDouble(modeloPecas.getValueAt(i, 3).toString()
+                    .replace("R$","").replace(".","").replace(",",".").trim());
+            } catch (NumberFormatException ignored) {}
+        }
+        lblTotal.setText(String.format("R$ %.2f", total).replace(".", ","));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -267,6 +372,14 @@ public class PanelComposicaoOS extends JPanel {
         lbl.setForeground(MainFrame.COR_NAVY);
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         return lbl;
+    }
+
+    private JPanel criarGridRow(int cols) {
+        JPanel row = new JPanel(new GridLayout(1, cols, 14, 0));
+        row.setOpaque(false);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 62));
+        return row;
     }
 
     private JPanel criarCardBase() {
@@ -289,17 +402,77 @@ public class PanelComposicaoOS extends JPanel {
         return card;
     }
 
-    private JPanel criarDivisorLinha() {
-        JPanel d = new JPanel() {
-            @Override protected void paintComponent(Graphics g) {
-                g.setColor(MainFrame.COR_BORDER);
-                g.fillRect(16, 0, getWidth() - 32, 1);
-            }
-        };
-        d.setOpaque(false);
-        d.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        d.setPreferredSize(new Dimension(0, 1));
-        return d;
+    private JTable criarTabela(DefaultTableModel model) {
+        JTable t = new JTable(model);
+        t.setFont(MainFrame.FONT_NORMAL);
+        t.setRowHeight(36);
+        t.setShowGrid(false);
+        t.setIntercellSpacing(new Dimension(0, 0));
+        t.setBackground(Color.WHITE);
+        t.setSelectionBackground(new Color(0xe8e3d8));
+        t.setSelectionForeground(MainFrame.COR_NAVY);
+        t.setFillsViewportHeight(true);
+        t.setDefaultEditor(Object.class, null);
+
+        JTableHeader header = t.getTableHeader();
+        header.setBackground(MainFrame.COR_CREAM_ALT);
+        header.setForeground(new Color(0x444444));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, MainFrame.COR_BORDER));
+        header.setReorderingAllowed(false);
+        return t;
+    }
+
+    private JPanel criarGrupoCombo(String label, JComboBox<String> combo) {
+        JPanel g = new JPanel();
+        g.setOpaque(false);
+        g.setLayout(new BoxLayout(g, BoxLayout.Y_AXIS));
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lbl.setForeground(new Color(0x444444));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        combo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        combo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        combo.setFont(MainFrame.FONT_NORMAL);
+        g.add(lbl);
+        g.add(Box.createVerticalStrut(4));
+        g.add(combo);
+        return g;
+    }
+
+    private JPanel criarGrupoCampo(String label, JTextField campo) {
+        JPanel g = new JPanel();
+        g.setOpaque(false);
+        g.setLayout(new BoxLayout(g, BoxLayout.Y_AXIS));
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lbl.setForeground(new Color(0x444444));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        campo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        campo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        g.add(lbl);
+        g.add(Box.createVerticalStrut(4));
+        g.add(campo);
+        return g;
+    }
+
+    private JTextField criarCampo() {
+        JTextField f = new JTextField();
+        f.setFont(MainFrame.FONT_NORMAL);
+        f.setBackground(Color.WHITE);
+        f.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
+            new EmptyBorder(6, 10, 6, 10)));
+        f.setPreferredSize(new Dimension(0, 34));
+        return f;
+    }
+
+    private JComboBox<String> criarCombo(String[] itens) {
+        JComboBox<String> c = new JComboBox<>(itens);
+        c.setFont(MainFrame.FONT_NORMAL);
+        c.setBackground(Color.WHITE);
+        c.setPreferredSize(new Dimension(0, 34));
+        return c;
     }
 
     private JButton criarBotaoNavy(String texto, int w, int h) {
@@ -312,8 +485,31 @@ public class PanelComposicaoOS extends JPanel {
                 g2.setColor(Color.WHITE);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(),
-                    (getWidth() - fm.stringWidth(getText())) / 2,
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btn.setOpaque(true);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(w, h));
+        return btn;
+    }
+
+    private JButton criarBotaoGold(String texto, int w, int h) {
+        JButton btn = new JButton(texto) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD.darker() : MainFrame.COR_GOLD);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
                     (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
@@ -337,8 +533,7 @@ public class PanelComposicaoOS extends JPanel {
                 g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
                 g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(),
-                    (getWidth() - fm.stringWidth(getText())) / 2,
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
                     (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
