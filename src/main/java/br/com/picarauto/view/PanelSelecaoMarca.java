@@ -13,6 +13,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 public class PanelSelecaoMarca extends JPanel {
 
@@ -120,7 +122,7 @@ public class PanelSelecaoMarca extends JPanel {
 
     private JPanel criarCardMarca(String sigla, Color bgLogo, Color fgLogo,
                                    String nome, String fileKey) {
-        final ImageIcon logoIcon = carregarLogoMarca(fileKey, 80, 80);
+        final ImageIcon logoIcon = carregarLogoMarca(fileKey);
 
         JPanel card = new JPanel() {
             private boolean hover = false;
@@ -243,13 +245,20 @@ public class PanelSelecaoMarca extends JPanel {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-    private ImageIcon carregarLogoMarca(String fileKey, int w, int h) {
+    private ImageIcon carregarLogoMarca(String fileKey) {
         String caminho = "/images/logo" + fileKey + ".png";
         java.net.URL url = getClass().getResource(caminho);
         if (url != null) {
-            Image img = new ImageIcon(url).getImage()
-                .getScaledInstance(w, h, Image.SCALE_SMOOTH);
-            return new ImageIcon(img);
+            try {
+                BufferedImage bi = ImageIO.read(url);
+                if (bi != null) {
+                    int iw = bi.getWidth(), ih = bi.getHeight();
+                    int newW, newH;
+                    if (iw >= ih) { newW = 80; newH = Math.max(1, (int)(80.0 * ih / iw)); }
+                    else          { newH = 80; newW = Math.max(1, (int)(80.0 * iw / ih)); }
+                    return new ImageIcon(bi.getScaledInstance(newW, newH, Image.SCALE_SMOOTH));
+                }
+            } catch (java.io.IOException ignored) {}
         }
         return null;
     }
