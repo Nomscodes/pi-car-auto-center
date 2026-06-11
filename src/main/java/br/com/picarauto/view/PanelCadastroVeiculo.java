@@ -75,7 +75,7 @@ public class PanelCadastroVeiculo extends JPanel {
         lbl.setForeground(Color.WHITE);
 
         JButton btnVoltar = criarBotaoVoltar();
-        btnVoltar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_MARCA));
+        btnVoltar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_CLIENTES));
 
         bar.add(lbl,       BorderLayout.WEST);
         bar.add(btnVoltar, BorderLayout.EAST);
@@ -162,9 +162,14 @@ public class PanelCadastroVeiculo extends JPanel {
         p.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton btnCancelar = criarBotaoOutline("Cancelar", 110, 36);
-        btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_MARCA));
+        btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_CLIENTES));
 
         JButton btnSalvar = criarBotaoGold("Salvar veículo", 140, 36);
+        btnSalvar.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Veículo cadastrado com sucesso!",
+                "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            frame.mostrarTela(MainFrame.TELA_LISTA_CLIENTES);
+        });
 
         p.add(btnCancelar);
         p.add(btnSalvar);
