@@ -27,28 +27,17 @@ public class PanelComposicaoOS extends JPanel {
         "Carlos Funileiro", "Maria Pintora", "Luiz Borracheiro"
     };
     private static final String[] MARCAS = {
-        "Selecione...", "Chevrolet", "Volkswagen", "Fiat", "Ford",
-        "Toyota", "Honda", "Hyundai", "Renault", "Nissan",
-        "Jeep", "Peugeot", "Citroën", "Mitsubishi", "Kia", "Subaru", "Mercedes"
+        "Selecione...", "Chevrolet", "Volkswagen", "Hyundai", "Toyota", "Ford", "Fiat", "Honda"
     };
     private static final String[][] MODELOS = {
         {},
-        {"Onix","Tracker","Cruze","S10","Spin","Montana"},
-        {"Gol","Polo","T-Cross","Virtus","Nivus","Amarok"},
-        {"Argo","Pulse","Cronos","Toro","Strada","Mobi"},
-        {"Ka","EcoSport","Ranger","Territory","Bronco"},
-        {"Corolla","Hilux","SW4","Yaris","RAV4"},
-        {"Civic","HR-V","City","Fit","CR-V"},
-        {"HB20","Creta","Tucson","Santa Fe","Elantra"},
-        {"Kwid","Sandero","Logan","Duster","Captur"},
-        {"Kicks","Frontier","Versa","Sentra"},
-        {"Renegade","Compass","Commander","Wrangler"},
-        {"208","2008","308","3008","5008"},
-        {"C3","C4 Cactus","C5 Aircross"},
-        {"Eclipse Cross","Outlander","L200"},
-        {"Sportage","Sorento","Stinger","Soul"},
-        {"Impreza","Forester","Outback","WRX"},
-        {"Classe A","Classe C","GLA","GLC","Sprinter"},
+        {"Onix", "Tracker", "Cruze", "S10", "Spin", "Montana"},
+        {"Gol", "Polo", "T-Cross", "Virtus", "Nivus", "Amarok"},
+        {"HB20", "Creta", "Tucson", "Santa Fe", "Elantra"},
+        {"Corolla", "Hilux", "SW4", "Yaris", "RAV4"},
+        {"Ka", "EcoSport", "Ranger", "Territory", "Bronco"},
+        {"Argo", "Pulse", "Cronos", "Toro", "Strada", "Mobi"},
+        {"Civic", "HR-V", "City", "Fit", "CR-V"},
     };
 
     private JComboBox<String> cmbCliente, cmbColaborador, cmbMarca, cmbModelo, cmbStatus;
