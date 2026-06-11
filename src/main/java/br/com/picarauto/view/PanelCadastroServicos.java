@@ -114,35 +114,37 @@ public class PanelCadastroServicos extends JPanel {
     }
 
     private JPanel criarBarraFerr() {
-        JPanel barra = new JPanel(new BorderLayout(0, 10));
-        barra.setOpaque(false);
-        barra.setBorder(new EmptyBorder(0, 0, 12, 0));
-
-        // Toggle Internos / Externos
         JPanel abas = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         abas.setOpaque(false);
 
-        JButton[] btns = new JButton[2];
-        btns[0] = criarBotaoAba("Internos");
-        btns[1] = criarBotaoAba("Externos");
-
+        JButton[] btns = { criarBotaoAba("Internos"), criarBotaoAba("Externos") };
         btns[0].addActionListener(e -> { abaInterno = true;  recarregarTabela(); btns[0].repaint(); btns[1].repaint(); });
         btns[1].addActionListener(e -> { abaInterno = false; recarregarTabela(); btns[0].repaint(); btns[1].repaint(); });
-
         abas.add(btns[0]);
         abas.add(btns[1]);
 
-        // Linha busca + botão
-        JPanel linha2 = new JPanel(new BorderLayout(12, 0));
-        linha2.setOpaque(false);
-
         txtBusca = new JTextField();
-        txtBusca.setFont(MainFrame.FONT_NORMAL);
+        txtBusca.setPreferredSize(new Dimension(0, 36));
+        txtBusca.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         txtBusca.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
-            new EmptyBorder(6, 10, 6, 10)));
+            BorderFactory.createLineBorder(new Color(0xD0C9B8)),
+            BorderFactory.createEmptyBorder(4, 10, 4, 10)));
+        txtBusca.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         txtBusca.setBackground(Color.WHITE);
-        txtBusca.setToolTipText("Buscar serviço...");
+        txtBusca.setText("Pesquisar...");
+        txtBusca.setForeground(Color.GRAY);
+        txtBusca.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) {
+                if ("Pesquisar...".equals(txtBusca.getText())) {
+                    txtBusca.setText(""); txtBusca.setForeground(new Color(0x333333));
+                }
+            }
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                if (txtBusca.getText().isEmpty()) {
+                    txtBusca.setText("Pesquisar..."); txtBusca.setForeground(Color.GRAY);
+                }
+            }
+        });
         txtBusca.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e)  { filtrar(); }
             @Override public void removeUpdate(DocumentEvent e)  { filtrar(); }
@@ -150,17 +152,23 @@ public class PanelCadastroServicos extends JPanel {
             void filtrar() {
                 if (sorter == null) return;
                 String txt = txtBusca.getText().trim();
+                if ("Pesquisar...".equals(txt)) { sorter.setRowFilter(null); return; }
                 sorter.setRowFilter(txt.isEmpty() ? null : RowFilter.regexFilter("(?i)" + txt));
             }
         });
 
         JButton btnNovo = criarBotaoNavy("Novo serviço", 120, 34);
 
-        linha2.add(txtBusca, BorderLayout.CENTER);
-        linha2.add(btnNovo,  BorderLayout.EAST);
+        JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
+        painelBusca.setBackground(new Color(0xF5F0E6));
+        painelBusca.add(txtBusca, BorderLayout.CENTER);
+        painelBusca.add(btnNovo, BorderLayout.EAST);
 
-        barra.add(abas,   BorderLayout.NORTH);
-        barra.add(linha2, BorderLayout.SOUTH);
+        JPanel barra = new JPanel(new BorderLayout(0, 10));
+        barra.setOpaque(false);
+        barra.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        barra.add(abas, BorderLayout.NORTH);
+        barra.add(painelBusca, BorderLayout.SOUTH);
         return barra;
     }
 
