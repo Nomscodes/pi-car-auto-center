@@ -120,15 +120,14 @@ public class PanelSelecaoMarca extends JPanel {
 
     private JPanel criarCardMarca(String sigla, Color bgLogo, Color fgLogo,
                                    String nome, String fileKey) {
-        final ImageIcon logoIcon = carregarLogoMarca(fileKey, 56, 56);
+        final ImageIcon logoIcon = carregarLogoMarca(fileKey, 80, 80);
 
         JPanel card = new JPanel() {
             private boolean hover = false;
             {
                 setOpaque(false);
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-                setBorder(new EmptyBorder(10, 8, 8, 8));
+                setLayout(new GridBagLayout());
                 addMouseListener(new MouseAdapter() {
                     @Override public void mouseEntered(MouseEvent e) { hover = true;  repaint(); }
                     @Override public void mouseExited (MouseEvent e) { hover = false; repaint(); }
@@ -165,32 +164,22 @@ public class PanelSelecaoMarca extends JPanel {
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2.setColor(bgLogo);
-                    g2.fill(new Ellipse2D.Float(0, 0, 56, 56));
+                    g2.fill(new Ellipse2D.Float(0, 0, 80, 80));
                     g2.setColor(fgLogo);
-                    g2.setFont(new Font("Segoe UI", Font.BOLD, sigla.length() > 2 ? 11 : 14));
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, sigla.length() > 2 ? 14 : 18));
                     FontMetrics fm = g2.getFontMetrics();
                     g2.drawString(sigla,
-                        (56 - fm.stringWidth(sigla)) / 2,
-                        (56 + fm.getAscent() - fm.getDescent()) / 2);
+                        (80 - fm.stringWidth(sigla)) / 2,
+                        (80 + fm.getAscent() - fm.getDescent()) / 2);
                     g2.dispose();
                 }
             };
-            lblLogo.setPreferredSize(new Dimension(56, 56));
-            lblLogo.setMinimumSize(new Dimension(56, 56));
-            lblLogo.setMaximumSize(new Dimension(56, 56));
+            lblLogo.setPreferredSize(new Dimension(80, 80));
+            lblLogo.setMinimumSize(new Dimension(80, 80));
+            lblLogo.setMaximumSize(new Dimension(80, 80));
         }
-        lblLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblNome = new JLabel(nome, SwingConstants.CENTER);
-        lblNome.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblNome.setForeground(new Color(0x444444));
-        lblNome.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        card.add(Box.createVerticalGlue());
         card.add(lblLogo);
-        card.add(Box.createVerticalStrut(6));
-        card.add(lblNome);
-        card.add(Box.createVerticalGlue());
 
         return card;
     }
