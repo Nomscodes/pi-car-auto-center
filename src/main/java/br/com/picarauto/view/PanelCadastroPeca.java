@@ -104,17 +104,28 @@ public class PanelCadastroPeca extends JPanel {
     }
 
     private JPanel criarBarraFerr() {
-        JPanel barra = new JPanel(new BorderLayout(12, 0));
-        barra.setOpaque(false);
-        barra.setBorder(new EmptyBorder(0, 0, 12, 0));
-
         txtBusca = new JTextField();
-        txtBusca.setFont(MainFrame.FONT_NORMAL);
+        txtBusca.setPreferredSize(new Dimension(0, 36));
+        txtBusca.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         txtBusca.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
-            new EmptyBorder(6, 10, 6, 10)));
+            BorderFactory.createLineBorder(new Color(0xD0C9B8)),
+            BorderFactory.createEmptyBorder(4, 10, 4, 10)));
+        txtBusca.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         txtBusca.setBackground(Color.WHITE);
-        txtBusca.setToolTipText("Buscar peça...");
+        txtBusca.setText("Pesquisar...");
+        txtBusca.setForeground(Color.GRAY);
+        txtBusca.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) {
+                if ("Pesquisar...".equals(txtBusca.getText())) {
+                    txtBusca.setText(""); txtBusca.setForeground(new Color(0x333333));
+                }
+            }
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                if (txtBusca.getText().isEmpty()) {
+                    txtBusca.setText("Pesquisar..."); txtBusca.setForeground(Color.GRAY);
+                }
+            }
+        });
         txtBusca.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e)  { filtrar(); }
             @Override public void removeUpdate(DocumentEvent e)  { filtrar(); }
@@ -122,22 +133,22 @@ public class PanelCadastroPeca extends JPanel {
             void filtrar() {
                 if (sorter == null) return;
                 String txt = txtBusca.getText().trim();
+                if ("Pesquisar...".equals(txt)) { sorter.setRowFilter(null); return; }
                 sorter.setRowFilter(txt.isEmpty() ? null : RowFilter.regexFilter("(?i)" + txt));
             }
         });
 
         JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         direita.setOpaque(false);
+        direita.add(criarBotaoGreen("Importar Excel", 140, 34));
+        direita.add(criarBotaoNavy("Nova peça", 110, 34));
 
-        JButton btnImportar = criarBotaoGreen("Importar Excel", 140, 34);
-        JButton btnNova     = criarBotaoNavy("Nova peça",       110, 34);
-
-        direita.add(btnImportar);
-        direita.add(btnNova);
-
-        barra.add(txtBusca, BorderLayout.CENTER);
-        barra.add(direita,  BorderLayout.EAST);
-        return barra;
+        JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
+        painelBusca.setBackground(new Color(0xF5F0E6));
+        painelBusca.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        painelBusca.add(txtBusca, BorderLayout.CENTER);
+        painelBusca.add(direita, BorderLayout.EAST);
+        return painelBusca;
     }
 
     private JScrollPane criarScrollTabela() {
