@@ -170,6 +170,7 @@ public class PanelSelecaoModelo extends JPanel {
         if (gradeModelos == null) return;
 
         gradeModelos.removeAll();
+        frame.setModeloSelecionado("");
         String[]  modelos  = MODELOS_POR_MARCA.getOrDefault(marcaAtual, new String[]{});
         Color[]   corMarca = getMarcaCor(marcaAtual);
 
@@ -351,6 +352,7 @@ public class PanelSelecaoModelo extends JPanel {
 
     private void selecionarModelo(String nome) {
         modeloSelecionado = nome;
+        frame.setModeloSelecionado(nome);
         lblModeloSel.setText("Modelo selecionado: " + nome);
         lblModeloSel.setForeground(MainFrame.COR_NAVY);
         btnProximo.setEnabled(true);

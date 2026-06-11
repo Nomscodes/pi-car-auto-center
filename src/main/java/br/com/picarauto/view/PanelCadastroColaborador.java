@@ -21,6 +21,7 @@ public class PanelCadastroColaborador extends JPanel {
     private JTable        tabela;
     private DefaultTableModel modelo;
     private TableRowSorter<DefaultTableModel> sorter;
+    private JComboBox<String> cmbOrdenar;
 
     private static final String[] COLUNAS = {"Nome", "CPF", "Função", "Telefone", ""};
 
@@ -78,13 +79,13 @@ public class PanelCadastroColaborador extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_GOLD);
-                g2.fillOval(0, 0, 30, 30);
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2.setColor(MainFrame.COR_NAVY);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
-                String i = MainFrame.getUsuarioLogado().substring(0, 1).toUpperCase();
+                g2.fillOval(0, 0, 30, 30);
+                String car = new String(Character.toChars(0x1F697));
+                g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(i, (30 - fm.stringWidth(i)) / 2, (30 + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(car, (30 - fm.stringWidth(car)) / 2, (30 + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
@@ -132,15 +133,9 @@ public class PanelCadastroColaborador extends JPanel {
             }
         });
         txtBusca.getDocument().addDocumentListener(new DocumentListener() {
-            @Override public void insertUpdate(DocumentEvent e)  { filtrar(); }
-            @Override public void removeUpdate(DocumentEvent e)  { filtrar(); }
-            @Override public void changedUpdate(DocumentEvent e) { filtrar(); }
-            void filtrar() {
-                if (sorter == null) return;
-                String txt = txtBusca.getText().trim();
-                if ("Pesquisar...".equals(txt)) { sorter.setRowFilter(null); return; }
-                sorter.setRowFilter(txt.isEmpty() ? null : RowFilter.regexFilter("(?i)" + txt));
-            }
+            @Override public void insertUpdate(DocumentEvent e)  { aplicarFiltros(); }
+            @Override public void removeUpdate(DocumentEvent e)  { aplicarFiltros(); }
+            @Override public void changedUpdate(DocumentEvent e) { aplicarFiltros(); }
         });
 
         JButton btnNovo = criarBotaoNavy("Novo colaborador", 150, 34);
@@ -148,10 +143,50 @@ public class PanelCadastroColaborador extends JPanel {
 
         JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
         painelBusca.setBackground(new Color(0xF5F0E6));
-        painelBusca.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
         painelBusca.add(txtBusca, BorderLayout.CENTER);
         painelBusca.add(btnNovo, BorderLayout.EAST);
-        return painelBusca;
+
+        String[] funcoes = {"Padrão", "A-Z (Nome)", "Z-A (Nome)",
+            "Função: Mecânico", "Função: Eletricista", "Função: Funileiro", "Função: Pintor",
+            "Função: Borracheiro", "Função: Auxiliar", "Função: Lavador", "Função: Recepcionista"};
+        cmbOrdenar = new JComboBox<>(funcoes);
+        cmbOrdenar.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        cmbOrdenar.setBackground(Color.WHITE);
+        cmbOrdenar.setPreferredSize(new Dimension(200, 32));
+        cmbOrdenar.addActionListener(e -> aplicarFiltros());
+
+        JPanel filtroRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 4));
+        filtroRow.setOpaque(false);
+        filtroRow.add(cmbOrdenar);
+
+        JPanel barra = new JPanel(new BorderLayout(0, 6));
+        barra.setOpaque(false);
+        barra.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        barra.add(painelBusca, BorderLayout.NORTH);
+        barra.add(filtroRow, BorderLayout.SOUTH);
+        return barra;
+    }
+
+    private void aplicarFiltros() {
+        if (sorter == null) return;
+        String sel = cmbOrdenar == null ? "Padrão" : (String) cmbOrdenar.getSelectedItem();
+        if (sel == null) sel = "Padrão";
+        String txt = txtBusca.getText().trim();
+        boolean hasText = !txt.isEmpty() && !"Pesquisar...".equals(txt);
+
+        sorter.setSortKeys(java.util.Collections.emptyList());
+        if ("A-Z (Nome)".equals(sel))
+            sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
+        else if ("Z-A (Nome)".equals(sel))
+            sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
+
+        java.util.List<RowFilter<Object, Object>> filtros = new java.util.ArrayList<>();
+        if (hasText) filtros.add(RowFilter.regexFilter("(?i)" + txt));
+        if (sel.startsWith("Função: ")) {
+            String func = java.util.regex.Pattern.quote(sel.substring(8));
+            filtros.add(RowFilter.regexFilter("(?i)^" + func + "$", 2));
+        }
+        sorter.setRowFilter(filtros.isEmpty() ? null : RowFilter.andFilter(filtros));
     }
 
     private JScrollPane criarScrollTabela() {

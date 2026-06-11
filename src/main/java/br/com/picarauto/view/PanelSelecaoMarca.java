@@ -240,6 +240,7 @@ public class PanelSelecaoMarca extends JPanel {
 
     private void navegarParaModelo() {
         if (marcaSelecionada == null) return;
+        frame.setMarcaSelecionada(marcaSelecionada);
         PanelSelecaoModelo.setMarcaSelecionada(marcaSelecionada, modoNovaOS);
         frame.mostrarTela(MainFrame.TELA_MODELO);
     }
