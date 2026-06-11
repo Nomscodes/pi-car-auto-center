@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
  */
 
 @Service
-public class ServicoInternoService extends GenericService<ServicoInternoModel, IServicoInternoRepository, IServicoInternoValidation> implements IServicoInternoService{
-    
+public class ServicoInternoService extends GenericService<ServicoInternoModel, IServicoInternoRepository, IServicoInternoValidation> implements IServicoInternoService {
+
     public ServicoInternoService(IServicoInternoRepository repository, IServicoInternoValidation validation) {
         super(repository, validation);
     }

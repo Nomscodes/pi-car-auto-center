@@ -15,9 +15,9 @@ import org.springframework.stereotype.Service;
  */
 
 @Service
-public class ServicoExternoService extends GenericService<ServicoExternoModel, IServicoExternoRepository, IServicoExternoValidation> implements IServicoExternoService{
+public class ServicoExternoService extends GenericService<ServicoExternoModel, IServicoExternoRepository, IServicoExternoValidation> implements IServicoExternoService {
 
     public ServicoExternoService(IServicoExternoRepository repository, IServicoExternoValidation validation) {
         super(repository, validation);
-    }
+    }   
 }
