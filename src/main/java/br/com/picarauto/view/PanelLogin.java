@@ -40,13 +40,18 @@ public class PanelLogin extends JPanel {
             }
         };
         card.setOpaque(false);
-        card.setPreferredSize(new Dimension(320, 460));
+        card.setPreferredSize(new Dimension(320, 480));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(new EmptyBorder(28, 36, 28, 36));
 
         // --- Logo ---
         JLabel logoLabel = carregarLogo();
         logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel lblAutoCenter = new JLabel("AUTO CENTER", SwingConstants.CENTER);
+        lblAutoCenter.setFont(new Font("Segoe UI", Font.PLAIN, 9));
+        lblAutoCenter.setForeground(MainFrame.COR_MUTED);
+        lblAutoCenter.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Divisor gold 40px
         JPanel divider = new JPanel() {
@@ -110,7 +115,9 @@ public class PanelLogin extends JPanel {
 
         // --- Montagem ---
         card.add(logoLabel);
-        card.add(Box.createVerticalStrut(14));
+        card.add(Box.createVerticalStrut(6));
+        card.add(lblAutoCenter);
+        card.add(Box.createVerticalStrut(10));
         card.add(divider);
         card.add(Box.createVerticalStrut(28));
         card.add(lblUsuarioLabel);
@@ -132,13 +139,13 @@ public class PanelLogin extends JPanel {
         java.net.URL url = getClass().getResource("/images/logo.png");
         if (url != null) {
             Image scaled = new ImageIcon(url).getImage()
-                .getScaledInstance(200, 100, Image.SCALE_SMOOTH);
+                .getScaledInstance(220, 110, Image.SCALE_SMOOTH);
             return new JLabel(new ImageIcon(scaled), SwingConstants.CENTER);
         }
-        return new JLabel(
-            "<html><center><span style='font-size:18pt;font-weight:bold;color:#1a2744'>AV CAR</span>"
-            + "<br><span style='font-size:9pt;color:#8899bb'>AUTO CENTER</span></center></html>",
-            SwingConstants.CENTER);
+        JLabel lbl = new JLabel("AV CAR", SwingConstants.CENTER);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lbl.setForeground(MainFrame.COR_NAVY);
+        return lbl;
     }
 
     private JLabel criarLabel(String texto) {
@@ -167,7 +174,7 @@ public class PanelLogin extends JPanel {
         String usuario = txtUsuario.getText().trim();
         String senha   = new String(txtSenha.getPassword());
         if (usuario.equals("admin") && senha.equals("admin")) {
-            MainFrame.setUsuarioLogado("admin");
+            MainFrame.setUsuarioLogado("Godofredo Silva");
             lblErro.setText(" ");
             frame.mostrarTela(MainFrame.TELA_DASHBOARD);
         } else {

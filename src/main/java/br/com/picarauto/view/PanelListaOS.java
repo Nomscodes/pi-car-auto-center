@@ -98,7 +98,7 @@ public class PanelListaOS extends JPanel {
     private JPanel criarConteudo() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(MainFrame.COR_CREAM);
-        p.setBorder(new EmptyBorder(20, 20, 20, 20));
+        p.setBorder(new EmptyBorder(16, 16, 16, 16));
 
         p.add(criarBarraFerr(), BorderLayout.NORTH);
         p.add(criarScrollTabela(), BorderLayout.CENTER);
@@ -108,7 +108,7 @@ public class PanelListaOS extends JPanel {
     private JPanel criarBarraFerr() {
         JPanel barra = new JPanel(new BorderLayout(12, 0));
         barra.setOpaque(false);
-        barra.setBorder(new EmptyBorder(0, 0, 14, 0));
+        barra.setBorder(new EmptyBorder(0, 0, 12, 0));
 
         // Busca
         txtBusca = new JTextField();
@@ -144,10 +144,7 @@ public class PanelListaOS extends JPanel {
 
         // Botão Nova OS
         JButton btnNova = criarBotaoNavy("Nova OS", 110, 34);
-        btnNova.addActionListener(e -> {
-            PanelSelecaoMarca.modoNovaOS = true;
-            frame.mostrarTela(MainFrame.TELA_MARCA);
-        });
+        btnNova.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_COMPOSICAO));
 
         JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         direita.setOpaque(false);
@@ -169,9 +166,9 @@ public class PanelListaOS extends JPanel {
         sorter = new TableRowSorter<>(modelo);
         tabela.setRowSorter(sorter);
         tabela.setFont(MainFrame.FONT_NORMAL);
-        tabela.setRowHeight(40);
+        tabela.setRowHeight(32);
         tabela.setShowGrid(false);
-        tabela.setIntercellSpacing(new Dimension(0, 0));
+        tabela.setIntercellSpacing(new Dimension(12, 0));
         tabela.setBackground(Color.WHITE);
         tabela.setSelectionBackground(new Color(0xe8e3d8));
         tabela.setSelectionForeground(MainFrame.COR_NAVY);
