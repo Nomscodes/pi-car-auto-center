@@ -136,11 +136,30 @@ public class PanelLogin extends JPanel {
     }
 
     private JLabel carregarLogo() {
-        java.net.URL url = getClass().getResource("/images/logo.png");
-        if (url != null) {
-            Image scaled = new ImageIcon(url).getImage()
-                .getScaledInstance(260, 130, Image.SCALE_SMOOTH);
-            return new JLabel(new ImageIcon(scaled), SwingConstants.CENTER);
+        // Tenta os dois nomes possíveis (Windows salva JFIF com extensão dupla)
+        String[] caminhos = {"/images/logo.png", "/images/logo.png.jfif"};
+        for (String caminho : caminhos) {
+            java.net.URL url = getClass().getResource(caminho);
+            System.out.println("Logo URL [" + caminho + "]: " + url);
+            if (url != null) {
+                Image scaled = new ImageIcon(url).getImage()
+                    .getScaledInstance(260, 130, Image.SCALE_SMOOTH);
+                return new JLabel(new ImageIcon(scaled), SwingConstants.CENTER);
+            }
+        }
+        // Fallback via classloader (sem barra inicial)
+        String[] caminhosCl = {"images/logo.png", "images/logo.png.jfif"};
+        for (String caminho : caminhosCl) {
+            try (java.io.InputStream stream =
+                    getClass().getClassLoader().getResourceAsStream(caminho)) {
+                System.out.println("Logo stream [" + caminho + "]: " + stream);
+                if (stream != null) {
+                    byte[] bytes = stream.readAllBytes();
+                    Image scaled = new ImageIcon(bytes).getImage()
+                        .getScaledInstance(260, 130, Image.SCALE_SMOOTH);
+                    return new JLabel(new ImageIcon(scaled), SwingConstants.CENTER);
+                }
+            } catch (java.io.IOException ignored) {}
         }
         JLabel lbl = new JLabel("AV CAR", SwingConstants.CENTER);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 18));
