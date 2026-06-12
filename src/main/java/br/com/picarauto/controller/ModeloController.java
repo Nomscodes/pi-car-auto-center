@@ -4,19 +4,25 @@
  */
 package br.com.picarauto.controller;
 
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import br.com.picarauto.model.ModeloModel;
 import br.com.picarauto.service.IModeloService;
-import org.springframework.stereotype.Component;
 
 /**
  *
  * @author Gabriel
  */
-
 @Component
 public class ModeloController extends GenericController<ModeloModel, IModeloService> {
 
     public ModeloController(IModeloService service) {
         super(service);
+    }
+
+    public List<ModeloModel> findAllByIdMarca(Long idMarca) {
+        return service.findAllByIdMarca(idMarca);
     }
 }
