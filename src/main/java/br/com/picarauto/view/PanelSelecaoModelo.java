@@ -33,8 +33,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.imageio.ImageIO;
+
+// Imports do backend para carregar modelos do banco e salvar o id do modelo selecionado
+import br.com.picarauto.util.ContextoAplicacao;
+import br.com.picarauto.controller.ModeloController;
+import br.com.picarauto.model.ModeloModel;
 
 public class PanelSelecaoModelo extends JPanel {
 
@@ -48,6 +54,9 @@ public class PanelSelecaoModelo extends JPanel {
     private JLabel  lblModeloSel;
     private JLabel  lblTitulo;
     private JPanel  gradeModelos;
+
+    // Guarda os modelos carregados do banco para identificar o id ao selecionar
+    private List<ModeloModel> modelosAtuais = null;
 
     private static final Map<String, String[]> MODELOS_POR_MARCA = new HashMap<>();
     static {
@@ -69,16 +78,14 @@ public class PanelSelecaoModelo extends JPanel {
         MODELOS_POR_MARCA.put("Mercedes-Benz",new String[]{"Classe A", "Classe C", "GLA", "GLC", "Sprinter", "Actros", "CLA", "EQC"});
     }
 
-    // Mapeamento para nomes de arquivo que não seguem a conversão padrão
-    // Chave = nome.toLowerCase().replace(" ","").replace("/","-")
     private static final Map<String, String> ARQUIVO_OVERRIDE = new HashMap<>();
     static {
-        ARQUIVO_OVERRIDE.put("hilux",        "hillux");       // typo no arquivo
-        ARQUIVO_OVERRIDE.put("broncosport",  "bronco");       // "Bronco Sport" → bronco.png
-        ARQUIVO_OVERRIDE.put("nivus",        "nirvus");       // typo no arquivo
-        ARQUIVO_OVERRIDE.put("t-cross",      "t-cross");      // hifens preservados
-        ARQUIVO_OVERRIDE.put("onixplus",     "onixplus");     // "Onix Plus" → onixplus.png
-        ARQUIVO_OVERRIDE.put("corollacross", "corollacross"); // "Corolla Cross" → corollacross.png
+        ARQUIVO_OVERRIDE.put("hilux",        "hillux");
+        ARQUIVO_OVERRIDE.put("broncosport",  "bronco");
+        ARQUIVO_OVERRIDE.put("nivus",        "nirvus");
+        ARQUIVO_OVERRIDE.put("t-cross",      "t-cross");
+        ARQUIVO_OVERRIDE.put("onixplus",     "onixplus");
+        ARQUIVO_OVERRIDE.put("corollacross", "corollacross");
         ARQUIVO_OVERRIDE.put("toro",         "toro");
         ARQUIVO_OVERRIDE.put("pulse",        "pulse");
         ARQUIVO_OVERRIDE.put("argo",         "argo");
@@ -162,6 +169,7 @@ public class PanelSelecaoModelo extends JPanel {
             lblTitulo.setText("AV CAR AUTO CENTER  —  Selecionar Modelo — " + marcaAtual);
 
         modeloSelecionado = null;
+        modelosAtuais     = null;
         if (lblModeloSel != null) {
             lblModeloSel.setText("Nenhum modelo selecionado");
             lblModeloSel.setForeground(new Color(0x888888));
@@ -171,20 +179,45 @@ public class PanelSelecaoModelo extends JPanel {
 
         gradeModelos.removeAll();
         frame.setModeloSelecionado("");
-        String[]  modelos  = MODELOS_POR_MARCA.getOrDefault(marcaAtual, new String[]{});
-        Color[]   corMarca = getMarcaCor(marcaAtual);
+        frame.setIdModeloSelecionado(null);
 
-        for (String modelo : modelos)
-            gradeModelos.add(criarCardModelo(modelo, corMarca[0], corMarca[1]));
+        Color[] corMarca = getMarcaCor(marcaAtual);
+
+        // Tenta carregar os modelos do banco usando o id da marca salvo no MainFrame.
+        // Se o id não estiver disponível ou o banco falhar, usa o Map estático como fallback.
+        Long idMarca = frame.getIdMarcaSelecionada();
+        if (idMarca != null) {
+            try {
+                ModeloController modeloController = ContextoAplicacao.getBean(ModeloController.class);
+                modelosAtuais = modeloController.findAllByIdMarca(idMarca);
+                for (ModeloModel m : modelosAtuais)
+                    gradeModelos.add(criarCardModelo(m.getNomeModelo(), corMarca[0], corMarca[1]));
+            } catch (Exception ex) {
+                // Banco indisponível — cai no fallback estático
+                modelosAtuais = null;
+                carregarModelosFallback(corMarca);
+            }
+        } else {
+            // id da marca não disponível — usa o Map estático
+            carregarModelosFallback(corMarca);
+        }
 
         if ("Jeep".equals(marcaAtual) || "Mitsubishi".equals(marcaAtual)) {
-            int cardsFaltantes = Math.max(0, 8 - modelos.length);
-            for (int i = 0; i < cardsFaltantes; i++)
+            int total = gradeModelos.getComponentCount();
+            int faltam = Math.max(0, 8 - total);
+            for (int i = 0; i < faltam; i++)
                 gradeModelos.add(criarCardVazio());
         }
 
         gradeModelos.revalidate();
         gradeModelos.repaint();
+    }
+
+    // Preenche a grade com os nomes do Map estático (usado como fallback quando o banco não está disponível)
+    private void carregarModelosFallback(Color[] corMarca) {
+        String[] modelos = MODELOS_POR_MARCA.getOrDefault(marcaAtual, new String[]{});
+        for (String nome : modelos)
+            gradeModelos.add(criarCardModelo(nome, corMarca[0], corMarca[1]));
     }
 
     private Color[] getMarcaCor(String marca) {
@@ -356,6 +389,18 @@ public class PanelSelecaoModelo extends JPanel {
         lblModeloSel.setText("Modelo selecionado: " + nome);
         lblModeloSel.setForeground(MainFrame.COR_NAVY);
         btnProximo.setEnabled(true);
+
+        // Se os modelos foram carregados do banco, busca o id do modelo selecionado
+        // e armazena no MainFrame para uso no cadastro de veículo
+        if (modelosAtuais != null) {
+            for (ModeloModel m : modelosAtuais) {
+                if (m.getNomeModelo().equalsIgnoreCase(nome)) {
+                    frame.setIdModeloSelecionado(m.getId());
+                    break;
+                }
+            }
+        }
+
         repaint();
     }
 
