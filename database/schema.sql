@@ -91,6 +91,7 @@ CREATE TABLE pessoaJuridica (
     razaoSocial       VARCHAR(150) NOT NULL,
     nomeFantasia      VARCHAR(150),
     dataAbertura      DATE         NOT NULL,
+    inscricaoEstadual VARCHAR(30)
     FOREIGN KEY (idCliente) REFERENCES cliente (idPessoa)
 );
 
@@ -136,6 +137,7 @@ CREATE TABLE colaborador (
     ativo             BOOLEAN          NOT NULL DEFAULT TRUE,
     dataAdmissao      DATE             NOT NULL,
     salario           DOUBLE PRECISION NOT NULL,
+    cpf               VARCHAR(11)  NOT NULL UNIQUE,
     idFuncao          INT              NOT NULL,
     FOREIGN KEY (idPessoa) REFERENCES pessoa            (id),
     FOREIGN KEY (idFuncao) REFERENCES funcaoColaborador (id)
