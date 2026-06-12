@@ -13,6 +13,6 @@ import br.com.picarauto.validation.IServicoExternoValidation;
  * @author Gabriel
  */
 
-public interface IServicoExternoService extends IGenericService<ServicoExternoModel, IServicoExternoRepository, IServicoExternoValidation>{
+public interface IServicoExternoService extends IGenericService<ServicoExternoModel, IServicoExternoRepository, IServicoExternoValidation> {
     
 }
