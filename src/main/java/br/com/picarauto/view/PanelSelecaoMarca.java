@@ -16,6 +16,12 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
+// Imports do backend para buscar o id da marca selecionada no banco
+import br.com.picarauto.util.ContextoAplicacao;
+import br.com.picarauto.controller.MarcaController;
+import br.com.picarauto.model.MarcaModel;
+import java.util.List;
+
 public class PanelSelecaoMarca extends JPanel {
 
     private final MainFrame frame;
@@ -182,7 +188,6 @@ public class PanelSelecaoMarca extends JPanel {
         }
 
         card.add(lblLogo);
-
         return card;
     }
 
@@ -240,7 +245,27 @@ public class PanelSelecaoMarca extends JPanel {
 
     private void navegarParaModelo() {
         if (marcaSelecionada == null) return;
+
+        // Salva o nome da marca para exibição visual nas próximas telas
         frame.setMarcaSelecionada(marcaSelecionada);
+
+        // Busca todas as marcas no banco e localiza o id da marca selecionada pelo nome,
+        // para que PanelSelecaoModelo possa filtrar os modelos corretamente
+        try {
+            MarcaController marcaController = ContextoAplicacao.getBean(MarcaController.class);
+            List<MarcaModel> todasMarcas = marcaController.findAll();
+            for (MarcaModel m : todasMarcas) {
+                if (m.getNome().equalsIgnoreCase(marcaSelecionada)) {
+                    // Armazena o id da marca no MainFrame para uso nas telas seguintes
+                    frame.setIdMarcaSelecionada(m.getId());
+                    break;
+                }
+            }
+        } catch (Exception ex) {
+            // Se o banco não estiver disponível, continua com id null (modo visual apenas)
+            frame.setIdMarcaSelecionada(null);
+        }
+
         PanelSelecaoModelo.setMarcaSelecionada(marcaSelecionada, modoNovaOS);
         frame.mostrarTela(MainFrame.TELA_MODELO);
     }
