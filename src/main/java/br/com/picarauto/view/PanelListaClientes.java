@@ -240,9 +240,9 @@ public class PanelListaClientes extends JPanel {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
 
-        // Substituído o preenchimento mockado pelo carregamento real do banco
-        // for (Object[] row : DADOS_MOCK) modelo.addRow(row);
-        carregarClientes();
+        // A tabela começa vazia — carregarClientes() é chamado pelo MainFrame.mostrarTela()
+        // ao navegar para TELA_LISTA_CLIENTES, quando o Spring já está inicializado.
+        // Chamar aqui causaria IllegalStateException pois o Spring ainda não subiu.
 
         tabela = new JTable(modelo);
         sorter = new TableRowSorter<>(modelo);
