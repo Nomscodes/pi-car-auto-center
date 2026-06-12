@@ -16,6 +16,9 @@ import java.time.LocalDate;
 @PrimaryKeyJoinColumn(name = "idPessoa")  // ← FK que liga colaborador → pessoa
 public class ColaboradorModel extends PessoaModel {
 
+    @Column(name = "cpf", nullable = false, unique = true, length = 11)
+    private String cpf;
+
     @Column(name = "dataAdmissao", nullable = false)
     private LocalDate dataAdmissao;
 

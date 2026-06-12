@@ -27,4 +27,7 @@ public class PessoaJuridicaModel extends ClienteModel {
 
     @Column(name = "dataAbertura", nullable = false)
     private LocalDate dataAbertura;
+
+    @Column(name = "inscricaoEstadual", length = 30)
+    private String inscricaoEstadual;
 }

@@ -6,6 +6,7 @@ package br.com.picarauto.validation;
 
 import br.com.picarauto.model.ColaboradorModel;
 import br.com.picarauto.model.exception.FieldValidationException;
+import br.com.picarauto.model.exception.RuleValidationException;
 import br.com.picarauto.repository.IColaboradorRepository;
 import java.time.LocalDate;
 import org.springframework.stereotype.Component;
@@ -66,6 +67,24 @@ public class ColaboradorValidation extends GenericValidation<ColaboradorModel, I
         if (entity.getFuncao() == null) {
             throw new FieldValidationException("funcao",
                     "A função do colaborador é de preenchimento obrigatório.");
+        }
+
+        // ── CPF ──────────────────────────────────────────────────────────────
+        if (entity.getCpf() == null || entity.getCpf().isBlank()) {
+            throw new FieldValidationException("cpf",
+                    "O CPF do colaborador é de preenchimento obrigatório.");
+        }
+        if (!entity.getCpf().matches("\\d{11}")) {
+            throw new FieldValidationException("cpf",
+                    "O CPF deve conter exatamente 11 dígitos numéricos, sem pontos ou traços.");
+        }
+    }
+
+    @Override
+    public void validateInsert(ColaboradorModel entity) {
+        if (repository.existsByCpf(entity.getCpf())) {
+            throw new RuleValidationException("CPF Duplicado",
+                    "Já existe um colaborador cadastrado com o CPF informado.");
         }
     }
 }
