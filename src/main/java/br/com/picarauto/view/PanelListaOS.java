@@ -10,9 +10,17 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
+// Imports do backend para carregar OS do banco
+import br.com.picarauto.util.ContextoAplicacao;
+import br.com.picarauto.controller.OrdemServicoController;
+import br.com.picarauto.model.OrdemServicoModel;
+import java.util.List;
 
 public class PanelListaOS extends JPanel {
 
@@ -22,17 +30,10 @@ public class PanelListaOS extends JPanel {
     private DefaultTableModel modelo;
     private TableRowSorter<DefaultTableModel> sorter;
 
-    private static final String[] COLUNAS = {"Nº OS", "Cliente", "Veículo", "Data", "Status", "Valor", ""};
+    // Guarda as OS carregadas do banco na mesma ordem das linhas da tabela
+    private List<OrdemServicoModel> osAtuais;
 
-    private static final Object[][] DADOS_MOCK = {
-        {"#0042", "Marcos Silva",   "Onix 2022",    "08/06/2026", "Concluída",  "R$ 620,00"},
-        {"#0041", "Ana Pereira",    "HB20 2021",    "07/06/2026", "Andamento",  "R$ 380,00"},
-        {"#0040", "Roberto Leal",   "Gol 2019",     "06/06/2026", "Aberta",     "R$ 150,00"},
-        {"#0039", "Carla Moura",    "Pulse 2023",   "05/06/2026", "Concluída",  "R$ 940,00"},
-        {"#0038", "Fábio Nunes",   "Kwid 2020",    "04/06/2026", "Aberta",     "R$ 210,00"},
-        {"#0037", "Juliana Costa",  "HB20 2022",    "03/06/2026", "Concluída",  "R$ 530,00"},
-        {"#0036", "Lucas Mello",    "Tracker 2023", "02/06/2026", "Andamento",  "R$ 1.200,00"},
-    };
+    private static final String[] COLUNAS = {"Nº OS", "Cliente", "Veículo", "Data", "Status", "Valor", ""};
 
     public PanelListaOS(MainFrame frame) {
         this.frame = frame;
@@ -143,17 +144,29 @@ public class PanelListaOS extends JPanel {
         String[] opcoes = {
             "Ordenar por...",
             "Cliente A → Z", "Cliente Z → A",
-            "Status: Concluída → Aberta", "Status: Aberta → Concluída",
             "Nº OS crescente", "Nº OS decrescente",
-            "Valor crescente", "Valor decrescente"
         };
         JComboBox<String> cmbOrdem = new JComboBox<>(opcoes);
         cmbOrdem.setFont(MainFrame.FONT_NORMAL);
         cmbOrdem.setBackground(Color.WHITE);
         cmbOrdem.setPreferredSize(new Dimension(200, 34));
+        cmbOrdem.addActionListener(e -> {
+            if (sorter == null) return;
+            switch ((String) cmbOrdem.getSelectedItem()) {
+                case "Cliente A → Z"    -> sorter.setSortKeys(List.of(new RowSorter.SortKey(1, SortOrder.ASCENDING)));
+                case "Cliente Z → A"    -> sorter.setSortKeys(List.of(new RowSorter.SortKey(1, SortOrder.DESCENDING)));
+                case "Nº OS crescente"  -> sorter.setSortKeys(List.of(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
+                case "Nº OS decrescente"-> sorter.setSortKeys(List.of(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
+                default                 -> sorter.setSortKeys(java.util.Collections.emptyList());
+            }
+        });
 
         JButton btnNova = criarBotaoNavy("Nova OS", 110, 34);
-        btnNova.addActionListener(e -> abrirDialogNovaOS());
+        // Navega para seleção de marca com modoNovaOS=true em vez de abrir dialog local
+        btnNova.addActionListener(e -> {
+            PanelSelecaoMarca.modoNovaOS = true;
+            frame.mostrarTela(MainFrame.TELA_MARCA);
+        });
 
         JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         direita.setOpaque(false);
@@ -172,7 +185,11 @@ public class PanelListaOS extends JPanel {
         modelo = new DefaultTableModel(COLUNAS, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        for (Object[] row : DADOS_MOCK) modelo.addRow(row);
+
+        // A tabela começa vazia — o carregamento do banco só ocorre quando o usuário
+        // navegar para essa tela via MainFrame.mostrarTela(TELA_LISTA_OS),
+        // que chama carregarOS(). Isso evita o erro "contexto não inicializado pelo Spring"
+        // que ocorre quando o painel é construído antes do Spring terminar de subir.
 
         tabela = new JTable(modelo);
         sorter = new TableRowSorter<>(modelo);
@@ -187,7 +204,6 @@ public class PanelListaOS extends JPanel {
         tabela.setFillsViewportHeight(true);
         tabela.setDefaultEditor(Object.class, null);
 
-        // Header
         JTableHeader header = tabela.getTableHeader();
         header.setBackground(MainFrame.COR_CREAM_ALT);
         header.setForeground(new Color(0x444444));
@@ -195,17 +211,25 @@ public class PanelListaOS extends JPanel {
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, MainFrame.COR_BORDER));
         header.setReorderingAllowed(false);
 
-        // Larguras
         tabela.getColumnModel().getColumn(0).setPreferredWidth(60);
-        tabela.getColumnModel().getColumn(4).setPreferredWidth(100);
+        tabela.getColumnModel().getColumn(4).setPreferredWidth(110);
         tabela.getColumnModel().getColumn(5).setPreferredWidth(100);
         tabela.getColumnModel().getColumn(6).setPreferredWidth(60);
-
-        // Renderer de status
         tabela.getColumnModel().getColumn(4).setCellRenderer(new StatusPillRenderer());
-
-        // Renderer de ação
         tabela.getColumnModel().getColumn(6).setCellRenderer(new AcaoRenderer());
+
+        // Detecta clique na coluna "Ver OS" e navega para PanelComposicaoOS
+        tabela.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                int viewRow = tabela.rowAtPoint(e.getPoint());
+                int viewCol = tabela.columnAtPoint(e.getPoint());
+                if (viewRow < 0 || viewCol != 6) return;
+                int modelRow = tabela.convertRowIndexToModel(viewRow);
+                if (osAtuais == null || modelRow >= osAtuais.size()) return;
+                OrdemServicoModel osSelecionada = osAtuais.get(modelRow);
+                frame.mostrarTela(MainFrame.TELA_COMPOSICAO);
+            }
+        });
 
         JScrollPane scroll = new JScrollPane(tabela);
         scroll.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1));
@@ -213,119 +237,32 @@ public class PanelListaOS extends JPanel {
         return scroll;
     }
 
-    // ── Dialog Nova OS ────────────────────────────────────────────────────────
-    private void abrirDialogNovaOS() {
-        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this),
-            "Nova Ordem de Serviço", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-        dlg.setSize(500, 340);
-        dlg.setLocationRelativeTo(this);
+    // Busca todas as OS ativas do banco com placa e nome do cliente já populados,
+    // e preenche a tabela. Chamado pelo MainFrame ao navegar para TELA_LISTA_OS.
+    public void carregarOS() {
+        modelo.setRowCount(0);
+        try {
+            OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
+            osAtuais = controller.findAllEnriquecido();
 
-        JTextField txtCliente  = criarCampoDlg();
-        JTextField txtColab    = criarCampoDlg();
-        JTextField txtMarca    = criarCampoDlg();
-        JTextField txtModelo   = criarCampoDlg();
-        JTextField txtPlaca    = criarCampoDlg();
-
-        JPanel grid = new JPanel(new java.awt.GridLayout(3, 2, 14, 10));
-        grid.setOpaque(false);
-        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
-        grid.add(criarGrupoDlg("Cliente",              txtCliente));
-        grid.add(criarGrupoDlg("Colaborador",          txtColab));
-        grid.add(criarGrupoDlg("Marca",                txtMarca));
-        grid.add(criarGrupoDlg("Modelo",               txtModelo));
-        grid.add(criarGrupoDlg("Placa",                txtPlaca));
-        grid.add(new JPanel() {{ setOpaque(false); }});
-
-        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        rodape.setOpaque(false);
-        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JButton btnCanc = new JButton("Cancelar") {
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_NAVY);
-                g2.setStroke(new java.awt.BasicStroke(1.5f));
-                g2.draw(new java.awt.geom.RoundRectangle2D.Float(1, 1, getWidth()-2, getHeight()-2, 8, 8));
-                g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-                FontMetrics fm2 = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth()-fm2.stringWidth(getText()))/2, (getHeight()+fm2.getAscent()-fm2.getDescent())/2);
-                g2.dispose();
+            for (OrdemServicoModel os : osAtuais) {
+                String numOS   = "#" + String.format("%04d", os.getId());
+                String cliente = os.getNomeCliente()  != null ? os.getNomeCliente()  : "-";
+                String veiculo = os.getPlacaVeiculo() != null ? os.getPlacaVeiculo() : "-";
+                String data    = os.getDataAbertura() != null
+                    ? os.getDataAbertura().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    : "-";
+                String status  = os.getStatus() != null ? os.getStatus().name() : "-";
+                String valor   = os.getValorTotal() != null
+                    ? String.format("R$ %.2f", os.getValorTotal())
+                    : "-";
+                modelo.addRow(new Object[]{ numOS, cliente, veiculo, data, status, valor });
             }
-        };
-        btnCanc.setOpaque(false); btnCanc.setContentAreaFilled(false); btnCanc.setBorderPainted(false);
-        btnCanc.setFocusPainted(false); btnCanc.setForeground(MainFrame.COR_NAVY);
-        btnCanc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnCanc.setPreferredSize(new Dimension(100, 34));
-        btnCanc.addActionListener(e -> dlg.dispose());
-
-        JButton btnSalv = new JButton("Salvar") {
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD.darker() : MainFrame.COR_GOLD);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                FontMetrics fm2 = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth()-fm2.stringWidth(getText()))/2, (getHeight()+fm2.getAscent()-fm2.getDescent())/2);
-                g2.dispose();
-            }
-        };
-        btnSalv.setOpaque(true); btnSalv.setContentAreaFilled(false); btnSalv.setBorderPainted(false);
-        btnSalv.setFocusPainted(false);
-        btnSalv.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnSalv.setPreferredSize(new Dimension(100, 34));
-        btnSalv.addActionListener(e -> {
-            String cliente = txtCliente.getText().trim();
-            String veiculo = (txtMarca.getText().trim() + " " + txtModelo.getText().trim()).trim();
-            if (veiculo.isEmpty()) veiculo = "-";
-            int num = modelo.getRowCount() + 1;
-            String numOS = "#" + String.format("%04d", num);
-            String data = new java.text.SimpleDateFormat("dd/MM/yyyy").format(new java.util.Date());
-            modelo.insertRow(0, new Object[]{numOS, cliente, veiculo, data, "Aberta", "R$ 0,00", ""});
-            dlg.dispose();
-        });
-
-        rodape.add(btnCanc);
-        rodape.add(btnSalv);
-
-        JPanel form = new JPanel();
-        form.setBackground(MainFrame.COR_CREAM);
-        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
-        form.setBorder(new EmptyBorder(20, 24, 20, 24));
-        form.add(grid);
-        form.add(Box.createVerticalStrut(14));
-        form.add(rodape);
-
-        dlg.add(form);
-        dlg.setVisible(true);
-    }
-
-    private JPanel criarGrupoDlg(String label, JTextField campo) {
-        JPanel g = new JPanel();
-        g.setOpaque(false);
-        g.setLayout(new BoxLayout(g, BoxLayout.Y_AXIS));
-        JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lbl.setForeground(new Color(0x444444));
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        campo.setAlignmentX(Component.LEFT_ALIGNMENT);
-        campo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-        g.add(lbl); g.add(Box.createVerticalStrut(4)); g.add(campo);
-        return g;
-    }
-
-    private JTextField criarCampoDlg() {
-        JTextField f = new JTextField();
-        f.setFont(MainFrame.FONT_NORMAL);
-        f.setBackground(Color.WHITE);
-        f.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
-            new EmptyBorder(6, 10, 6, 10)));
-        f.setPreferredSize(new Dimension(0, 34));
-        return f;
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar OS: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -358,15 +295,23 @@ public class PanelListaOS extends JPanel {
     static class StatusPillRenderer extends DefaultTableCellRenderer {
         @Override public Component getTableCellRendererComponent(
                 JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            JLabel lbl = new JLabel(v == null ? "" : v.toString(), SwingConstants.CENTER) {
+            String raw = v == null ? "" : v.toString();
+            String label = switch (raw) {
+                case "ORCAMENTO" -> "Orçamento";
+                case "EXECUCAO"  -> "Execução";
+                case "PAGAMENTO" -> "Pagamento";
+                case "FINALIZADO"-> "Finalizado";
+                default          -> raw;
+            };
+            JLabel lbl = new JLabel(label, SwingConstants.CENTER) {
                 @Override protected void paintComponent(Graphics g) {
-                    String s = getText();
-                    Color bg;
-                    switch (s) {
-                        case "Concluída": bg = new Color(0xE6F1FB); break;
-                        case "Andamento": bg = new Color(0xFAEEDA); break;
-                        default:          bg = new Color(0xE1F5EE); break;
-                    }
+                    Color bg = switch (raw) {
+                        case "ORCAMENTO"  -> new Color(0xE1F5EE);
+                        case "EXECUCAO"   -> new Color(0xFAEEDA);
+                        case "PAGAMENTO"  -> new Color(0xE6F1FB);
+                        case "FINALIZADO" -> new Color(0xEAEAEA);
+                        default           -> new Color(0xF0F0F0);
+                    };
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2.setColor(bg);
@@ -375,13 +320,13 @@ public class PanelListaOS extends JPanel {
                     super.paintComponent(g);
                 }
             };
-            String s = v == null ? "" : v.toString();
-            Color fg;
-            switch (s) {
-                case "Concluída": fg = new Color(0x185FA5); break;
-                case "Andamento": fg = new Color(0x854F0B); break;
-                default:          fg = new Color(0x0F6E56); break;
-            }
+            Color fg = switch (raw) {
+                case "ORCAMENTO"  -> new Color(0x0F6E56);
+                case "EXECUCAO"   -> new Color(0x854F0B);
+                case "PAGAMENTO"  -> new Color(0x185FA5);
+                case "FINALIZADO" -> new Color(0x555555);
+                default           -> Color.DARK_GRAY;
+            };
             lbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
             lbl.setForeground(fg);
             lbl.setOpaque(false);

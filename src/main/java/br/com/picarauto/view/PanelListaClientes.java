@@ -15,6 +15,14 @@ import java.awt.geom.RoundRectangle2D;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+// Imports do backend necessários para buscar clientes do banco
+import br.com.picarauto.util.ContextoAplicacao;
+import br.com.picarauto.controller.ClienteController;
+import br.com.picarauto.model.ClienteModel;
+import br.com.picarauto.model.PessoaFisicaModel;
+import br.com.picarauto.model.PessoaJuridicaModel;
+import java.util.List;
+
 public class PanelListaClientes extends JPanel {
 
     private final MainFrame frame;
@@ -24,6 +32,10 @@ public class PanelListaClientes extends JPanel {
     private TableRowSorter<DefaultTableModel> sorter;
     private JComboBox<String> cmbOrdenar;
     private String        filtroTipo = "Todos";
+
+    // Guarda os clientes carregados do banco na mesma ordem das linhas da tabela,
+    // permitindo identificar qual cliente foi clicado na coluna "Editar"
+    private List<ClienteModel> clientesAtuais;
 
     private static final String[] COLUNAS = {"Nome", "Tipo", "CPF / CNPJ", "Telefone", "Veículos", ""};
 
@@ -138,7 +150,9 @@ public class PanelListaClientes extends JPanel {
         });
 
         JButton btnNovo = criarBotaoNavy("Novo cliente", 120, 34);
-        btnNovo.addActionListener(e -> abrirFormNovoCliente());
+        // Navega para a tela de cadastro de cliente em vez de abrir o dialog local
+        // (o dialog não tem todos os campos obrigatórios para salvar no banco)
+        btnNovo.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_CLIENTE));
 
         JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
         painelBusca.setBackground(new Color(0xF5F0E6));
@@ -225,7 +239,10 @@ public class PanelListaClientes extends JPanel {
         modelo = new DefaultTableModel(COLUNAS, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        for (Object[] row : DADOS_MOCK) modelo.addRow(row);
+
+        // A tabela começa vazia — carregarClientes() é chamado pelo MainFrame.mostrarTela()
+        // ao navegar para TELA_LISTA_CLIENTES, quando o Spring já está inicializado.
+        // Chamar aqui causaria IllegalStateException pois o Spring ainda não subiu.
 
         tabela = new JTable(modelo);
         sorter = new TableRowSorter<>(modelo);
@@ -252,10 +269,49 @@ public class PanelListaClientes extends JPanel {
         tabela.getColumnModel().getColumn(5).setPreferredWidth(70);
         tabela.getColumnModel().getColumn(5).setCellRenderer(new EditarRenderer());
 
+        // Detecta clique na coluna "Editar", identifica o cliente da linha
+        // e navega para a tela de cadastro para edição
+        tabela.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                int viewRow = tabela.rowAtPoint(e.getPoint());
+                int viewCol = tabela.columnAtPoint(e.getPoint());
+                if (viewRow < 0 || viewCol != 5) return;
+                int modelRow = tabela.convertRowIndexToModel(viewRow);
+                if (clientesAtuais == null || modelRow >= clientesAtuais.size()) return;
+                // Cliente selecionado — será usado na Tela 3 (PanelCadastroCliente) para edição
+                ClienteModel selecionado = clientesAtuais.get(modelRow);
+                frame.mostrarTela(MainFrame.TELA_CLIENTE);
+            }
+        });
+
         JScrollPane scroll = new JScrollPane(tabela);
         scroll.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1));
         scroll.getViewport().setBackground(Color.WHITE);
         return scroll;
+    }
+
+    // Busca todos os clientes ativos no banco via ClienteController
+    // e preenche a tabela. Chamado ao entrar na tela e após cadastros/edições.
+    public void carregarClientes() {
+        modelo.setRowCount(0);
+        ClienteController controller = ContextoAplicacao.getBean(ClienteController.class);
+        clientesAtuais = controller.findAll();
+
+        for (ClienteModel c : clientesAtuais) {
+            String tipo, doc;
+            if (c instanceof PessoaFisicaModel pf) {
+                tipo = "PF";
+                doc  = pf.getCpf();
+            } else if (c instanceof PessoaJuridicaModel pj) {
+                tipo = "PJ";
+                doc  = pj.getCnpj();
+            } else {
+                tipo = "?";
+                doc  = "-";
+            }
+            // Coluna "Veículos" ainda sem contagem real — será integrada futuramente
+            modelo.addRow(new Object[]{ c.getNomeCompleto(), tipo, doc, c.getTelefone(), "-" });
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -284,7 +340,7 @@ public class PanelListaClientes extends JPanel {
         return btn;
     }
 
-    // ── Dialog Novo Cliente ───────────────────────────────────────────────────
+    // ── Dialog Novo Cliente — mantido mas sem uso (botão agora navega para TELA_CLIENTE) ──
     private void abrirFormNovoCliente() {
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
             "Novo Cliente", java.awt.Dialog.ModalityType.APPLICATION_MODAL);

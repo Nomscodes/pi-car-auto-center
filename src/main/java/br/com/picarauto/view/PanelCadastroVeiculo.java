@@ -3,7 +3,6 @@ package br.com.picarauto.view;
 /**
  * Formulário de cadastro de veículo — campos em grid 2 colunas.
  * Marca readonly (vinda da seleção anterior) e modelo readonly.
- * Lógica de cascata marca/modelo preservada via arrays estáticos.
  *
  * @author Cassiano
  */
@@ -12,11 +11,21 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
+// Imports do backend para buscar clientes e salvar o veículo no banco
+import br.com.picarauto.util.ContextoAplicacao;
+import br.com.picarauto.controller.VeiculoController;
+import br.com.picarauto.controller.ClienteController;
+import br.com.picarauto.model.VeiculoModel;
+import br.com.picarauto.model.ClienteModel;
+import br.com.picarauto.model.exception.FieldValidationException;
+import br.com.picarauto.model.exception.RuleValidationException;
+import java.util.List;
+
 public class PanelCadastroVeiculo extends JPanel {
 
     private final MainFrame frame;
 
-    private JTextField    txtPlaca, txtCor, txtAno, txtRenavam, txtCliente;
+    private JTextField txtPlaca, txtCor, txtAno, txtRenavam, txtChassi, txtCliente;
     private JComboBox<String> cmbMarca, cmbModelo;
 
     private static final String[] MARCAS = {
@@ -92,31 +101,33 @@ public class PanelCadastroVeiculo extends JPanel {
         corpo.add(criarLabelSecao("Identificação do veículo"));
         corpo.add(Box.createVerticalStrut(10));
 
-        // Grid principal
         JPanel grid = new JPanel(new GridLayout(3, 2, 14, 10));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        txtPlaca   = criarCampo(); txtCor    = criarCampo();
-        txtAno     = criarCampo(); txtRenavam = criarCampo();
+        txtPlaca   = criarCampo();
+        txtCor     = criarCampo();
+        txtChassi  = criarCampo();
+        txtAno     = criarCampo();
         txtCliente = criarCampo();
+        txtRenavam = criarCampo();
 
-        grid.add(criarGrupo("Placa",               txtPlaca));
-        grid.add(criarGrupo("Cor",                 txtCor));
-        grid.add(criarGrupo("Ano",                 txtAno));
-        grid.add(criarGrupo("Renavam",             txtRenavam));
-        grid.add(criarGrupo("Cliente proprietário", txtCliente));
-        grid.add(new JPanel() {{ setOpaque(false); }});
+        grid.add(criarGrupo("Placa (sem hífen — ex: ABC1234)",  txtPlaca));
+        grid.add(criarGrupo("Cor",                              txtCor));
+        // Chassi é obrigatório no banco (17 caracteres, único)
+        grid.add(criarGrupo("Chassi (17 caracteres)",           txtChassi));
+        grid.add(criarGrupo("Ano",                              txtAno));
+        // Cliente: digitar parte do nome — o sistema busca o id no banco ao salvar
+        grid.add(criarGrupo("Nome do cliente proprietário",     txtCliente));
+        grid.add(criarGrupo("Renavam (informativo)",            txtRenavam));
 
         corpo.add(grid);
         corpo.add(Box.createVerticalStrut(20));
 
-        // Marca / Modelo
         corpo.add(criarLabelSecao("Marca e modelo"));
         corpo.add(Box.createVerticalStrut(10));
         corpo.add(criarGridMarcaModelo());
 
-        // Rodapé
         corpo.add(Box.createVerticalStrut(24));
         corpo.add(criarRodapeAcoes());
 
@@ -142,7 +153,7 @@ public class PanelCadastroVeiculo extends JPanel {
         return grid;
     }
 
-    /** Preenche e desabilita os combos de Marca e Modelo com os valores já escolhidos. */
+    /** Preenche e desabilita os combos de Marca e Modelo com os valores já escolhidos nas telas anteriores. */
     public void preencherSelecoes() {
         String marca  = frame.getMarcaSelecionada();
         String modelo = frame.getModeloSelecionado();
@@ -166,15 +177,80 @@ public class PanelCadastroVeiculo extends JPanel {
         btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_CLIENTES));
 
         JButton btnSalvar = criarBotaoGold("Salvar veículo", 140, 36);
-        btnSalvar.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Veículo cadastrado com sucesso!",
-                "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-            frame.mostrarTela(MainFrame.TELA_LISTA_CLIENTES);
-        });
+        btnSalvar.addActionListener(e -> salvarVeiculo());
 
         p.add(btnCancelar);
         p.add(btnSalvar);
         return p;
+    }
+
+    // Coleta os dados do formulário, busca o cliente pelo nome digitado,
+    // monta o VeiculoModel e chama o VeiculoController para salvar no banco
+    private void salvarVeiculo() {
+        try {
+            // Verifica se o idModelo foi definido nas telas de seleção
+            Long idModelo = frame.getIdModeloSelecionado();
+            if (idModelo == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Selecione uma marca e um modelo antes de cadastrar o veículo.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Busca o cliente pelo nome digitado — pega o primeiro que bater
+            String nomeCliente = txtCliente.getText().trim();
+            if (nomeCliente.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                    "Informe o nome do cliente proprietário.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            ClienteController clienteController = ContextoAplicacao.getBean(ClienteController.class);
+            List<ClienteModel> clientes = clienteController.findAll();
+            ClienteModel clienteEncontrado = null;
+            for (ClienteModel c : clientes) {
+                if (c.getNomeCompleto().toLowerCase().contains(nomeCliente.toLowerCase())) {
+                    clienteEncontrado = c;
+                    break;
+                }
+            }
+
+            if (clienteEncontrado == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Nenhum cliente encontrado com o nome informado.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Monta o VeiculoModel com os dados do formulário
+            VeiculoModel veiculo = new VeiculoModel();
+            // Normaliza a placa: remove hífen e converte para maiúsculas
+            veiculo.setPlaca(txtPlaca.getText().replace("-", "").toUpperCase().trim());
+            veiculo.setCor(txtCor.getText().trim());
+            veiculo.setChassi(txtChassi.getText().trim().toUpperCase());
+            veiculo.setIdModelo(idModelo);
+            veiculo.setIdCliente(clienteEncontrado.getId());
+
+            // Salva o veículo no banco via VeiculoController
+            VeiculoController veiculoController = ContextoAplicacao.getBean(VeiculoController.class);
+            veiculoController.insert(veiculo);
+
+            JOptionPane.showMessageDialog(this,
+                "Veículo cadastrado com sucesso!",
+                "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            frame.mostrarTela(MainFrame.TELA_LISTA_CLIENTES);
+
+        } catch (FieldValidationException | RuleValidationException valEx) {
+            // Exibe a mensagem de validação do backend
+            JOptionPane.showMessageDialog(this,
+                valEx.getMessage(),
+                "Erro de validação", JOptionPane.WARNING_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao salvar veículo: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
