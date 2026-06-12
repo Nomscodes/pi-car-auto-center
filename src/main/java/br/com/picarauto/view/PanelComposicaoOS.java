@@ -14,18 +14,36 @@ import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+// Imports do backend para carregar dados e salvar a OS no banco
+import br.com.picarauto.util.ContextoAplicacao;
+import br.com.picarauto.controller.OrdemServicoController;
+import br.com.picarauto.controller.ClienteController;
+import br.com.picarauto.controller.ColaboradorController;
+import br.com.picarauto.controller.VeiculoController;
+import br.com.picarauto.controller.ServicoInternoController;
+import br.com.picarauto.controller.ServicoExternoController;
+import br.com.picarauto.model.OrdemServicoModel;
+import br.com.picarauto.model.ClienteModel;
+import br.com.picarauto.model.ColaboradorModel;
+import br.com.picarauto.model.VeiculoModel;
+import br.com.picarauto.model.ServicoInternoModel;
+import br.com.picarauto.model.ServicoExternoModel;
+import br.com.picarauto.model.exception.FieldValidationException;
+import br.com.picarauto.model.exception.RuleValidationException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class PanelComposicaoOS extends JPanel {
 
     private final MainFrame frame;
 
-    private static final String[] CLIENTES = {
-        "Selecione...", "Marcos Silva", "Ana Pereira", "Roberto Leal",
-        "Carla Moura", "Fábio Nunes", "Juliana Costa", "Lucas Mello"
-    };
-    private static final String[] COLABORADORES = {
-        "Selecione...", "João Mecânico", "Pedro Eletricista",
-        "Carlos Funileiro", "Maria Pintora", "Luiz Borracheiro"
-    };
+    // Listas carregadas do banco para popular os combos e identificar ids ao salvar
+    private List<ClienteModel>        clientesDisponiveis   = new ArrayList<>();
+    private List<ColaboradorModel>    colaboradoresDisponiveis = new ArrayList<>();
+    private List<VeiculoModel>        veiculosDisponiveis   = new ArrayList<>();
+    private List<ServicoInternoModel> servicosInternos      = new ArrayList<>();
+    private List<ServicoExternoModel> servicosExternos      = new ArrayList<>();
+
     private static final String[] MARCAS = {
         "Selecione...", "Chevrolet", "Volkswagen", "Hyundai", "Toyota", "Ford", "Fiat", "Honda"
     };
@@ -44,6 +62,7 @@ public class PanelComposicaoOS extends JPanel {
     private JTextField        txtPlaca, txtData;
     private DefaultTableModel modeloServicos, modeloPecas;
     private JLabel            lblTotal;
+    private JTextArea         txtObs;
 
     public PanelComposicaoOS(MainFrame frame) {
         this.frame = frame;
@@ -119,21 +138,95 @@ public class PanelComposicaoOS extends JPanel {
         return scroll;
     }
 
+    // Carrega clientes, colaboradores, veículos e serviços do banco e popula os combos.
+    // Chamado pelo MainFrame ao navegar para TELA_COMPOSICAO.
+    public void carregarDados() {
+        carregarClientes();
+        carregarColaboradores();
+        carregarServicos();
+        limparFormulario();
+    }
+
+    // Busca clientes ativos no banco e preenche o combo de clientes
+    private void carregarClientes() {
+        try {
+            ClienteController cc = ContextoAplicacao.getBean(ClienteController.class);
+            clientesDisponiveis = cc.findAll();
+            cmbCliente.removeAllItems();
+            cmbCliente.addItem("Selecione...");
+            for (ClienteModel c : clientesDisponiveis)
+                cmbCliente.addItem(c.getNomeCompleto());
+        } catch (Exception ex) {
+            cmbCliente.removeAllItems();
+            cmbCliente.addItem("Erro ao carregar");
+        }
+    }
+
+    // Busca colaboradores ativos no banco e preenche o combo de colaboradores
+    private void carregarColaboradores() {
+        try {
+            ColaboradorController cc = ContextoAplicacao.getBean(ColaboradorController.class);
+            colaboradoresDisponiveis = cc.findAll();
+            cmbColaborador.removeAllItems();
+            cmbColaborador.addItem("Selecione...");
+            for (ColaboradorModel c : colaboradoresDisponiveis)
+                cmbColaborador.addItem(c.getNomeCompleto());
+        } catch (Exception ex) {
+            cmbColaborador.removeAllItems();
+            cmbColaborador.addItem("Erro ao carregar");
+        }
+    }
+
+    // Busca serviços internos e externos ativos no banco para uso no dialog de adição
+    private void carregarServicos() {
+        try {
+            ServicoInternoController sic = ContextoAplicacao.getBean(ServicoInternoController.class);
+            servicosInternos = sic.findAll();
+        } catch (Exception ex) {
+            servicosInternos = new ArrayList<>();
+        }
+        try {
+            ServicoExternoController sec = ContextoAplicacao.getBean(ServicoExternoController.class);
+            servicosExternos = sec.findAll();
+        } catch (Exception ex) {
+            servicosExternos = new ArrayList<>();
+        }
+    }
+
+    // Limpa os campos do formulário para uma nova OS
+    private void limparFormulario() {
+        txtData.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        txtPlaca.setText("");
+        if (txtObs != null) txtObs.setText("");
+        modeloServicos.setRowCount(0);
+        modeloPecas.setRowCount(0);
+        lblTotal.setText("R$ 0,00");
+        cmbMarca.setSelectedIndex(0);
+        cmbStatus.setSelectedIndex(0);
+    }
+
     private JPanel criarCardDados() {
         JPanel card = criarCardBase();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        cmbCliente     = criarCombo(CLIENTES);
-        cmbColaborador = criarCombo(COLABORADORES);
+        // Combos serão populados com dados do banco via carregarDados()
+        cmbCliente     = criarCombo(new String[]{"Selecione..."});
+        cmbColaborador = criarCombo(new String[]{"Selecione..."});
         cmbMarca       = criarCombo(MARCAS);
         cmbModelo      = criarCombo(new String[]{"Selecione primeiro a marca..."});
         cmbModelo.setEnabled(false);
-        cmbStatus      = criarCombo(new String[]{"Aberta", "Em Andamento", "Concluída"});
-        txtPlaca       = criarCampo();
-        txtData        = criarCampo();
+
+        // Status segue o enum do banco: ORCAMENTO, EXECUCAO, PAGAMENTO, FINALIZADO
+        cmbStatus = criarCombo(new String[]{
+            "ORCAMENTO", "EXECUCAO", "PAGAMENTO", "FINALIZADO"
+        });
+
+        txtPlaca = criarCampo();
+        txtData  = criarCampo();
         txtData.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
+        // Ao selecionar uma marca, filtra os modelos disponíveis no combo
         cmbMarca.addActionListener(e -> {
             int idx = cmbMarca.getSelectedIndex();
             cmbModelo.removeAllItems();
@@ -147,6 +240,14 @@ public class PanelComposicaoOS extends JPanel {
             }
         });
 
+        // Ao selecionar um cliente, carrega os veículos vinculados a ele no combo de placa
+        cmbCliente.addActionListener(e -> {
+            int idx = cmbCliente.getSelectedIndex();
+            if (idx <= 0 || clientesDisponiveis.isEmpty() || idx > clientesDisponiveis.size()) return;
+            ClienteModel clienteSel = clientesDisponiveis.get(idx - 1);
+            carregarVeiculosDoCliente(clienteSel.getId());
+        });
+
         JPanel row1 = criarGridRow(2);
         row1.add(criarGrupoCombo("Cliente",      cmbCliente));
         row1.add(criarGrupoCombo("Colaborador",  cmbColaborador));
@@ -156,9 +257,9 @@ public class PanelComposicaoOS extends JPanel {
         row2.add(criarGrupoCombo("Modelo", cmbModelo));
 
         JPanel row3 = criarGridRow(3);
-        row3.add(criarGrupoCampo("Placa",          txtPlaca));
-        row3.add(criarGrupoCampo("Data Abertura",   txtData));
-        row3.add(criarGrupoCombo("Status",          cmbStatus));
+        row3.add(criarGrupoCampo("Placa do veículo",  txtPlaca));
+        row3.add(criarGrupoCampo("Data Abertura",      txtData));
+        row3.add(criarGrupoCombo("Status",             cmbStatus));
 
         card.add(row1);
         card.add(Box.createVerticalStrut(12));
@@ -168,6 +269,24 @@ public class PanelComposicaoOS extends JPanel {
         return card;
     }
 
+    // Busca os veículos vinculados ao cliente selecionado e preenche o campo de placa
+    private void carregarVeiculosDoCliente(Long idCliente) {
+        try {
+            VeiculoController vc = ContextoAplicacao.getBean(VeiculoController.class);
+            veiculosDisponiveis = vc.findAll().stream()
+                .filter(v -> idCliente.equals(v.getIdCliente()))
+                .toList();
+            // Se o cliente tiver apenas um veículo, preenche automaticamente
+            if (veiculosDisponiveis.size() == 1) {
+                txtPlaca.setText(veiculosDisponiveis.get(0).getPlaca());
+            } else {
+                txtPlaca.setText("");
+            }
+        } catch (Exception ex) {
+            veiculosDisponiveis = new ArrayList<>();
+        }
+    }
+
     private JPanel criarCardServicos() {
         JPanel card = criarCardBase();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
@@ -175,8 +294,6 @@ public class PanelComposicaoOS extends JPanel {
         modeloServicos = new DefaultTableModel(new String[]{"Serviço", "Tipo", "Valor"}, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        modeloServicos.addRow(new Object[]{"Troca de Óleo", "Interno", "R$ 80,00"});
-        modeloServicos.addRow(new Object[]{"Alinhamento",   "Externo", "R$ 60,00"});
 
         JScrollPane scrollServ = new JScrollPane(criarTabela(modeloServicos));
         scrollServ.setBorder(null);
@@ -205,8 +322,6 @@ public class PanelComposicaoOS extends JPanel {
         modeloPecas = new DefaultTableModel(new String[]{"Peça", "Qtd", "Valor Unit.", "Total"}, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        modeloPecas.addRow(new Object[]{"Óleo Motor 5W30", "4", "R$ 32,00", "R$ 128,00"});
-        modeloPecas.addRow(new Object[]{"Filtro de Óleo",  "1", "R$ 28,50", "R$ 28,50"});
 
         JScrollPane scrollPec = new JScrollPane(criarTabela(modeloPecas));
         scrollPec.setBorder(null);
@@ -235,7 +350,7 @@ public class PanelComposicaoOS extends JPanel {
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JTextArea txtObs = new JTextArea(3, 0);
+        txtObs = new JTextArea(3, 0);
         txtObs.setFont(MainFrame.FONT_NORMAL);
         txtObs.setBackground(Color.WHITE);
         txtObs.setBorder(null);
@@ -260,7 +375,7 @@ public class PanelComposicaoOS extends JPanel {
         lblTotalLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblTotalLabel.setForeground(new Color(0x666666));
 
-        lblTotal = new JLabel("R$ 296,50");
+        lblTotal = new JLabel("R$ 0,00");
         lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTotal.setForeground(MainFrame.COR_NAVY);
 
@@ -274,11 +389,8 @@ public class PanelComposicaoOS extends JPanel {
         btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_OS));
 
         JButton btnSalvar = criarBotaoGold("Salvar OS", 140, 38);
-        btnSalvar.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "OS salva com sucesso!", "Sucesso",
-                JOptionPane.INFORMATION_MESSAGE);
-            frame.mostrarTela(MainFrame.TELA_LISTA_OS);
-        });
+        // Coleta os dados do formulário, monta o OrdemServicoModel e salva no banco
+        btnSalvar.addActionListener(e -> salvarOS());
 
         btnPanel.add(btnCancelar);
         btnPanel.add(btnSalvar);
@@ -288,36 +400,162 @@ public class PanelComposicaoOS extends JPanel {
         return p;
     }
 
-    // ── Ações ─────────────────────────────────────────────────────────────────
-    private void adicionarServico() {
-        JTextField txtNome   = new JTextField(20);
-        JComboBox<String> cb = new JComboBox<>(new String[]{"Interno", "Externo"});
-        JTextField txtValor  = new JTextField("R$ 0,00", 10);
+    // Valida os campos obrigatórios, monta o OrdemServicoModel e chama o controller para salvar
+    private void salvarOS() {
+        try {
+            // Valida seleção de cliente
+            int idxCliente = cmbCliente.getSelectedIndex();
+            if (idxCliente <= 0 || clientesDisponiveis.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Selecione um cliente.", "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            ClienteModel cliente = clientesDisponiveis.get(idxCliente - 1);
 
-        JPanel form = new JPanel(new GridLayout(3, 2, 8, 8));
-        form.add(new JLabel("Serviço:")); form.add(txtNome);
-        form.add(new JLabel("Tipo:"));   form.add(cb);
-        form.add(new JLabel("Valor:"));  form.add(txtValor);
+            // Busca o veículo pela placa digitada — obrigatório para montar a OS
+            String placaDigitada = txtPlaca.getText().replace("-", "").toUpperCase().trim();
+            if (placaDigitada.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Informe a placa do veículo.", "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            VeiculoController vc = ContextoAplicacao.getBean(VeiculoController.class);
+            List<VeiculoModel> todosVeiculos = vc.findAll();
+            VeiculoModel veiculoEncontrado = null;
+            for (VeiculoModel v : todosVeiculos) {
+                if (v.getPlaca().equalsIgnoreCase(placaDigitada)) {
+                    veiculoEncontrado = v;
+                    break;
+                }
+            }
+
+            if (veiculoEncontrado == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Veículo com a placa informada não encontrado no cadastro.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Monta o OrdemServicoModel com os dados do formulário
+            OrdemServicoModel os = new OrdemServicoModel();
+            os.setIdVeiculo(veiculoEncontrado.getId());
+            os.setDataAbertura(LocalDate.now());
+            os.setObservacoes(txtObs != null ? txtObs.getText().trim() : "");
+
+            // Mapeia o status selecionado no combo para o enum do banco
+            String statusSel = (String) cmbStatus.getSelectedItem();
+            os.setStatus(OrdemServicoModel.StatusOrdemServico.valueOf(statusSel));
+
+            // Calcula o valor total com base nos serviços e peças adicionados na tela
+            double total = 0;
+            for (int i = 0; i < modeloServicos.getRowCount(); i++) {
+                try {
+                    total += Double.parseDouble(modeloServicos.getValueAt(i, 2).toString()
+                        .replace("R$", "").replace(".", "").replace(",", ".").trim());
+                } catch (NumberFormatException ignored) {}
+            }
+            for (int i = 0; i < modeloPecas.getRowCount(); i++) {
+                try {
+                    total += Double.parseDouble(modeloPecas.getValueAt(i, 3).toString()
+                        .replace("R$", "").replace(".", "").replace(",", ".").trim());
+                } catch (NumberFormatException ignored) {}
+            }
+            os.setValorTotal(total > 0 ? total : null);
+
+            // Popula os campos @Transient para enfileiramento na FilaOS
+            os.setPlacaVeiculo(veiculoEncontrado.getPlaca());
+            os.setNomeCliente(cliente.getNomeCompleto());
+
+            // Salva a OS no banco via OrdemServicoController
+            OrdemServicoController osc = ContextoAplicacao.getBean(OrdemServicoController.class);
+            osc.insert(os);
+
+            JOptionPane.showMessageDialog(this, "OS salva com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            frame.mostrarTela(MainFrame.TELA_LISTA_OS);
+
+        } catch (FieldValidationException | RuleValidationException valEx) {
+            // Exibe a mensagem de validação do backend
+            JOptionPane.showMessageDialog(this, valEx.getMessage(), "Erro de validação", JOptionPane.WARNING_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao salvar OS: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // ── Ações ─────────────────────────────────────────────────────────────────
+
+    // Abre dialog para adicionar um serviço à OS.
+    // Se houver serviços cadastrados no banco, exibe um combo para seleção.
+    // Caso contrário, permite digitação manual.
+    private void adicionarServico() {
+        List<String> nomes = new ArrayList<>();
+        nomes.add("-- Digitar manualmente --");
+        for (ServicoInternoModel s : servicosInternos) nomes.add("[INT] " + s.getDescricao());
+        for (ServicoExternoModel s : servicosExternos) nomes.add("[EXT] " + s.getDescricao());
+
+        JComboBox<String> cmbServico = new JComboBox<>(nomes.toArray(new String[0]));
+        JTextField txtNomeManual = criarCampo();
+        JTextField txtValor      = new JTextField("0,00", 10);
+        txtNomeManual.setEnabled(false);
+
+        // Ao selecionar "Digitar manualmente", habilita o campo de texto
+        cmbServico.addActionListener(e -> {
+            boolean manual = cmbServico.getSelectedIndex() == 0;
+            txtNomeManual.setEnabled(manual);
+            if (!manual) {
+                int idx = cmbServico.getSelectedIndex() - 1;
+                double valor = 0;
+                String tipo = "Interno";
+                if (idx < servicosInternos.size()) {
+                    valor = servicosInternos.get(idx).getValorCobrado();
+                } else {
+                    valor = servicosExternos.get(idx - servicosInternos.size()).getValorCobrado();
+                    tipo = "Externo";
+                }
+                txtValor.setText(String.format("%.2f", valor).replace(".", ","));
+            }
+        });
+
+        JPanel form = new JPanel(new GridLayout(4, 2, 8, 8));
+        form.add(new JLabel("Serviço do catálogo:")); form.add(cmbServico);
+        form.add(new JLabel("Nome manual:"));         form.add(txtNomeManual);
+        form.add(new JLabel("Tipo:"));
+        JComboBox<String> cmbTipo = new JComboBox<>(new String[]{"Interno", "Externo"});
+        form.add(cmbTipo);
+        form.add(new JLabel("Valor (R$):"));          form.add(txtValor);
 
         if (JOptionPane.showConfirmDialog(this, form, "Adicionar Serviço",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
-            String nome = txtNome.getText().trim();
+
+            String nome;
+            String tipo;
+            if (cmbServico.getSelectedIndex() == 0) {
+                // Modo manual: usa o nome digitado e o tipo selecionado
+                nome = txtNomeManual.getText().trim();
+                tipo = (String) cmbTipo.getSelectedItem();
+            } else {
+                // Modo catálogo: usa o nome do serviço selecionado
+                nome = (String) cmbServico.getSelectedItem();
+                int idx = cmbServico.getSelectedIndex() - 1;
+                tipo = idx < servicosInternos.size() ? "Interno" : "Externo";
+            }
+
             if (!nome.isEmpty()) {
-                modeloServicos.addRow(new Object[]{nome, cb.getSelectedItem(), txtValor.getText().trim()});
+                String valorStr = "R$ " + txtValor.getText().trim().replace(",", ".");
+                modeloServicos.addRow(new Object[]{ nome, tipo, valorStr });
                 recalcularTotal();
             }
         }
     }
 
+    // Abre dialog para adicionar uma peça à OS com quantidade e valor unitário
     private void adicionarPeca() {
         JTextField txtNome  = new JTextField(20);
         JTextField txtQtd   = new JTextField("1", 5);
-        JTextField txtValor = new JTextField("R$ 0,00", 10);
+        JTextField txtValor = new JTextField("0,00", 10);
 
         JPanel form = new JPanel(new GridLayout(3, 2, 8, 8));
-        form.add(new JLabel("Peça:"));        form.add(txtNome);
-        form.add(new JLabel("Quantidade:"));  form.add(txtQtd);
-        form.add(new JLabel("Valor Unit.:"));  form.add(txtValor);
+        form.add(new JLabel("Peça:"));         form.add(txtNome);
+        form.add(new JLabel("Quantidade:"));   form.add(txtQtd);
+        form.add(new JLabel("Valor Unit. (R$):")); form.add(txtValor);
 
         if (JOptionPane.showConfirmDialog(this, form, "Adicionar Peça",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
@@ -325,30 +563,31 @@ public class PanelComposicaoOS extends JPanel {
             if (!nome.isEmpty()) {
                 int qtd = 1;
                 try { qtd = Integer.parseInt(txtQtd.getText().trim()); } catch (NumberFormatException ignored) {}
-                String valorStr = txtValor.getText().trim();
                 double valor = 0;
                 try {
-                    valor = Double.parseDouble(valorStr.replace("R$","").replace(".","").replace(",",".").trim());
+                    valor = Double.parseDouble(txtValor.getText().trim().replace(",", "."));
                 } catch (NumberFormatException ignored) {}
-                String total = String.format("R$ %.2f", valor * qtd).replace(".", ",");
-                modeloPecas.addRow(new Object[]{nome, qtd, valorStr, total});
+                String valorUnitStr = String.format("R$ %.2f", valor).replace(".", ",");
+                String totalStr     = String.format("R$ %.2f", valor * qtd).replace(".", ",");
+                modeloPecas.addRow(new Object[]{ nome, qtd, valorUnitStr, totalStr });
                 recalcularTotal();
             }
         }
     }
 
+    // Recalcula o total somando todos os serviços e peças adicionados na tela
     private void recalcularTotal() {
         double total = 0;
         for (int i = 0; i < modeloServicos.getRowCount(); i++) {
             try {
                 total += Double.parseDouble(modeloServicos.getValueAt(i, 2).toString()
-                    .replace("R$","").replace(".","").replace(",",".").trim());
+                    .replace("R$", "").replace(".", "").replace(",", ".").trim());
             } catch (NumberFormatException ignored) {}
         }
         for (int i = 0; i < modeloPecas.getRowCount(); i++) {
             try {
                 total += Double.parseDouble(modeloPecas.getValueAt(i, 3).toString()
-                    .replace("R$","").replace(".","").replace(",",".").trim());
+                    .replace("R$", "").replace(".", "").replace(",", ".").trim());
             } catch (NumberFormatException ignored) {}
         }
         lblTotal.setText(String.format("R$ %.2f", total).replace(".", ","));

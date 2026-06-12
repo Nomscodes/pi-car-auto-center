@@ -43,6 +43,12 @@ public class MainFrame extends JFrame {
     // Promovido a campo de classe para recarregar a lista ao voltar para a tela de cadastro
     private PanelCadastroCliente cadastroCliente;
 
+    // Promovido a campo de classe para recarregar a lista de OS ao voltar para a tela
+    private PanelListaOS listaOS;
+
+    // Promovido a campo de classe para recarregar clientes/colaboradores/serviços ao abrir nova OS
+    private PanelComposicaoOS composicaoOS;
+
     // ── Seleção de marca/modelo — nome (exibição visual) ──────────────────────
     private String marcaSelecionada = "";
     private String modeloSelecionado = "";
@@ -103,8 +109,10 @@ public class MainFrame extends JFrame {
         PanelDashboard dashboard                  = new PanelDashboard(this);
         PanelSelecaoMarca selecaoMarca            = new PanelSelecaoMarca(this);
         selecaoModelo                             = new PanelSelecaoModelo(this);
-        PanelListaOS listaOS                      = new PanelListaOS(this);
-        PanelComposicaoOS composicaoOS            = new PanelComposicaoOS(this);
+        // Inicializado como campo de classe para reload ao retornar à tela
+        listaOS = new PanelListaOS(this);
+        // Inicializado como campo de classe para recarregar dados ao abrir nova OS
+        composicaoOS                              = new PanelComposicaoOS(this);
 
         // Inicializado como campo de classe para permitir reload da lista ao retornar à tela
         listaClientes                             = new PanelListaClientes(this);
@@ -146,6 +154,14 @@ public class MainFrame extends JFrame {
             splash.reiniciar();
         if (TELA_VEICULO.equals(nomeTela))
             cadastroVeiculo.preencherSelecoes();
+
+        // Recarrega clientes, colaboradores e serviços do banco ao abrir a tela de composição
+        if (TELA_COMPOSICAO.equals(nomeTela))
+            composicaoOS.carregarDados();
+
+        // Recarrega a lista de OS do banco ao navegar para essa tela
+        if (TELA_LISTA_OS.equals(nomeTela))
+            listaOS.carregarOS();
 
         // Recarrega a lista de clientes do banco ao navegar para essa tela,
         // garantindo que cadastros ou edições feitas antes apareçam atualizados
