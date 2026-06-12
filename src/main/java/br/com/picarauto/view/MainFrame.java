@@ -37,6 +37,10 @@ public class MainFrame extends JFrame {
     private PanelSplash splash;
     private PanelCadastroVeiculo cadastroVeiculo;
 
+    // Promovido a campo de classe para que mostrarTela() consiga chamar
+    // carregarClientes() sempre que o usuário voltar para a lista
+    private PanelListaClientes listaClientes;
+
     // ── Seleção de marca/modelo — nome (exibição visual) ──────────────────────
     private String marcaSelecionada = "";
     private String modeloSelecionado = "";
@@ -130,7 +134,10 @@ public class MainFrame extends JFrame {
         selecaoModelo = new PanelSelecaoModelo(this);
         PanelListaOS listaOS = new PanelListaOS(this);
         PanelComposicaoOS composicaoOS = new PanelComposicaoOS(this);
-        PanelListaClientes listaClientes = new PanelListaClientes(this);
+
+        // Inicializado como campo de classe para permitir reload da lista ao retornar à tela
+        listaClientes = new PanelListaClientes(this);
+
         PanelCadastroCliente cadastroCliente = new PanelCadastroCliente(this);
         cadastroVeiculo = new PanelCadastroVeiculo(this);
         PanelCadastroPeca cadastroPeca = new PanelCadastroPeca(this);
@@ -168,6 +175,11 @@ public class MainFrame extends JFrame {
         }
         if (TELA_VEICULO.equals(nomeTela)) {
             cadastroVeiculo.preencherSelecoes();
+        }
+        // Recarrega a lista de clientes do banco sempre que o usuário navegar para essa tela,
+        // garantindo que cadastros ou edições feitas antes apareçam atualizados
+        if (TELA_LISTA_CLIENTES.equals(nomeTela)) {
+            listaClientes.carregarClientes();
         }
         cardLayout.show(painelPrincipal, nomeTela);
         SidebarPanel.atualizarTodas();
