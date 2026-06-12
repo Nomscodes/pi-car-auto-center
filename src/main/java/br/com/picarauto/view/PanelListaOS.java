@@ -35,12 +35,6 @@ public class PanelListaOS extends JPanel {
 
     private static final String[] COLUNAS = {"Nº OS", "Cliente", "Veículo", "Data", "Status", "Valor", ""};
 
-    private static final Object[][] DADOS_MOCK = {
-        {"#0042", "Marcos Silva",   "Onix 2022",    "08/06/2026", "FINALIZADO",  "R$ 620,00"},
-        {"#0041", "Ana Pereira",    "HB20 2021",    "07/06/2026", "EXECUCAO",    "R$ 380,00"},
-        {"#0040", "Roberto Leal",   "Gol 2019",     "06/06/2026", "ORCAMENTO",   "R$ 150,00"},
-    };
-
     public PanelListaOS(MainFrame frame) {
         this.frame = frame;
         setBackground(MainFrame.COR_CREAM);
@@ -192,9 +186,10 @@ public class PanelListaOS extends JPanel {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
 
-        // Substituído o mock pelo carregamento real do banco
-        // for (Object[] row : DADOS_MOCK) modelo.addRow(row);
-        carregarOS();
+        // A tabela começa vazia — o carregamento do banco só ocorre quando o usuário
+        // navegar para essa tela via MainFrame.mostrarTela(TELA_LISTA_OS),
+        // que chama carregarOS(). Isso evita o erro "contexto não inicializado pelo Spring"
+        // que ocorre quando o painel é construído antes do Spring terminar de subir.
 
         tabela = new JTable(modelo);
         sorter = new TableRowSorter<>(modelo);
@@ -223,7 +218,7 @@ public class PanelListaOS extends JPanel {
         tabela.getColumnModel().getColumn(4).setCellRenderer(new StatusPillRenderer());
         tabela.getColumnModel().getColumn(6).setCellRenderer(new AcaoRenderer());
 
-        // Detecta clique na coluna "Ver OS" e navega para PanelComposicaoOS com a OS selecionada
+        // Detecta clique na coluna "Ver OS" e navega para PanelComposicaoOS
         tabela.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
                 int viewRow = tabela.rowAtPoint(e.getPoint());
@@ -231,7 +226,6 @@ public class PanelListaOS extends JPanel {
                 if (viewRow < 0 || viewCol != 6) return;
                 int modelRow = tabela.convertRowIndexToModel(viewRow);
                 if (osAtuais == null || modelRow >= osAtuais.size()) return;
-                // OS selecionada — será usada pelo PanelComposicaoOS para exibir os detalhes
                 OrdemServicoModel osSelecionada = osAtuais.get(modelRow);
                 frame.mostrarTela(MainFrame.TELA_COMPOSICAO);
             }
@@ -244,7 +238,7 @@ public class PanelListaOS extends JPanel {
     }
 
     // Busca todas as OS ativas do banco com placa e nome do cliente já populados,
-    // e preenche a tabela. Chamado ao entrar na tela e após criar/alterar uma OS.
+    // e preenche a tabela. Chamado pelo MainFrame ao navegar para TELA_LISTA_OS.
     public void carregarOS() {
         modelo.setRowCount(0);
         try {
@@ -259,7 +253,6 @@ public class PanelListaOS extends JPanel {
                     ? os.getDataAbertura().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                     : "-";
                 String status  = os.getStatus() != null ? os.getStatus().name() : "-";
-                // Valor exibido como "-" se ainda não definido (OS em aberto)
                 String valor   = os.getValorTotal() != null
                     ? String.format("R$ %.2f", os.getValorTotal())
                     : "-";
@@ -270,36 +263,6 @@ public class PanelListaOS extends JPanel {
                 "Erro ao carregar OS: " + ex.getMessage(),
                 "Erro", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    // ── Dialog Nova OS — mantido mas sem uso (botão agora navega para TELA_MARCA) ──
-    private void abrirDialogNovaOS() {
-        // Substituído por navegação para PanelSelecaoMarca com modoNovaOS=true
-    }
-
-    private JPanel criarGrupoDlg(String label, JTextField campo) {
-        JPanel g = new JPanel();
-        g.setOpaque(false);
-        g.setLayout(new BoxLayout(g, BoxLayout.Y_AXIS));
-        JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lbl.setForeground(new Color(0x444444));
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        campo.setAlignmentX(Component.LEFT_ALIGNMENT);
-        campo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-        g.add(lbl); g.add(Box.createVerticalStrut(4)); g.add(campo);
-        return g;
-    }
-
-    private JTextField criarCampoDlg() {
-        JTextField f = new JTextField();
-        f.setFont(MainFrame.FONT_NORMAL);
-        f.setBackground(Color.WHITE);
-        f.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
-            new EmptyBorder(6, 10, 6, 10)));
-        f.setPreferredSize(new Dimension(0, 34));
-        return f;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -332,7 +295,6 @@ public class PanelListaOS extends JPanel {
     static class StatusPillRenderer extends DefaultTableCellRenderer {
         @Override public Component getTableCellRendererComponent(
                 JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            // Mapeia os nomes do enum do banco para labels visuais amigáveis
             String raw = v == null ? "" : v.toString();
             String label = switch (raw) {
                 case "ORCAMENTO" -> "Orçamento";
