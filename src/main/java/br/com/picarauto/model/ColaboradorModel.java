@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "colaborador")
-@PrimaryKeyJoinColumn(name = "idPessoa")  // ← FK que liga colaborador → pessoa
+@PrimaryKeyJoinColumn(name = "idPessoa")
 public class ColaboradorModel extends PessoaModel {
 
     @Column(name = "cpf", nullable = false, unique = true, length = 11)
@@ -25,7 +25,7 @@ public class ColaboradorModel extends PessoaModel {
     @Column(name = "salario", nullable = false)
     private double salario;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idFuncao", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "idFuncao")
     private FuncaoColaboradorModel funcao;
 }

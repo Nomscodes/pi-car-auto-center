@@ -15,6 +15,6 @@ import lombok.EqualsAndHashCode;
 @Table(name = "funcaoColaborador")
 public class FuncaoColaboradorModel extends BaseModel {
 
-    @Column(name = "funcao", nullable = false)
+    @Column(name = "funcao", nullable = false, length = 50)
     private String funcao;
 }
