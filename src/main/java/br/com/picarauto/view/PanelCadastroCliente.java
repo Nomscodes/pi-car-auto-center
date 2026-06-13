@@ -12,14 +12,8 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.List;
 
-// Imports do backend
+// Imports do backend necessários para buscar e salvar clientes no banco
 import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.ClienteController;
 import br.com.picarauto.model.ClienteModel;
@@ -27,6 +21,12 @@ import br.com.picarauto.model.PessoaFisicaModel;
 import br.com.picarauto.model.PessoaJuridicaModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
 
 public class PanelCadastroCliente extends JPanel {
 
@@ -41,7 +41,14 @@ public class PanelCadastroCliente extends JPanel {
     private List<ClienteModel> clientesAtuais;
 
     private static final String[] COLUNAS = {"Nome / Razão Social", "CPF / CNPJ", "Tipo", "Telefone", ""};
-    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private static final Object[][] DADOS_MOCK = {
+        {"João da Silva",           "123.456.789-00",     "Pessoa Física",   "(47) 99111-2222"},
+        {"Maria Oliveira",          "987.654.321-00",     "Pessoa Física",   "(47) 98222-3333"},
+        {"Empresa XPTO Ltda.",      "12.345.678/0001-99", "Pessoa Jurídica", "(47) 3300-4444"},
+        {"Carlos Eduardo",          "456.123.789-00",     "Pessoa Física",   "(47) 97555-6666"},
+        {"Distribuidora ABC Ltda.", "98.765.432/0001-11", "Pessoa Jurídica", "(47) 3311-5555"},
+    };
 
     public PanelCadastroCliente(MainFrame frame) {
         this.frame = frame;
@@ -149,7 +156,7 @@ public class PanelCadastroCliente extends JPanel {
         });
 
         JButton btnNovo = criarBotaoNavy("Novo cliente", 130, 34);
-        btnNovo.addActionListener(e -> abrirFormCliente(null));
+        btnNovo.addActionListener(e -> abrirFormNovoCliente());
 
         JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
         painelBusca.setBackground(new Color(0xF5F0E6));
@@ -166,6 +173,7 @@ public class PanelCadastroCliente extends JPanel {
 
         // A tabela começa vazia — carregarClientes() é chamado pelo MainFrame.mostrarTela()
         // ao navegar para TELA_CLIENTE, quando o Spring já está inicializado.
+        // Chamar aqui causaria IllegalStateException pois o Spring ainda não subiu.
 
         tabela = new JTable(modelo);
         sorter = new TableRowSorter<>(modelo);
@@ -190,6 +198,7 @@ public class PanelCadastroCliente extends JPanel {
         tabela.getColumnModel().getColumn(4).setPreferredWidth(60);
         tabela.getColumnModel().getColumn(4).setCellRenderer(new EditarRenderer());
 
+        // Detecta clique na coluna "Editar" e abre o dialog com os dados do cliente selecionado
         tabela.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
                 int viewRow = tabela.rowAtPoint(e.getPoint());
@@ -197,7 +206,8 @@ public class PanelCadastroCliente extends JPanel {
                 if (viewRow < 0 || viewCol != 4) return;
                 int modelRow = tabela.convertRowIndexToModel(viewRow);
                 if (clientesAtuais == null || modelRow >= clientesAtuais.size()) return;
-                abrirFormCliente(clientesAtuais.get(modelRow));
+                ClienteModel selecionado = clientesAtuais.get(modelRow);
+                abrirFormEdicaoCliente(selecionado);
             }
         });
 
@@ -207,7 +217,8 @@ public class PanelCadastroCliente extends JPanel {
         return scroll;
     }
 
-    // ── Carrega do banco ───────────────────────────────────────────────────────
+    // Busca todos os clientes ativos no banco via ClienteController
+    // e preenche a tabela. Chamado ao entrar na tela e após salvar/editar.
     public void carregarClientes() {
         modelo.setRowCount(0);
         try {
@@ -225,28 +236,37 @@ public class PanelCadastroCliente extends JPanel {
                     doc  = "-";
                     tipo = "-";
                 }
-                // 5 valores — um para cada coluna, incluindo a coluna "Editar"
-                modelo.addRow(new Object[]{ c.getNomeCompleto(), doc, tipo, c.getTelefone(), "" });
+                modelo.addRow(new Object[]{ c.getNomeCompleto(), doc, tipo, c.getTelefone() });
             }
         } catch (Exception ex) {
+            // Exibe erro na tela caso o banco não esteja acessível
             JOptionPane.showMessageDialog(this,
                 "Erro ao carregar clientes: " + ex.getMessage(),
                 "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // ── Diálogo unificado: null = novo, preenchido = edição ───────────────────
+    // ── Diálogo de cadastro ───────────────────────────────────────────────────
+    private void abrirFormNovoCliente() {
+        abrirFormCliente(null);
+    }
+
+    // Abre o dialog preenchido com os dados do cliente para edição
+    private void abrirFormEdicaoCliente(ClienteModel cliente) {
+        abrirFormCliente(cliente);
+    }
+
+    // Dialog unificado: null = novo cadastro, cliente preenchido = edição
     private void abrirFormCliente(ClienteModel clienteExistente) {
-        boolean editando = clienteExistente != null;
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-            editando ? "Editar Cliente" : "Novo Cliente",
+            clienteExistente == null ? "Novo Cliente" : "Editar Cliente",
             java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(500, 480);
+        dialog.setSize(480, 430);
         dialog.setLocationRelativeTo(this);
 
         boolean[] modoEmpresa = { clienteExistente instanceof PessoaJuridicaModel };
 
-        // ── Campos Pessoa Física ──────────────────────────────────────────────
+        // Campos PF
         JTextField txtNomePF  = criarCampo();
         JTextField txtCPF     = criarCampo();
         JTextField txtRG      = criarCampo();
@@ -255,69 +275,58 @@ public class PanelCadastroCliente extends JPanel {
         JTextField txtEmailPF = criarCampo();
         JTextField txtEndPF   = criarCampo();
 
-        // ── Campos Pessoa Jurídica ────────────────────────────────────────────
-        JTextField txtRazao      = criarCampo();
-        JTextField txtFantasia   = criarCampo();
-        JTextField txtCNPJ       = criarCampo();
-        JTextField txtIE         = criarCampo();
-        JTextField txtAbertura   = criarCampo();
-        JTextField txtTelPJ      = criarCampo();
-        JTextField txtEmailPJ    = criarCampo();
-        JTextField txtEndPJ      = criarCampo();
+        // Campos PJ
+        JTextField txtRazao   = criarCampo();
+        JTextField txtCNPJ    = criarCampo();
+        JTextField txtIE      = criarCampo();
+        JTextField txtTelPJ   = criarCampo();
+        JTextField txtEmailPJ = criarCampo();
+        JTextField txtEndPJ   = criarCampo();
 
         // Preenche os campos se for edição
         if (clienteExistente instanceof PessoaFisicaModel pf) {
             txtNomePF.setText(pf.getNomeCompleto());
             txtCPF.setText(pf.getCpf());
-            txtCPF.setEditable(false);
-            txtCPF.setBackground(new Color(0xEEEEEE));
             txtRG.setText(pf.getRg());
             if (pf.getDataNascimento() != null)
-                txtNascPF.setText(pf.getDataNascimento().format(FMT));
+                txtNascPF.setText(pf.getDataNascimento().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             txtTelPF.setText(pf.getTelefone());
             txtEmailPF.setText(pf.getEmail());
             txtEndPF.setText(pf.getEndereco());
         } else if (clienteExistente instanceof PessoaJuridicaModel pj) {
             txtRazao.setText(pj.getRazaoSocial());
-            txtFantasia.setText(pj.getNomeFantasia() != null ? pj.getNomeFantasia() : "");
             txtCNPJ.setText(pj.getCnpj());
-            txtCNPJ.setEditable(false);
-            txtCNPJ.setBackground(new Color(0xEEEEEE));
             txtIE.setText(pj.getInscricaoEstadual() != null ? pj.getInscricaoEstadual() : "");
-            if (pj.getDataAbertura() != null)
-                txtAbertura.setText(pj.getDataAbertura().format(FMT));
             txtTelPJ.setText(pj.getTelefone());
             txtEmailPJ.setText(pj.getEmail());
             txtEndPJ.setText(pj.getEndereco());
         }
 
-        // ── Grid PF ──────────────────────────────────────────────────────────
         JPanel gridPF = new JPanel(new GridLayout(4, 2, 14, 10));
         gridPF.setOpaque(false);
         gridPF.setAlignmentX(Component.LEFT_ALIGNMENT);
-        gridPF.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
-        gridPF.add(criarGrupo("Nome completo *",          txtNomePF));
-        gridPF.add(criarGrupo("CPF (só números) *",       txtCPF));
-        gridPF.add(criarGrupo("RG *",                     txtRG));
-        gridPF.add(criarGrupo("Data nasc. (dd/mm/aaaa) *", txtNascPF));
-        gridPF.add(criarGrupo("Telefone *",               txtTelPF));
-        gridPF.add(criarGrupo("E-mail *",                 txtEmailPF));
-        gridPF.add(criarGrupo("Endereço *",               txtEndPF));
+        gridPF.setMaximumSize(new Dimension(Integer.MAX_VALUE, 240));
+        gridPF.add(criarGrupo("Nome completo",  txtNomePF));
+        gridPF.add(criarGrupo("CPF",            txtCPF));
+        gridPF.add(criarGrupo("RG",             txtRG));
+        gridPF.add(criarGrupo("Data nasc. (dd/MM/yyyy)", txtNascPF));
+        gridPF.add(criarGrupo("Telefone",       txtTelPF));
+        gridPF.add(criarGrupo("E-mail",         txtEmailPF));
+        gridPF.add(criarGrupo("Endereço",       txtEndPF));
         gridPF.add(new JPanel() {{ setOpaque(false); }});
 
-        // ── Grid PJ ──────────────────────────────────────────────────────────
         JPanel gridPJ = new JPanel(new GridLayout(4, 2, 14, 10));
         gridPJ.setOpaque(false);
         gridPJ.setAlignmentX(Component.LEFT_ALIGNMENT);
-        gridPJ.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
-        gridPJ.add(criarGrupo("Razão Social *",              txtRazao));
-        gridPJ.add(criarGrupo("Nome Fantasia",               txtFantasia));
-        gridPJ.add(criarGrupo("CNPJ (só números) *",         txtCNPJ));
-        gridPJ.add(criarGrupo("Inscrição Estadual",          txtIE));
-        gridPJ.add(criarGrupo("Data abertura (dd/mm/aaaa) *", txtAbertura));
-        gridPJ.add(criarGrupo("Telefone *",                  txtTelPJ));
-        gridPJ.add(criarGrupo("E-mail *",                    txtEmailPJ));
-        gridPJ.add(criarGrupo("Endereço *",                  txtEndPJ));
+        gridPJ.setMaximumSize(new Dimension(Integer.MAX_VALUE, 240));
+        gridPJ.add(criarGrupo("Razão Social",       txtRazao));
+        gridPJ.add(criarGrupo("CNPJ",               txtCNPJ));
+        gridPJ.add(criarGrupo("Inscrição Estadual", txtIE));
+        gridPJ.add(criarGrupo("Telefone",           txtTelPJ));
+        gridPJ.add(criarGrupo("E-mail",             txtEmailPJ));
+        gridPJ.add(criarGrupo("Endereço",           txtEndPJ));
+        gridPJ.add(new JPanel() {{ setOpaque(false); }});
+        gridPJ.add(new JPanel() {{ setOpaque(false); }});
 
         JPanel camposCard = new JPanel(new CardLayout());
         camposCard.setOpaque(false);
@@ -325,10 +334,10 @@ public class PanelCadastroCliente extends JPanel {
         camposCard.add(gridPF, "PF");
         camposCard.add(gridPJ, "PJ");
 
+        // Exibe o painel correto se for edição
         if (clienteExistente instanceof PessoaJuridicaModel)
             ((CardLayout) camposCard.getLayout()).show(camposCard, "PJ");
 
-        // ── Toggle PF/PJ ──────────────────────────────────────────────────────
         JButton btnPF = criarBotaoToggle("Pessoa Física",   modoEmpresa);
         JButton btnPJ = criarBotaoToggle("Pessoa Jurídica", modoEmpresa);
 
@@ -343,8 +352,11 @@ public class PanelCadastroCliente extends JPanel {
             btnPF.repaint(); btnPJ.repaint();
         });
 
-        // Na edição o tipo não pode mudar
-        if (editando) { btnPF.setEnabled(false); btnPJ.setEnabled(false); }
+        // Desabilita o toggle de tipo ao editar — não faz sentido mudar PF para PJ
+        if (clienteExistente != null) {
+            btnPF.setEnabled(false);
+            btnPJ.setEnabled(false);
+        }
 
         JPanel togglePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         togglePanel.setOpaque(false);
@@ -352,34 +364,9 @@ public class PanelCadastroCliente extends JPanel {
         togglePanel.add(btnPF);
         togglePanel.add(btnPJ);
 
-        // ── Rodapé ───────────────────────────────────────────────────────────
         JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rodape.setOpaque(false);
         rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        // Botão excluir — só na edição
-        if (editando) {
-            JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
-            btnExcluir.setForeground(new Color(0xCC2222));
-            btnExcluir.addActionListener(e -> {
-                int conf = JOptionPane.showConfirmDialog(dialog,
-                    "Deseja excluir o cliente " + clienteExistente.getNomeCompleto() + "?",
-                    "Confirmar exclusão", JOptionPane.YES_NO_OPTION);
-                if (conf == JOptionPane.YES_OPTION) {
-                    try {
-                        ClienteController controller = ContextoAplicacao.getBean(ClienteController.class);
-                        controller.delete(clienteExistente.getId());
-                        dialog.dispose();
-                        carregarClientes();
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(dialog,
-                            "Erro ao excluir: " + ex.getMessage(),
-                            "Erro", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-            });
-            rodape.add(btnExcluir);
-        }
 
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
@@ -390,95 +377,57 @@ public class PanelCadastroCliente extends JPanel {
                 ClienteController controller = ContextoAplicacao.getBean(ClienteController.class);
 
                 if (!modoEmpresa[0]) {
-                    // ── Pessoa Física ─────────────────────────────────────────
-                    String nome = txtNomePF.getText().trim();
-                    String cpf  = txtCPF.getText().replaceAll("\\D", "").trim();
-                    String rg   = txtRG.getText().trim();
-                    String nasc = txtNascPF.getText().trim();
-                    String tel  = txtTelPF.getText().trim();
-                    String mail = txtEmailPF.getText().trim();
-                    String end  = txtEndPF.getText().trim();
-
-                    if (nome.isEmpty() || cpf.isEmpty() || rg.isEmpty()
-                            || nasc.isEmpty() || tel.isEmpty() || mail.isEmpty() || end.isEmpty()) {
-                        JOptionPane.showMessageDialog(dialog,
-                            "Preencha todos os campos obrigatórios (*).",
-                            "Atenção", JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-
-                    LocalDate dataNasc;
-                    try { dataNasc = LocalDate.parse(nasc, FMT); }
-                    catch (DateTimeParseException ex) {
-                        JOptionPane.showMessageDialog(dialog,
-                            "Data de nascimento inválida. Use dd/mm/aaaa.",
-                            "Atenção", JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-
+                    // Monta ou atualiza o objeto PessoaFisicaModel com os dados do formulário
                     PessoaFisicaModel pf = (clienteExistente instanceof PessoaFisicaModel existing)
                         ? existing : new PessoaFisicaModel();
-                    pf.setNomeCompleto(nome);
-                    if (!editando) pf.setCpf(cpf);
-                    pf.setRg(rg);
-                    pf.setDataNascimento(dataNasc);
-                    pf.setTelefone(tel);
-                    pf.setEmail(mail);
-                    pf.setEndereco(end);
-                    if (pf.getDataCadastro() == null) pf.setDataCadastro(LocalDate.now());
+                    pf.setNomeCompleto(txtNomePF.getText().trim());
+                    pf.setCpf(txtCPF.getText().replaceAll("\\D", "").trim());
+                    pf.setRg(txtRG.getText().trim());
+                    pf.setTelefone(txtTelPF.getText().trim());
+                    pf.setEmail(txtEmailPF.getText().trim());
+                    pf.setEndereco(txtEndPF.getText().trim());
+                    // Converte a data digitada no formato dd/MM/yyyy para LocalDate
+                    pf.setDataNascimento(LocalDate.parse(
+                        txtNascPF.getText().trim(),
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                    if (pf.getDataCadastro() == null)
+                        pf.setDataCadastro(LocalDate.now());
 
-                    if (!editando) controller.insert(pf);
-                    else          controller.update(pf);
+                    // Insere novo ou atualiza existente no banco
+                    if (clienteExistente == null) controller.insert(pf);
+                    else controller.update(pf);
 
                 } else {
-                    // ── Pessoa Jurídica ───────────────────────────────────────
-                    String razao    = txtRazao.getText().trim();
-                    String fantasia = txtFantasia.getText().trim();
-                    String cnpj     = txtCNPJ.getText().replaceAll("\\D", "").trim();
-                    String ie       = txtIE.getText().trim();
-                    String abertura = txtAbertura.getText().trim();
-                    String tel      = txtTelPJ.getText().trim();
-                    String mail     = txtEmailPJ.getText().trim();
-                    String end      = txtEndPJ.getText().trim();
-
-                    if (razao.isEmpty() || cnpj.isEmpty() || abertura.isEmpty()
-                            || tel.isEmpty() || mail.isEmpty() || end.isEmpty()) {
-                        JOptionPane.showMessageDialog(dialog,
-                            "Preencha todos os campos obrigatórios (*).",
-                            "Atenção", JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-
-                    LocalDate dataAbertura;
-                    try { dataAbertura = LocalDate.parse(abertura, FMT); }
-                    catch (DateTimeParseException ex) {
-                        JOptionPane.showMessageDialog(dialog,
-                            "Data de abertura inválida. Use dd/mm/aaaa.",
-                            "Atenção", JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-
+                    // Monta ou atualiza o objeto PessoaJuridicaModel com os dados do formulário
                     PessoaJuridicaModel pj = (clienteExistente instanceof PessoaJuridicaModel existing)
                         ? existing : new PessoaJuridicaModel();
-                    pj.setRazaoSocial(razao);
-                    pj.setNomeCompleto(razao);
-                    pj.setNomeFantasia(fantasia.isEmpty() ? null : fantasia);
-                    if (!editando) pj.setCnpj(cnpj);
-                    pj.setInscricaoEstadual(ie.isEmpty() ? null : ie);
-                    pj.setDataAbertura(dataAbertura);
-                    pj.setTelefone(tel);
-                    pj.setEmail(mail);
-                    pj.setEndereco(end);
-                    if (pj.getDataCadastro() == null) pj.setDataCadastro(LocalDate.now());
+                    pj.setRazaoSocial(txtRazao.getText().trim());
+                    pj.setNomeCompleto(txtRazao.getText().trim());
+                    pj.setCnpj(txtCNPJ.getText().replaceAll("\\D", "").trim());
+                    pj.setInscricaoEstadual(txtIE.getText().trim().isEmpty() ? null : txtIE.getText().trim());
+                    pj.setTelefone(txtTelPJ.getText().trim());
+                    pj.setEmail(txtEmailPJ.getText().trim());
+                    pj.setEndereco(txtEndPJ.getText().trim());
+                    // Converte data de abertura — usa data atual se não for edição
+                    if (pj.getDataAbertura() == null)
+                        pj.setDataAbertura(LocalDate.now());
+                    if (pj.getDataCadastro() == null)
+                        pj.setDataCadastro(LocalDate.now());
 
-                    if (!editando) controller.insert(pj);
-                    else          controller.update(pj);
+                    if (clienteExistente == null) controller.insert(pj);
+                    else controller.update(pj);
                 }
 
                 dialog.dispose();
+                // Recarrega a tabela para refletir o novo cadastro ou a edição
                 carregarClientes();
 
+            } catch (DateTimeParseException dtEx) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Data inválida. Use o formato dd/MM/yyyy.",
+                    "Erro de validação", JOptionPane.WARNING_MESSAGE);
             } catch (FieldValidationException | RuleValidationException valEx) {
+                // Exibe a mensagem de validação do backend (campo inválido ou regra de negócio)
                 JOptionPane.showMessageDialog(dialog,
                     valEx.getMessage(),
                     "Erro de validação", JOptionPane.WARNING_MESSAGE);
@@ -619,7 +568,7 @@ public class PanelCadastroCliente extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getForeground());
+                g2.setColor(MainFrame.COR_NAVY);
                 g2.setStroke(new java.awt.BasicStroke(1.5f));
                 g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
                 g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));

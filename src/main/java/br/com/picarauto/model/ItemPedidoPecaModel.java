@@ -23,7 +23,7 @@ public class ItemPedidoPecaModel extends BaseModel {
     private LocalDate dataEntrega;       // NULL até entrega confirmada
 
     @Column(name = "codigoNacional", nullable = false)
-    private Integer codigoNacional;
+    private Long codigoNacional;
 
     @Column(name = "idFornecedor", nullable = false)
     private Long idFornecedor;

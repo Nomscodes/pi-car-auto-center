@@ -1,27 +1,23 @@
 package br.com.picarauto;
 
-import br.com.picarauto.view.MainFrame;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import javax.swing.SwingUtilities;
 
 /**
+ *
  * @author Caio4breu
  */
 @SpringBootApplication
 public class Main {
 
-    public static void main(String[] args) throws Exception {
-        // Sobe o Spring com headless=false (necessário para Swing)
-        new SpringApplicationBuilder(Main.class)
-            .headless(false)
-            .run(args);
+    public static void main(String[] args) {
+        var ctx = SpringApplication.run(Main.class, args);
 
-        // Abre o MainFrame na thread do Swing
-        // invokeAndWait bloqueia a thread principal, mantendo a JVM viva
-        SwingUtilities.invokeAndWait(() -> {
-            MainFrame frame = new MainFrame();
-            frame.setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            // aqui você vai chamar a sua tela principal futuramente
+            // ex: ctx.getBean(MainView.class).setVisible(true);
+            System.out.println("Spring Boot iniciado! Swing pronto para uso.");
         });
     }
 }
