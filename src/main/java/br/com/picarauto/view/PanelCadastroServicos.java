@@ -219,23 +219,28 @@ public class PanelCadastroServicos extends JPanel {
     }
 
     public void carregarServicos() {
-        modelo.setRowCount(0);
-        try {
-            if (abaInterno) {
-                ServicoInternoController sic = ContextoAplicacao.getBean(ServicoInternoController.class);
-                servicosInternos = sic.findAll();
-                for (ServicoInternoModel s : servicosInternos)
-                    modelo.addRow(new Object[]{ s.getDescricao(), "Interno", String.format("R$ %.2f", s.getValorCobrado()), "" });
-            } else {
-                ServicoExternoController sec = ContextoAplicacao.getBean(ServicoExternoController.class);
-                servicosExternos = sec.findAll();
-                for (ServicoExternoModel s : servicosExternos)
-                    modelo.addRow(new Object[]{ s.getDescricao(), "Externo", String.format("R$ %.2f", s.getValorCobrado()), "" });
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar serviços: " + ex.getMessage(),
-                "Erro", JOptionPane.ERROR_MESSAGE);
+    modelo.setRowCount(0);
+    try {
+        java.text.NumberFormat fmtBR = java.text.NumberFormat.getNumberInstance(
+            java.util.Locale.forLanguageTag("pt-BR"));
+        fmtBR.setMinimumFractionDigits(2);
+        fmtBR.setMaximumFractionDigits(2);
+
+        if (abaInterno) {
+            ServicoInternoController sic = ContextoAplicacao.getBean(ServicoInternoController.class);
+            servicosInternos = sic.findAll();
+            for (ServicoInternoModel s : servicosInternos)
+                modelo.addRow(new Object[]{ s.getDescricao(), "Interno", "R$ " + fmtBR.format(s.getValorCobrado()), "" });
+        } else {
+            ServicoExternoController sec = ContextoAplicacao.getBean(ServicoExternoController.class);
+            servicosExternos = sec.findAll();
+            for (ServicoExternoModel s : servicosExternos)
+                modelo.addRow(new Object[]{ s.getDescricao(), "Externo", "R$ " + fmtBR.format(s.getValorCobrado()), "" });
         }
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(this, "Erro ao carregar serviços: " + ex.getMessage(),
+            "Erro", JOptionPane.ERROR_MESSAGE);
+    }
     }
 
     private void abrirFormServico(ServicoInternoModel interno, ServicoExternoModel externo) {
@@ -259,11 +264,23 @@ public class PanelCadastroServicos extends JPanel {
         togglePanel.setOpaque(false); togglePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         togglePanel.add(btnInt); togglePanel.add(btnExt);
 
+        // DEPOIS
         JTextField txtDescricao = criarCampo();
-        JTextField txtValor     = criarCampo();
+         JTextField txtValor     = criarCampo();
+        aplicarMascaraValor(txtValor);
 
-        if (interno != null)  { txtDescricao.setText(interno.getDescricao());  txtValor.setText(String.valueOf(interno.getValorCobrado())); }
-        if (externo != null)  { txtDescricao.setText(externo.getDescricao());  txtValor.setText(String.valueOf(externo.getValorCobrado())); }
+        if (interno != null) {
+          txtDescricao.setText(interno.getDescricao());
+          // Preenche já formatado para a máscara funcionar corretamente na edição
+         // Converte double para centavos inteiros e injeta como string de dígitos
+         String centavos = String.valueOf(Math.round(interno.getValorCobrado() * 100));
+         txtValor.setText(centavos); // A máscara detecta e reformata
+        }
+         if (externo != null) {
+          txtDescricao.setText(externo.getDescricao());
+          String centavos = String.valueOf(Math.round(externo.getValorCobrado() * 100));
+          txtValor.setText(centavos);
+        }
 
         JPanel grid = new JPanel(new GridLayout(1, 2, 14, 0));
         grid.setOpaque(false); grid.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -302,9 +319,15 @@ public class PanelCadastroServicos extends JPanel {
                 JOptionPane.showMessageDialog(dialog, "Preencha a descrição.", "Atenção", JOptionPane.WARNING_MESSAGE); return;
             }
             double valor;
-            try { valor = Double.parseDouble(txtValor.getText().trim().replace(",", ".")); }
-            catch (NumberFormatException nfe) {
-                JOptionPane.showMessageDialog(dialog, "Valor inválido.", "Atenção", JOptionPane.WARNING_MESSAGE); return;
+            try {
+              // Remove separadores de milhar (.) e troca vírgula decimal por ponto
+              String valorLimpo = txtValor.getText().trim()
+              .replaceAll("\\.", "")   // remove pontos de milhar: "2.000,00" → "2000,00"
+              .replace(",", ".");      // vírgula → ponto:          "2000,00"  → "2000.00"
+              valor = Double.parseDouble(valorLimpo);
+            } catch (NumberFormatException nfe) {
+             JOptionPane.showMessageDialog(dialog, "Valor inválido.", "Atenção", JOptionPane.WARNING_MESSAGE);
+             return;
             }
             try {
                 if (!modoExterno[0]) {
@@ -462,4 +485,38 @@ public class PanelCadastroServicos extends JPanel {
             return lbl;
         }
     }
+    /**
+ * Máscara de valor monetário em tempo real.
+ * O usuário digita apenas dígitos; o campo exibe no formato 0,00 → 1.000,00.
+ * Exemplo: digitar "2000" → exibe "2.000,00"
+ */
+private void aplicarMascaraValor(JTextField campo) {
+    campo.getDocument().addDocumentListener(new DocumentListener() {
+        private boolean atualizando = false;
+        private void formatar() {
+            if (atualizando) return;
+            atualizando = true;
+            SwingUtilities.invokeLater(() -> {
+                // Mantém só dígitos
+                String raw = campo.getText().replaceAll("\\D", "");
+                if (raw.isEmpty()) { campo.setText(""); atualizando = false; return; }
+                // Limita a 13 dígitos (9.999.999.999,99)
+                if (raw.length() > 13) raw = raw.substring(0, 13);
+                // Converte para centavos → formata
+                long centavos = Long.parseLong(raw);
+                double valor  = centavos / 100.0;
+                java.text.NumberFormat fmt = java.text.NumberFormat.getNumberInstance(
+                    java.util.Locale.forLanguageTag("pt-BR"));
+                fmt.setMinimumFractionDigits(2);
+                fmt.setMaximumFractionDigits(2);
+                campo.setText(fmt.format(valor));
+                campo.setCaretPosition(campo.getText().length());
+                atualizando = false;
+            });
+        }
+        @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
+        @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
+        @Override public void changedUpdate(DocumentEvent e) {}
+    });
+}
 }
