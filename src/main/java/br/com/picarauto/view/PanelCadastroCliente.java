@@ -22,6 +22,8 @@ import java.util.List;
 // Imports do backend
 import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.ClienteController;
+import br.com.picarauto.controller.PessoaFisicaController;
+import br.com.picarauto.controller.PessoaJuridicaController;
 import br.com.picarauto.model.ClienteModel;
 import br.com.picarauto.model.PessoaFisicaModel;
 import br.com.picarauto.model.PessoaJuridicaModel;
@@ -40,6 +42,10 @@ public class PanelCadastroCliente extends JPanel {
     // Guarda os clientes carregados do banco na mesma ordem das linhas da tabela
     private List<ClienteModel> clientesAtuais;
 
+    // Flag usada pelo MainFrame para abrir o dialog "Novo" imediatamente ao navegar
+    private boolean abrirNovoAoCarregar = false;
+    private ClienteModel clienteParaEditar = null;
+
     private static final String[] COLUNAS = {"Nome / Razão Social", "CPF / CNPJ", "Tipo", "Telefone", ""};
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -48,6 +54,15 @@ public class PanelCadastroCliente extends JPanel {
         setBackground(MainFrame.COR_CREAM);
         setLayout(new BorderLayout());
         construirUI();
+    }
+
+    /** Chamado pelo MainFrame quando o usuário clicou em "Novo cliente" na lista. */
+    public void sinalizarNovoCliente() {
+        abrirNovoAoCarregar = true;
+    }
+    
+    public void sinalizarEdicaoCliente(ClienteModel cliente) {
+        this.clienteParaEditar = cliente;
     }
 
     private void construirUI() {
@@ -149,6 +164,7 @@ public class PanelCadastroCliente extends JPanel {
         });
 
         JButton btnNovo = criarBotaoNavy("Novo cliente", 130, 34);
+        // Abre o dialog diretamente — sem navegar para lugar nenhum
         btnNovo.addActionListener(e -> abrirFormCliente(null));
 
         JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
@@ -163,9 +179,6 @@ public class PanelCadastroCliente extends JPanel {
         modelo = new DefaultTableModel(COLUNAS, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-
-        // A tabela começa vazia — carregarClientes() é chamado pelo MainFrame.mostrarTela()
-        // ao navegar para TELA_CLIENTE, quando o Spring já está inicializado.
 
         tabela = new JTable(modelo);
         sorter = new TableRowSorter<>(modelo);
@@ -216,22 +229,33 @@ public class PanelCadastroCliente extends JPanel {
             for (ClienteModel c : clientesAtuais) {
                 String doc, tipo;
                 if (c instanceof PessoaFisicaModel pf) {
-                    doc  = pf.getCpf();
+                    doc  = formatarCpf(pf.getCpf());
                     tipo = "Pessoa Física";
                 } else if (c instanceof PessoaJuridicaModel pj) {
-                    doc  = pj.getCnpj();
+                    doc  = formatarCnpj(pj.getCnpj());
                     tipo = "Pessoa Jurídica";
                 } else {
                     doc  = "-";
                     tipo = "-";
                 }
-                // 5 valores — um para cada coluna, incluindo a coluna "Editar"
                 modelo.addRow(new Object[]{ c.getNomeCompleto(), doc, tipo, c.getTelefone(), "" });
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                 "Erro ao carregar clientes: " + ex.getMessage(),
                 "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+
+        // Se veio sinalizado para abrir o form de novo cadastro, abre agora
+        if (abrirNovoAoCarregar) {
+            abrirNovoAoCarregar = false;
+            SwingUtilities.invokeLater(() -> abrirFormCliente(null));
+        }
+        
+        if (clienteParaEditar != null) {
+            ClienteModel c = clienteParaEditar;
+            clienteParaEditar = null;
+            SwingUtilities.invokeLater(() -> abrirFormCliente(c));
         }
     }
 
@@ -241,7 +265,7 @@ public class PanelCadastroCliente extends JPanel {
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
             editando ? "Editar Cliente" : "Novo Cliente",
             java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(500, 480);
+        dialog.setSize(500, 500);
         dialog.setLocationRelativeTo(this);
 
         boolean[] modoEmpresa = { clienteExistente instanceof PessoaJuridicaModel };
@@ -265,10 +289,22 @@ public class PanelCadastroCliente extends JPanel {
         JTextField txtEmailPJ    = criarCampo();
         JTextField txtEndPJ      = criarCampo();
 
+        // ── Máscaras em tempo real ────────────────────────────────────────────
+        aplicarMascaraNome(txtNomePF);
+        aplicarMascaraNome(txtRazao);
+        aplicarMascaraNome(txtFantasia);
+        aplicarMascaraCpf(txtCPF);
+        aplicarMascaraTelefone(txtTelPF);
+        aplicarMascaraTelefone(txtTelPJ);
+        aplicarMascaraCnpj(txtCNPJ);
+        aplicarMascaraData(txtNascPF);
+        aplicarMascaraData(txtAbertura);
+        aplicarMascaraRG(txtRG);
+
         // Preenche os campos se for edição
         if (clienteExistente instanceof PessoaFisicaModel pf) {
             txtNomePF.setText(pf.getNomeCompleto());
-            txtCPF.setText(pf.getCpf());
+            txtCPF.setText(formatarCpf(pf.getCpf()));
             txtCPF.setEditable(false);
             txtCPF.setBackground(new Color(0xEEEEEE));
             txtRG.setText(pf.getRg());
@@ -280,7 +316,7 @@ public class PanelCadastroCliente extends JPanel {
         } else if (clienteExistente instanceof PessoaJuridicaModel pj) {
             txtRazao.setText(pj.getRazaoSocial());
             txtFantasia.setText(pj.getNomeFantasia() != null ? pj.getNomeFantasia() : "");
-            txtCNPJ.setText(pj.getCnpj());
+            txtCNPJ.setText(formatarCnpj(pj.getCnpj()));
             txtCNPJ.setEditable(false);
             txtCNPJ.setBackground(new Color(0xEEEEEE));
             txtIE.setText(pj.getInscricaoEstadual() != null ? pj.getInscricaoEstadual() : "");
@@ -296,13 +332,13 @@ public class PanelCadastroCliente extends JPanel {
         gridPF.setOpaque(false);
         gridPF.setAlignmentX(Component.LEFT_ALIGNMENT);
         gridPF.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
-        gridPF.add(criarGrupo("Nome completo *",          txtNomePF));
-        gridPF.add(criarGrupo("CPF (só números) *",       txtCPF));
-        gridPF.add(criarGrupo("RG *",                     txtRG));
+        gridPF.add(criarGrupo("Nome completo *",           txtNomePF));
+        gridPF.add(criarGrupo("CPF (só números) *",        txtCPF));
+        gridPF.add(criarGrupo("RG *",                      txtRG));
         gridPF.add(criarGrupo("Data nasc. (dd/mm/aaaa) *", txtNascPF));
-        gridPF.add(criarGrupo("Telefone *",               txtTelPF));
-        gridPF.add(criarGrupo("E-mail *",                 txtEmailPF));
-        gridPF.add(criarGrupo("Endereço *",               txtEndPF));
+        gridPF.add(criarGrupo("Telefone *",                txtTelPF));
+        gridPF.add(criarGrupo("E-mail *",                  txtEmailPF));
+        gridPF.add(criarGrupo("Endereço *",                txtEndPF));
         gridPF.add(new JPanel() {{ setOpaque(false); }});
 
         // ── Grid PJ ──────────────────────────────────────────────────────────
@@ -310,14 +346,14 @@ public class PanelCadastroCliente extends JPanel {
         gridPJ.setOpaque(false);
         gridPJ.setAlignmentX(Component.LEFT_ALIGNMENT);
         gridPJ.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
-        gridPJ.add(criarGrupo("Razão Social *",              txtRazao));
-        gridPJ.add(criarGrupo("Nome Fantasia",               txtFantasia));
-        gridPJ.add(criarGrupo("CNPJ (só números) *",         txtCNPJ));
-        gridPJ.add(criarGrupo("Inscrição Estadual",          txtIE));
+        gridPJ.add(criarGrupo("Razão Social *",               txtRazao));
+        gridPJ.add(criarGrupo("Nome Fantasia",                txtFantasia));
+        gridPJ.add(criarGrupo("CNPJ (só números) *",          txtCNPJ));
+        gridPJ.add(criarGrupo("Inscrição Estadual",           txtIE));
         gridPJ.add(criarGrupo("Data abertura (dd/mm/aaaa) *", txtAbertura));
-        gridPJ.add(criarGrupo("Telefone *",                  txtTelPJ));
-        gridPJ.add(criarGrupo("E-mail *",                    txtEmailPJ));
-        gridPJ.add(criarGrupo("Endereço *",                  txtEndPJ));
+        gridPJ.add(criarGrupo("Telefone *",                   txtTelPJ));
+        gridPJ.add(criarGrupo("E-mail *",                     txtEmailPJ));
+        gridPJ.add(criarGrupo("Endereço *",                   txtEndPJ));
 
         JPanel camposCard = new JPanel(new CardLayout());
         camposCard.setOpaque(false);
@@ -343,7 +379,6 @@ public class PanelCadastroCliente extends JPanel {
             btnPF.repaint(); btnPJ.repaint();
         });
 
-        // Na edição o tipo não pode mudar
         if (editando) { btnPF.setEnabled(false); btnPJ.setEnabled(false); }
 
         JPanel togglePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -357,14 +392,15 @@ public class PanelCadastroCliente extends JPanel {
         rodape.setOpaque(false);
         rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Botão excluir — só na edição
+        // Botão excluir — soft delete (seta ativo = false), só na edição
         if (editando) {
             JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
             btnExcluir.setForeground(new Color(0xCC2222));
             btnExcluir.addActionListener(e -> {
                 int conf = JOptionPane.showConfirmDialog(dialog,
-                    "Deseja excluir o cliente " + clienteExistente.getNomeCompleto() + "?",
-                    "Confirmar exclusão", JOptionPane.YES_NO_OPTION);
+                    "Deseja desativar o cliente " + clienteExistente.getNomeCompleto() + "?\n"
+                    + "O registro não será apagado permanentemente.",
+                    "Confirmar desativação", JOptionPane.YES_NO_OPTION);
                 if (conf == JOptionPane.YES_OPTION) {
                     try {
                         ClienteController controller = ContextoAplicacao.getBean(ClienteController.class);
@@ -373,7 +409,7 @@ public class PanelCadastroCliente extends JPanel {
                         carregarClientes();
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(dialog,
-                            "Erro ao excluir: " + ex.getMessage(),
+                            "Erro ao desativar: " + ex.getMessage(),
                             "Erro", JOptionPane.ERROR_MESSAGE);
                     }
                 }
@@ -387,11 +423,10 @@ public class PanelCadastroCliente extends JPanel {
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             try {
-                ClienteController controller = ContextoAplicacao.getBean(ClienteController.class);
-
                 if (!modoEmpresa[0]) {
                     // ── Pessoa Física ─────────────────────────────────────────
                     String nome = txtNomePF.getText().trim();
+                    // Remove a máscara antes de enviar ao backend
                     String cpf  = txtCPF.getText().replaceAll("\\D", "").trim();
                     String rg   = txtRG.getText().trim();
                     String nasc = txtNascPF.getText().trim();
@@ -422,13 +457,15 @@ public class PanelCadastroCliente extends JPanel {
                     if (!editando) pf.setCpf(cpf);
                     pf.setRg(rg);
                     pf.setDataNascimento(dataNasc);
-                    pf.setTelefone(tel);
+                    // Envia telefone sem máscara; o backend formata e persiste
+                    pf.setTelefone(tel.replaceAll("\\D", ""));
                     pf.setEmail(mail);
                     pf.setEndereco(end);
                     if (pf.getDataCadastro() == null) pf.setDataCadastro(LocalDate.now());
 
-                    if (!editando) controller.insert(pf);
-                    else          controller.update(pf);
+                    PessoaFisicaController pfController = ContextoAplicacao.getBean(PessoaFisicaController.class);
+                    if (!editando) pfController.insert(pf);
+                    else          pfController.update(pf);
 
                 } else {
                     // ── Pessoa Jurídica ───────────────────────────────────────
@@ -466,13 +503,15 @@ public class PanelCadastroCliente extends JPanel {
                     if (!editando) pj.setCnpj(cnpj);
                     pj.setInscricaoEstadual(ie.isEmpty() ? null : ie);
                     pj.setDataAbertura(dataAbertura);
-                    pj.setTelefone(tel);
+                    // Envia telefone sem máscara; o backend formata e persiste
+                    pj.setTelefone(tel.replaceAll("\\D", ""));
                     pj.setEmail(mail);
                     pj.setEndereco(end);
                     if (pj.getDataCadastro() == null) pj.setDataCadastro(LocalDate.now());
 
-                    if (!editando) controller.insert(pj);
-                    else          controller.update(pj);
+                    PessoaJuridicaController pjController = ContextoAplicacao.getBean(PessoaJuridicaController.class);
+                    if (!editando) pjController.insert(pj);
+                    else          pjController.update(pj);
                 }
 
                 dialog.dispose();
@@ -508,7 +547,213 @@ public class PanelCadastroCliente extends JPanel {
         dialog.setVisible(true);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Máscaras em tempo real ────────────────────────────────────────────────
+
+    /**
+     * Capitaliza a primeira letra de cada palavra enquanto o usuário digita.
+     * Exemplos: "joao da silva" → "Joao Da Silva"
+     */
+    private void aplicarMascaraNome(JTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+            private void formatar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    String texto = campo.getText();
+                    String[] palavras = texto.split(" ", -1);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < palavras.length; i++) {
+                        String p = palavras[i];
+                        if (!p.isEmpty()) {
+                            sb.append(Character.toUpperCase(p.charAt(0)));
+                            sb.append(p.substring(1));
+                        }
+                        if (i < palavras.length - 1) sb.append(" ");
+                    }
+                    int caret = campo.getCaretPosition();
+                    campo.setText(sb.toString());
+                    campo.setCaretPosition(Math.min(caret, campo.getText().length()));
+                    atualizando = false;
+                });
+            }
+            @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void changedUpdate(DocumentEvent e) {}
+        });
+    }
+
+    /**
+     * Máscara de CPF em tempo real: 000.000.000-00
+     * Aceita apenas dígitos e aplica a formatação automaticamente.
+     */
+    private void aplicarMascaraCpf(JTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+            private void formatar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    String raw = campo.getText().replaceAll("\\D", "");
+                    if (raw.length() > 11) raw = raw.substring(0, 11);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < raw.length(); i++) {
+                        if (i == 3 || i == 6) sb.append('.');
+                        if (i == 9) sb.append('-');
+                        sb.append(raw.charAt(i));
+                    }
+                    campo.setText(sb.toString());
+                    campo.setCaretPosition(campo.getText().length());
+                    atualizando = false;
+                });
+            }
+            @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void changedUpdate(DocumentEvent e) {}
+        });
+    }
+
+    /**
+     * Máscara de CNPJ em tempo real: 00.000.000/0000-00
+     */
+    private void aplicarMascaraCnpj(JTextField campo) {
+        campo.setDocument(new javax.swing.text.PlainDocument() {
+            @Override
+            public void insertString(int offs, String str, javax.swing.text.AttributeSet a)
+                    throws javax.swing.text.BadLocationException {
+                if (str == null) return;
+                // Remove não-dígitos do que está sendo inserido
+                String apenasDigitos = str.replaceAll("\\D", "");
+                // Conta quantos dígitos já existem no campo
+                String atual = getText(0, getLength()).replaceAll("\\D", "");
+                if (atual.length() >= 14) return;
+                // Trunca se ultrapassar 14 dígitos
+                int espaco = 14 - atual.length();
+                if (apenasDigitos.length() > espaco)
+                    apenasDigitos = apenasDigitos.substring(0, espaco);
+                if (!apenasDigitos.isEmpty())
+                    super.insertString(offs, apenasDigitos, a);
+            }
+        });
+        // O DocumentListener de formatação continua funcionando normalmente
+        // pois o setDocument apenas substitui o modelo de texto, não os listeners
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+            private void formatar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    String raw = campo.getText().replaceAll("\\D", "");
+                    if (raw.length() > 14) raw = raw.substring(0, 14);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < raw.length(); i++) {
+                        if (i == 2 || i == 5) sb.append('.');
+                        if (i == 8) sb.append('/');
+                        if (i == 12) sb.append('-');
+                        sb.append(raw.charAt(i));
+                    }
+                    campo.setText(sb.toString());
+                    campo.setCaretPosition(campo.getText().length());
+                    atualizando = false;
+                });
+            }
+            @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void changedUpdate(DocumentEvent e) {}
+        });
+    }
+    /**
+     * Máscara de telefone em tempo real.
+     * Até 10 dígitos (fixo): (00) 0000-0000
+     * 11 dígitos (celular):  (00) 00000-0000
+     */
+    private void aplicarMascaraTelefone(JTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+            private void formatar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    String raw = campo.getText().replaceAll("\\D", "");
+                    if (raw.length() > 11) raw = raw.substring(0, 11);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < raw.length(); i++) {
+                        if (i == 0) sb.append('(');
+                        if (i == 2) sb.append(") ");
+                        // Celular (11 dígitos): traço na posição 7; Fixo (10): traço na posição 6
+                        boolean celular = raw.length() == 11;
+                        if ((celular && i == 7) || (!celular && i == 6)) sb.append('-');
+                        sb.append(raw.charAt(i));
+                    }
+                    campo.setText(sb.toString());
+                    campo.setCaretPosition(campo.getText().length());
+                    atualizando = false;
+                });
+            }
+            @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void changedUpdate(DocumentEvent e) {}
+        });
+    }
+
+    /**
+     * Máscara de data em tempo real: dd/mm/aaaa
+     */
+    private void aplicarMascaraData(JTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+            private void formatar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    String raw = campo.getText().replaceAll("\\D", "");
+                    if (raw.length() > 8) raw = raw.substring(0, 8);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < raw.length(); i++) {
+                        if (i == 2 || i == 4) sb.append('/');
+                        sb.append(raw.charAt(i));
+                    }
+                    campo.setText(sb.toString());
+                    campo.setCaretPosition(campo.getText().length());
+                    atualizando = false;
+                });
+            }
+            @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void changedUpdate(DocumentEvent e) {}
+        });
+    }
+
+    // ── Helpers de formatação para exibição na tabela ─────────────────────────
+
+    private String formatarCpf(String cpf) {
+        if (cpf == null) return "";
+        String d = cpf.replaceAll("\\D", "");
+        if (d.length() != 11) return cpf;
+        return d.substring(0,3) + "." + d.substring(3,6) + "." + d.substring(6,9) + "-" + d.substring(9);
+    }
+
+    private String formatarCnpj(String cnpj) {
+        if (cnpj == null) return "";
+        String d = cnpj.replaceAll("\\D", "");
+        if (d.length() != 14) return cnpj;
+        return d.substring(0,2) + "." + d.substring(2,5) + "." + d.substring(5,8)
+             + "/" + d.substring(8,12) + "-" + d.substring(12);
+    }
+    
+    private void aplicarMascaraRG(JTextField campo) {
+        campo.setDocument(new javax.swing.text.PlainDocument() {
+            @Override
+            public void insertString(int offs, String str, javax.swing.text.AttributeSet a)
+                    throws javax.swing.text.BadLocationException {
+                if (str == null) return;
+                if ((getLength() + str.length()) <= 20)
+                    super.insertString(offs, str, a);
+            }
+        });
+    }
+
+    // ── Helpers de UI ─────────────────────────────────────────────────────────
     private JButton criarBotaoToggle(String texto, boolean[] modoEmpresa) {
         JButton btn = new JButton(texto) {
             @Override protected void paintComponent(Graphics g) {

@@ -152,7 +152,11 @@ public class PanelListaClientes extends JPanel {
         JButton btnNovo = criarBotaoNavy("Novo cliente", 120, 34);
         // Navega para a tela de cadastro de cliente em vez de abrir o dialog local
         // (o dialog não tem todos os campos obrigatórios para salvar no banco)
-        btnNovo.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_CLIENTE));
+        btnNovo.addActionListener(e -> {
+            MainFrame.getInstance().getCadastroClientePanel().sinalizarNovoCliente();
+            frame.mostrarTela(MainFrame.TELA_CLIENTE);
+        });
+
 
         JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
         painelBusca.setBackground(new Color(0xF5F0E6));
@@ -279,7 +283,9 @@ public class PanelListaClientes extends JPanel {
                 int modelRow = tabela.convertRowIndexToModel(viewRow);
                 if (clientesAtuais == null || modelRow >= clientesAtuais.size()) return;
                 // Cliente selecionado — será usado na Tela 3 (PanelCadastroCliente) para edição
+                // COMO DEVE FICAR:
                 ClienteModel selecionado = clientesAtuais.get(modelRow);
+                MainFrame.getInstance().getCadastroClientePanel().sinalizarEdicaoCliente(selecionado);
                 frame.mostrarTela(MainFrame.TELA_CLIENTE);
             }
         });
