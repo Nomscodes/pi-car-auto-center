@@ -285,9 +285,9 @@ public class PanelCadastroColaborador extends JPanel {
         form.setBorder(new EmptyBorder(20, 24, 20, 24));
 
         JTextField txtNome     = criarCampo();
-        JTextField txtCPF      = criarCampo();
-        JTextField txtAdmissao = criarCampo();
-        JTextField txtTelefone = criarCampo();
+        JTextField txtCPF      = criarCampoMascara("###.###.###-##");
+        JTextField txtAdmissao = criarCampoMascara("##/##/####");
+        JTextField txtTelefone = criarCampoMascara("(##) #####-####");
         JTextField txtEmail    = criarCampo();
         JTextField txtEndereco = criarCampo();
         JTextField txtSalario  = criarCampo();
@@ -385,9 +385,9 @@ public class PanelCadastroColaborador extends JPanel {
         btnSalv.addActionListener(e -> {
             // Validação básica na view
             String nome     = txtNome.getText().trim();
-            String cpf      = txtCPF.getText().trim();
-            String admissao = txtAdmissao.getText().trim();
-            String telefone = txtTelefone.getText().trim();
+            String cpf      = txtCPF.getText().replaceAll("[^\\d]", "").trim();
+            String admissao = txtAdmissao.getText().replaceAll("_", "").trim();
+            String telefone = txtTelefone.getText().replaceAll("[^\\d]", "").trim();
             String email    = txtEmail.getText().trim();
             String endereco = txtEndereco.getText().trim();
             String salarioStr = txtSalario.getText().trim();
@@ -512,7 +512,23 @@ public class PanelCadastroColaborador extends JPanel {
         f.setPreferredSize(new Dimension(0, 34));
         return f;
     }
-
+    
+    private JTextField criarCampoMascara(String mascara) {
+        try {
+            javax.swing.text.MaskFormatter fmt = new javax.swing.text.MaskFormatter(mascara);
+            fmt.setPlaceholderCharacter('_');
+            JFormattedTextField f = new JFormattedTextField(fmt);
+            f.setFont(MainFrame.FONT_NORMAL);
+            f.setBackground(Color.WHITE);
+            f.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
+                new EmptyBorder(6, 10, 6, 10)));
+            f.setPreferredSize(new Dimension(0, 34));
+            return f;
+        } catch (java.text.ParseException ex) {
+            return criarCampo(); // fallback sem máscara
+        }
+    }
     private JButton criarBotaoNavy(String texto, int w, int h) {
         JButton btn = new JButton(texto) {
             @Override protected void paintComponent(Graphics g) {
