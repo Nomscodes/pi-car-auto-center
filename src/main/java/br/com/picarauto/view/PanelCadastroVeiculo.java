@@ -4,10 +4,15 @@ package br.com.picarauto.view;
  * Formulário de cadastro de veículo — campos em grid 2 colunas.
  * Marca e modelo são readonly (vindos da seleção anterior).
  *
- * @author Cassiano
+ * @author Cassiano / melhorias por Caio4breu
  */
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.util.List;
@@ -26,11 +31,14 @@ public class PanelCadastroVeiculo extends JPanel {
     private final MainFrame frame;
 
     // Campos do formulário
-    private JTextField txtPlaca, txtCor, txtChassi, txtCliente;
-    private JComboBox<String> cmbMarca, cmbModelo;
+    private JTextField txtPlaca, txtCor, txtChassi;
+    private JComboBox<String> cmbMarca, cmbModelo, cmbCliente;
 
-    // Guarda o cliente selecionado no autocomplete para pegar o ID correto
-    private ClienteModel clienteSelecionado = null;
+    // Flag para evitar loop recursivo na máscara de placa
+    private boolean atualizandoPlaca = false;
+
+    // Lista de clientes carregada uma vez ao montar a tela
+    private List<ClienteModel> listaClientes;
 
     public PanelCadastroVeiculo(MainFrame frame) {
         this.frame = frame;
@@ -79,27 +87,24 @@ public class PanelCadastroVeiculo extends JPanel {
         corpo.add(criarLabelSecao("Identificação do veículo"));
         corpo.add(Box.createVerticalStrut(10));
 
-        txtPlaca   = criarCampo();
-        txtCor     = criarCampo();
-        txtChassi  = criarCampo();
-        txtCliente = criarCampo();
+        txtPlaca  = criarCampo();
+        txtCor    = criarCampo();
+        txtChassi = criarCampo();
+        cmbCliente = criarCombo(new String[]{"Carregando clientes..."});
 
-        // Autocomplete de cliente: ao perder foco, busca no banco e confirma
-        txtCliente.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusLost(java.awt.event.FocusEvent e) {
-                buscarClientePorNome();
-            }
-        });
+        aplicarMascaraPlaca();
+        aplicarCapitalizacaoCor();
+        aplicarLimiteChassi();
+        carregarClientes();
 
         JPanel grid = new JPanel(new GridLayout(2, 2, 14, 10));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        grid.add(criarGrupo("Placa (padrão antigo ABC1234 ou Mercosul ABC1D23) *", txtPlaca));
+        grid.add(criarGrupo("Placa (padrão antigo ABC-1234 ou Mercosul ABC1D23) *", txtPlaca));
         grid.add(criarGrupo("Cor *", txtCor));
         grid.add(criarGrupo("Chassi (exatamente 17 caracteres) *", txtChassi));
-        grid.add(criarGrupo("Nome do cliente proprietário *", txtCliente));
+        grid.add(criarGrupoCombo("Cliente proprietário *", cmbCliente));
 
         corpo.add(grid);
         corpo.add(Box.createVerticalStrut(20));
@@ -119,6 +124,159 @@ public class PanelCadastroVeiculo extends JPanel {
         return scroll;
     }
 
+    // ── Máscara de placa ──────────────────────────────────────────────────────
+    /**
+     * Aplica máscara visual à placa enquanto o usuário digita:
+     * - Padrão antigo:  ABC-1234  (letras-números)
+     * - Mercosul:       ABC1D23   (sem hífen, letra na 5ª posição)
+     *
+     * O hífen é inserido/removido automaticamente. O valor salvo no banco
+     * é sempre a versão normalizada sem hífen e em maiúsculas.
+     */
+    private void aplicarMascaraPlaca() {
+        txtPlaca.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void changedUpdate(DocumentEvent e) { formatar(); }
+
+            private void formatar() {
+                if (atualizandoPlaca) return;
+                atualizandoPlaca = true;
+
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        // 1. Pega o texto cru, remove hífen e converte para maiúsculas
+                        String raw = txtPlaca.getText()
+                                .replace("-", "")
+                                .toUpperCase()
+                                .replaceAll("[^A-Z0-9]", "");
+
+                        // Limita ao máximo de 7 caracteres úteis
+                        if (raw.length() > 7) raw = raw.substring(0, 7);
+
+                        // 2. Detecta se é Mercosul (posição 4, índice 3, é letra)
+                        //    ABC1D23 → a 5ª posição (idx 4) é letra
+                        boolean isMercosul = raw.length() >= 5
+                                && Character.isLetter(raw.charAt(4));
+
+                        // 3. Monta a string formatada
+                        String formatado;
+                        if (!isMercosul && raw.length() > 3) {
+                            // Padrão antigo: ABC-XXXX
+                            formatado = raw.substring(0, 3) + "-" + raw.substring(3);
+                        } else {
+                            // Mercosul ou ainda incompleto: sem hífen
+                            formatado = raw;
+                        }
+
+                        txtPlaca.setText(formatado);
+
+                    } finally {
+                        atualizandoPlaca = false;
+                    }
+                });
+            }
+        });
+    }
+
+    // ── Capitalização da cor ──────────────────────────────────────────────────
+    private void aplicarCapitalizacaoCor() {
+        txtCor.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+
+            @Override public void insertUpdate(DocumentEvent e)  { capitalizar(); }
+            @Override public void removeUpdate(DocumentEvent e)  {}
+            @Override public void changedUpdate(DocumentEvent e) {}
+
+            private void capitalizar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        String texto = txtCor.getText();
+                        if (!texto.isEmpty()) {
+                            String capitalizado = Character.toUpperCase(texto.charAt(0))
+                                    + texto.substring(1);
+                            if (!capitalizado.equals(texto)) {
+                                int caret = txtCor.getCaretPosition();
+                                txtCor.setText(capitalizado);
+                                // Reposiciona o cursor para não pular para o fim
+                                txtCor.setCaretPosition(Math.min(caret, capitalizado.length()));
+                            }
+                        }
+                    } finally {
+                        atualizando = false;
+                    }
+                });
+            }
+        });
+    }
+
+    // ── Limite de 17 caracteres no chassi ────────────────────────────────────
+    /**
+     * Usa PlainDocument customizado para bloquear entrada além de 17 chars
+     * e forçar maiúsculas imediatamente, sem precisar de DocumentListener.
+     */
+    private void aplicarLimiteChassi() {
+        txtChassi.setDocument(new PlainDocument() {
+            private static final int LIMITE = 17;
+
+            @Override
+            public void insertString(int offs, String str, AttributeSet a)
+                    throws BadLocationException {
+                if (str == null) return;
+                // Aceita só alfanuméricos e força maiúsculas
+                String filtrado = str.toUpperCase().replaceAll("[^A-Z0-9]", "");
+                // Garante que não ultrapasse o limite
+                int espacoDisponivel = LIMITE - getLength();
+                if (espacoDisponivel <= 0) return;
+                if (filtrado.length() > espacoDisponivel) {
+                    filtrado = filtrado.substring(0, espacoDisponivel);
+                }
+                super.insertString(offs, filtrado, a);
+            }
+        });
+    }
+
+    // ── Carregar clientes no ComboBox ─────────────────────────────────────────
+    /**
+     * Busca todos os clientes ativos no banco e popula o cmbCliente.
+     * A ordem do item no combo corresponde à posição em listaClientes,
+     * o que permite recuperar o ClienteModel pelo índice selecionado.
+     */
+    private void carregarClientes() {
+        try {
+            ClienteController clienteController = ContextoAplicacao.getBean(ClienteController.class);
+            listaClientes = clienteController.findAll();
+
+            cmbCliente.removeAllItems();
+            if (listaClientes.isEmpty()) {
+                cmbCliente.addItem("Nenhum cliente cadastrado");
+            } else {
+                cmbCliente.addItem("Selecione um cliente...");
+                for (ClienteModel c : listaClientes) {
+                    cmbCliente.addItem(c.getNomeCompleto() + " — " + c.getTelefone());
+                }
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar clientes: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Retorna o ClienteModel selecionado no combo, ou null se nenhum
+     * cliente válido foi escolhido (índice 0 = placeholder).
+     */
+    private ClienteModel getClienteSelecionado() {
+        int idx = cmbCliente.getSelectedIndex();
+        // idx 0 = placeholder "Selecione...", idx >= 1 = cliente real
+        if (listaClientes == null || listaClientes.isEmpty() || idx <= 0) return null;
+        return listaClientes.get(idx - 1); // -1 para compensar o placeholder
+    }
+
+    // ── Grid de marca e modelo ─────────────────────────────────────────────────
     private JPanel criarGridMarcaModelo() {
         JPanel grid = new JPanel(new GridLayout(1, 2, 14, 0));
         grid.setOpaque(false);
@@ -135,7 +293,8 @@ public class PanelCadastroVeiculo extends JPanel {
 
     /**
      * Preenche e desabilita os combos de Marca e Modelo com os valores
-     * já escolhidos nas telas de seleção. Também limpa os campos do form.
+     * já escolhidos nas telas de seleção. Também limpa os campos do form
+     * e recarrega a lista de clientes.
      */
     public void preencherSelecoes() {
         String marca  = frame.getMarcaSelecionada();
@@ -153,65 +312,9 @@ public class PanelCadastroVeiculo extends JPanel {
         txtPlaca.setText("");
         txtCor.setText("");
         txtChassi.setText("");
-        txtCliente.setText("");
-        clienteSelecionado = null;
-    }
 
-    // ── Busca cliente no banco ao sair do campo ────────────────────────────────
-    private void buscarClientePorNome() {
-        String nome = txtCliente.getText().trim();
-        if (nome.isEmpty()) {
-            clienteSelecionado = null;
-            return;
-        }
-
-        try {
-            ClienteController clienteController = ContextoAplicacao.getBean(ClienteController.class);
-            List<ClienteModel> todos = clienteController.findAll();
-
-            // Filtra clientes cujo nome contém o texto digitado (case-insensitive)
-            List<ClienteModel> encontrados = todos.stream()
-                .filter(c -> c.getNomeCompleto().toLowerCase().contains(nome.toLowerCase()))
-                .toList();
-
-            if (encontrados.isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                    "Nenhum cliente encontrado com \"" + nome + "\".\nVerifique o nome e tente novamente.",
-                    "Cliente não encontrado", JOptionPane.WARNING_MESSAGE);
-                clienteSelecionado = null;
-
-            } else if (encontrados.size() == 1) {
-                // Apenas um resultado — seleciona automaticamente
-                clienteSelecionado = encontrados.get(0);
-                txtCliente.setText(clienteSelecionado.getNomeCompleto());
-
-            } else {
-                // Vários resultados — abre diálogo para o usuário escolher
-                String[] opcoes = encontrados.stream()
-                    .map(c -> c.getNomeCompleto() + " — " + c.getTelefone())
-                    .toArray(String[]::new);
-
-                String escolha = (String) JOptionPane.showInputDialog(
-                    this,
-                    "Mais de um cliente encontrado. Selecione:",
-                    "Selecionar cliente",
-                    JOptionPane.PLAIN_MESSAGE,
-                    null, opcoes, opcoes[0]);
-
-                if (escolha != null) {
-                    int idx = java.util.Arrays.asList(opcoes).indexOf(escolha);
-                    clienteSelecionado = encontrados.get(idx);
-                    txtCliente.setText(clienteSelecionado.getNomeCompleto());
-                } else {
-                    clienteSelecionado = null;
-                }
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                "Erro ao buscar cliente: " + ex.getMessage(),
-                "Erro", JOptionPane.ERROR_MESSAGE);
-            clienteSelecionado = null;
-        }
+        // Recarrega a lista de clientes (pode ter sido cadastrado um novo entre sessões)
+        carregarClientes();
     }
 
     // ── Rodapé de ações ───────────────────────────────────────────────────────
@@ -242,10 +345,12 @@ public class PanelCadastroVeiculo extends JPanel {
             return;
         }
 
-        // 2. Validações básicas na view antes de ir ao backend
-        String placa   = txtPlaca.getText().replace("-", "").toUpperCase().trim();
-        String cor     = txtCor.getText().trim();
-        String chassi  = txtChassi.getText().trim().toUpperCase();
+        // 2. Coleta e normaliza os valores dos campos
+        //    A placa pode ter hífen visual (ABC-1234); o backend normaliza,
+        //    mas já enviamos limpa para manter consistência.
+        String placa  = txtPlaca.getText().replace("-", "").toUpperCase().trim();
+        String cor    = txtCor.getText().trim();
+        String chassi = txtChassi.getText().trim(); // já está em maiúsculas pelo PlainDocument
 
         if (placa.isEmpty() || cor.isEmpty() || chassi.isEmpty()) {
             JOptionPane.showMessageDialog(this,
@@ -254,17 +359,8 @@ public class PanelCadastroVeiculo extends JPanel {
             return;
         }
 
-        if (chassi.length() != 17) {
-            JOptionPane.showMessageDialog(this,
-                "O chassi deve conter exatamente 17 caracteres. Você digitou " + chassi.length() + ".",
-                "Atenção", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // 3. Garante que o cliente foi selecionado (busca se ainda não foi)
-        if (clienteSelecionado == null) {
-            buscarClientePorNome();
-        }
+        // 3. Valida o cliente selecionado no combo
+        ClienteModel clienteSelecionado = getClienteSelecionado();
         if (clienteSelecionado == null) {
             JOptionPane.showMessageDialog(this,
                 "Selecione um cliente proprietário válido.",
@@ -301,7 +397,7 @@ public class PanelCadastroVeiculo extends JPanel {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers de UI ─────────────────────────────────────────────────────────
     private JLabel criarLabelSecao(String texto) {
         JLabel lbl = new JLabel(texto);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -402,7 +498,7 @@ public class PanelCadastroVeiculo extends JPanel {
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
                 g2.setColor(MainFrame.COR_NAVY);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                FontMetrics fm = g2.getFontMetrics();;
+                FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
                     (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
