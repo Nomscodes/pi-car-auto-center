@@ -12,7 +12,14 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+// NOVO: imports usados pelas máscaras (DocumentFilter) de preço, código e ano
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
+import java.util.Locale;
 
 import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.PecaController;
@@ -36,6 +43,9 @@ public class PanelCadastroPeca extends JPanel {
 
     // Colunas: Código Nacional, Modelo, Marca, Ano Veículo, Preço, Garantia, Editar
     private static final String[] COLUNAS = {"Código", "Modelo", "Marca", "Ano Veículo", "Preço Unit.", "Garantia (m)", ""};
+
+    // NOVO: ano do primeiro veículo de fabricação em série (referência para validação de "anoVeiculo"/"anoModelo")
+    private static final int ANO_PRIMEIRO_VEICULO_FABRICADO = 1886;
 
     public PanelCadastroPeca(MainFrame frame) {
         this.frame = frame;
@@ -241,12 +251,13 @@ public class PanelCadastroPeca extends JPanel {
         dialog.setSize(500, 420);
         dialog.setLocationRelativeTo(this);
 
-        JTextField txtCodigo    = criarCampo();
+        // ALTERADO: campos abaixo agora usam métodos com máscara/restrição (criados nesta tela)
+        JTextField txtCodigo    = criarCampoDigitos(6);   // ALTERADO: só dígitos, máx. 6 (Código Nacional)
         JTextField txtModeloPeca= criarCampo();
         JTextField txtMarcaPeca = criarCampo();
-        JTextField txtAnoVeic   = criarCampo();
-        JTextField txtAnoMod    = criarCampo();
-        JTextField txtPreco     = criarCampo();
+        JTextField txtAnoVeic   = criarCampoDigitos(4);   // ALTERADO: só dígitos, máx. 4 (Ano Veículo - AAAA)
+        JTextField txtAnoMod    = criarCampoDigitos(4);   // ALTERADO: só dígitos, máx. 4 (Ano Modelo - AAAA)
+        JTextField txtPreco     = criarCampoPreco();      // ALTERADO: máscara monetária R$ 0,00
         JTextField txtGarantia  = criarCampo();
 
         // Combo de fornecedor
@@ -265,7 +276,8 @@ public class PanelCadastroPeca extends JPanel {
             txtMarcaPeca.setText(existente.getMarca());
             txtAnoVeic.setText(String.valueOf(existente.getAnoVeiculo()));
             txtAnoMod.setText(String.valueOf(existente.getAnoModelo()));
-            txtPreco.setText(String.valueOf(existente.getPrecoUnitario()));
+            // ALTERADO: envia o valor em centavos (texto só com dígitos) para a máscara já formatar como R$ x,xx
+            txtPreco.setText(String.valueOf(Math.round(existente.getPrecoUnitario() * 100)));
             txtGarantia.setText(String.valueOf(existente.getGarantia()));
             // Seleciona o fornecedor atual
             if (fornecedoresDisponiveis != null) {
@@ -281,11 +293,12 @@ public class PanelCadastroPeca extends JPanel {
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
         grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 270));
-        grid.add(criarGrupo("Código Nacional *", txtCodigo));
+        // ALTERADO: labels com indicação do formato esperado (6 dígitos / AAAA)
+        grid.add(criarGrupo("Código Nacional * (6 dígitos)", txtCodigo));
         grid.add(criarGrupo("Modelo da peça *", txtModeloPeca));
         grid.add(criarGrupo("Marca da peça *", txtMarcaPeca));
-        grid.add(criarGrupo("Ano veículo *", txtAnoVeic));
-        grid.add(criarGrupo("Ano modelo *", txtAnoMod));
+        grid.add(criarGrupo("Ano veículo * (AAAA)", txtAnoVeic));
+        grid.add(criarGrupo("Ano modelo * (AAAA)", txtAnoMod));
         grid.add(criarGrupo("Preço unitário *", txtPreco));
         grid.add(criarGrupo("Garantia (meses) *", txtGarantia));
 
@@ -330,13 +343,50 @@ public class PanelCadastroPeca extends JPanel {
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             try {
-                int codigo   = Integer.parseInt(txtCodigo.getText().trim());
+                // NOVO: validação de Código Nacional com exatamente 6 dígitos
+                String codigoStr = txtCodigo.getText().trim();
+                if (codigoStr.length() != 6) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "O código nacional deve conter exatamente 6 números.",
+                        "Atenção", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                // NOVO: validação de Ano Veículo/Modelo com exatamente 4 dígitos
+                String anoVStr = txtAnoVeic.getText().trim();
+                String anoMStr = txtAnoMod.getText().trim();
+                if (anoVStr.length() != 4 || anoMStr.length() != 4) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Os campos de ano devem ser preenchidos com 4 dígitos (AAAA).",
+                        "Atenção", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                int codigo = Integer.parseInt(codigoStr);
                 String mod   = txtModeloPeca.getText().trim();
                 String marc  = txtMarcaPeca.getText().trim();
-                int anoV     = Integer.parseInt(txtAnoVeic.getText().trim());
-                int anoM     = Integer.parseInt(txtAnoMod.getText().trim());
-                double preco = Double.parseDouble(txtPreco.getText().trim().replace(",", "."));
+                int anoV     = Integer.parseInt(anoVStr);
+                int anoM     = Integer.parseInt(anoMStr);
+                // ALTERADO: preço agora é extraído do texto mascarado (R$ x.xxx,xx) em vez de Double.parseDouble direto
+                double preco = extrairValorPreco(txtPreco.getText());
                 int garant   = Integer.parseInt(txtGarantia.getText().trim());
+
+                // NOVO: ano do veículo não pode ser anterior ao ano do primeiro veículo fabricado
+                if (anoV < ANO_PRIMEIRO_VEICULO_FABRICADO) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "O ano do veículo não pode ser anterior a " + ANO_PRIMEIRO_VEICULO_FABRICADO
+                            + " (ano do primeiro veículo fabricado).",
+                        "Atenção", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                // NOVO: mesma regra para o ano do modelo
+                if (anoM < ANO_PRIMEIRO_VEICULO_FABRICADO) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "O ano do modelo não pode ser anterior a " + ANO_PRIMEIRO_VEICULO_FABRICADO
+                            + " (ano do primeiro veículo fabricado).",
+                        "Atenção", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
 
                 if (mod.isEmpty() || marc.isEmpty()) {
                     JOptionPane.showMessageDialog(dialog, "Preencha todos os campos.", "Atenção", JOptionPane.WARNING_MESSAGE);
@@ -405,6 +455,124 @@ public class PanelCadastroPeca extends JPanel {
         f.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1), new EmptyBorder(6, 10, 6, 10)));
         f.setPreferredSize(new Dimension(0, 34)); return f;
     }
+
+    // ===================== NOVO: bloco de campos/máscaras para Código, Ano e Preço =====================
+
+    /** NOVO: Campo numérico que aceita apenas dígitos, limitado a {@code maxDigitos} caracteres. */
+    private JTextField criarCampoDigitos(int maxDigitos) {
+        JTextField f = criarCampo();
+        ((javax.swing.text.AbstractDocument) f.getDocument()).setDocumentFilter(new DigitLimitFilter(maxDigitos));
+        return f;
+    }
+
+    /** NOVO: Campo de preço com máscara monetária no formato R$ 0,00, atualizada conforme o usuário digita. */
+    private JTextField criarCampoPreco() {
+        JTextField f = criarCampo();
+        ((javax.swing.text.AbstractDocument) f.getDocument()).setDocumentFilter(new CurrencyFilter());
+        f.setText("0");
+        return f;
+    }
+
+    /** NOVO: Converte o texto mascarado (ex: "R$ 1.234,56") para o valor double correspondente (1234.56). */
+    private double extrairValorPreco(String textoMascarado) {
+        String digitos = textoMascarado == null ? "" : textoMascarado.replaceAll("\\D", "");
+        if (digitos.isEmpty()) return 0.0;
+        long centavos = Long.parseLong(digitos);
+        return centavos / 100.0;
+    }
+
+    /**
+     * NOVO: Filtro que restringe um campo a apenas dígitos numéricos, com um limite máximo de caracteres.
+     * Usado para Código Nacional (6 dígitos) e Ano Veículo / Ano Modelo (4 dígitos).
+     */
+    private static class DigitLimitFilter extends DocumentFilter {
+        private final int maxDigitos;
+
+        DigitLimitFilter(int maxDigitos) {
+            this.maxDigitos = maxDigitos;
+        }
+
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+            replace(fb, offset, 0, string, attr);
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+            String digitos = text == null ? "" : text.replaceAll("\\D", "");
+            int tamanhoAtual = fb.getDocument().getLength();
+            int tamanhoFinal = tamanhoAtual - length + digitos.length();
+            if (tamanhoFinal > maxDigitos) {
+                int permitido = maxDigitos - (tamanhoAtual - length);
+                if (permitido <= 0) {
+                    digitos = "";
+                } else {
+                    digitos = digitos.substring(0, Math.min(permitido, digitos.length()));
+                }
+            }
+            super.replace(fb, offset, length, digitos, attrs);
+        }
+    }
+
+    /**
+     * NOVO: Filtro que aplica máscara monetária no padrão brasileiro (R$ 0,00) enquanto o usuário digita.
+     * Os dígitos informados são tratados como centavos, da direita para a esquerda — semelhante
+     * ao comportamento de campos de valor em caixas eletrônicos / apps bancários.
+     */
+    private static class CurrencyFilter extends DocumentFilter {
+        private static final DecimalFormat FORMATO =
+            new DecimalFormat("#,##0.00", new DecimalFormatSymbols(new Locale("pt", "BR")));
+        private static final int MAX_DIGITOS = 11; // suporta até R$ 999.999.999,99
+
+        private StringBuilder centavos = new StringBuilder("0");
+
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+            replace(fb, offset, 0, string, attr);
+        }
+
+        @Override
+        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+            replace(fb, offset, length, "", null);
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+            String digitosInseridos = text == null ? "" : text.replaceAll("\\D", "");
+            boolean houveRemocao = length > 0 && digitosInseridos.isEmpty();
+
+            if (houveRemocao) {
+                // Backspace/Delete: remove o último dígito (centavo) do valor atual
+                if (centavos.length() > 1) {
+                    centavos.deleteCharAt(centavos.length() - 1);
+                } else {
+                    centavos.setLength(0);
+                    centavos.append("0");
+                }
+            } else if (!digitosInseridos.isEmpty()) {
+                // Remove zero à esquerda "sozinho" antes de acrescentar novos dígitos
+                if (centavos.length() == 1 && centavos.charAt(0) == '0') {
+                    centavos.setLength(0);
+                }
+                centavos.append(digitosInseridos);
+                if (centavos.length() > MAX_DIGITOS) {
+                    centavos.delete(0, centavos.length() - MAX_DIGITOS);
+                }
+            }
+
+            String formatado = formatar();
+            super.replace(fb, 0, fb.getDocument().getLength(), formatado, attrs);
+        }
+
+        private String formatar() {
+            String valorCentavos = centavos.toString();
+            if (valorCentavos.isEmpty()) valorCentavos = "0";
+            long total = Long.parseLong(valorCentavos);
+            return "R$ " + FORMATO.format(total / 100.0);
+        }
+    }
+
+    // ===================== FIM DO BLOCO NOVO =====================
 
     private JButton criarBotaoNavy(String texto, int w, int h) {
         JButton btn = new JButton(texto) {
