@@ -2,7 +2,7 @@ package br.com.picarauto.view;
 
 /**
  * Formulário de cadastro de veículo — campos em grid 2 colunas.
- * Marca readonly (vinda da seleção anterior) e modelo readonly.
+ * Marca e modelo são readonly (vindos da seleção anterior).
  *
  * @author Cassiano
  */
@@ -10,8 +10,9 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.util.List;
 
-// Imports do backend para buscar clientes e salvar o veículo no banco
+// Imports do backend
 import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.VeiculoController;
 import br.com.picarauto.controller.ClienteController;
@@ -19,40 +20,17 @@ import br.com.picarauto.model.VeiculoModel;
 import br.com.picarauto.model.ClienteModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
-import java.util.List;
 
 public class PanelCadastroVeiculo extends JPanel {
 
     private final MainFrame frame;
 
-    private JTextField txtPlaca, txtCor, txtAno, txtRenavam, txtChassi, txtCliente;
+    // Campos do formulário
+    private JTextField txtPlaca, txtCor, txtChassi, txtCliente;
     private JComboBox<String> cmbMarca, cmbModelo;
 
-    private static final String[] MARCAS = {
-        "Selecione...", "Chevrolet", "Volkswagen", "Fiat", "Ford",
-        "Toyota", "Honda", "Hyundai", "Renault", "Nissan",
-        "Jeep", "Peugeot", "Citroën", "Mitsubishi", "Kia", "Subaru", "Mercedes"
-    };
-
-    private static final String[][] MODELOS = {
-        {},
-        {"Onix", "Tracker", "Cruze", "S10", "Spin", "Montana"},
-        {"Gol", "Polo", "T-Cross", "Virtus", "Nivus", "Amarok"},
-        {"Argo", "Pulse", "Cronos", "Toro", "Strada", "Mobi"},
-        {"Ka", "EcoSport", "Ranger", "Territory", "Bronco"},
-        {"Corolla", "Hilux", "SW4", "Yaris", "RAV4"},
-        {"Civic", "HR-V", "City", "Fit", "CR-V"},
-        {"HB20", "Creta", "Tucson", "Santa Fe", "Elantra"},
-        {"Kwid", "Sandero", "Logan", "Duster", "Captur"},
-        {"Kicks", "Frontier", "Versa", "Sentra"},
-        {"Renegade", "Compass", "Commander", "Wrangler"},
-        {"208", "2008", "308", "3008", "5008"},
-        {"C3", "C4 Cactus", "C5 Aircross"},
-        {"Eclipse Cross", "Outlander", "L200"},
-        {"Sportage", "Sorento", "Stinger", "Soul"},
-        {"Impreza", "Forester", "Outback", "WRX"},
-        {"Classe A", "Classe C", "GLA", "GLC", "Sprinter"},
-    };
+    // Guarda o cliente selecionado no autocomplete para pegar o ID correto
+    private ClienteModel clienteSelecionado = null;
 
     public PanelCadastroVeiculo(MainFrame frame) {
         this.frame = frame;
@@ -101,25 +79,27 @@ public class PanelCadastroVeiculo extends JPanel {
         corpo.add(criarLabelSecao("Identificação do veículo"));
         corpo.add(Box.createVerticalStrut(10));
 
-        JPanel grid = new JPanel(new GridLayout(3, 2, 14, 10));
-        grid.setOpaque(false);
-        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         txtPlaca   = criarCampo();
         txtCor     = criarCampo();
         txtChassi  = criarCampo();
-        txtAno     = criarCampo();
         txtCliente = criarCampo();
-        txtRenavam = criarCampo();
 
-        grid.add(criarGrupo("Placa (sem hífen — ex: ABC1234)",  txtPlaca));
-        grid.add(criarGrupo("Cor",                              txtCor));
-        // Chassi é obrigatório no banco (17 caracteres, único)
-        grid.add(criarGrupo("Chassi (17 caracteres)",           txtChassi));
-        grid.add(criarGrupo("Ano",                              txtAno));
-        // Cliente: digitar parte do nome — o sistema busca o id no banco ao salvar
-        grid.add(criarGrupo("Nome do cliente proprietário",     txtCliente));
-        grid.add(criarGrupo("Renavam (informativo)",            txtRenavam));
+        // Autocomplete de cliente: ao perder foco, busca no banco e confirma
+        txtCliente.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                buscarClientePorNome();
+            }
+        });
+
+        JPanel grid = new JPanel(new GridLayout(2, 2, 14, 10));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        grid.add(criarGrupo("Placa (padrão antigo ABC1234 ou Mercosul ABC1D23) *", txtPlaca));
+        grid.add(criarGrupo("Cor *", txtCor));
+        grid.add(criarGrupo("Chassi (exatamente 17 caracteres) *", txtChassi));
+        grid.add(criarGrupo("Nome do cliente proprietário *", txtCliente));
 
         corpo.add(grid);
         corpo.add(Box.createVerticalStrut(20));
@@ -144,7 +124,7 @@ public class PanelCadastroVeiculo extends JPanel {
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        cmbMarca  = criarCombo(MARCAS);
+        cmbMarca  = criarCombo(new String[]{"Selecione..."});
         cmbModelo = criarCombo(new String[]{"Selecione primeiro a marca..."});
         cmbModelo.setEnabled(false);
 
@@ -153,7 +133,10 @@ public class PanelCadastroVeiculo extends JPanel {
         return grid;
     }
 
-    /** Preenche e desabilita os combos de Marca e Modelo com os valores já escolhidos nas telas anteriores. */
+    /**
+     * Preenche e desabilita os combos de Marca e Modelo com os valores
+     * já escolhidos nas telas de seleção. Também limpa os campos do form.
+     */
     public void preencherSelecoes() {
         String marca  = frame.getMarcaSelecionada();
         String modelo = frame.getModeloSelecionado();
@@ -165,6 +148,70 @@ public class PanelCadastroVeiculo extends JPanel {
         cmbModelo.removeAllItems();
         cmbModelo.addItem(modelo.isEmpty() ? "Selecione..." : modelo);
         cmbModelo.setEnabled(false);
+
+        // Limpa os campos para um novo cadastro
+        txtPlaca.setText("");
+        txtCor.setText("");
+        txtChassi.setText("");
+        txtCliente.setText("");
+        clienteSelecionado = null;
+    }
+
+    // ── Busca cliente no banco ao sair do campo ────────────────────────────────
+    private void buscarClientePorNome() {
+        String nome = txtCliente.getText().trim();
+        if (nome.isEmpty()) {
+            clienteSelecionado = null;
+            return;
+        }
+
+        try {
+            ClienteController clienteController = ContextoAplicacao.getBean(ClienteController.class);
+            List<ClienteModel> todos = clienteController.findAll();
+
+            // Filtra clientes cujo nome contém o texto digitado (case-insensitive)
+            List<ClienteModel> encontrados = todos.stream()
+                .filter(c -> c.getNomeCompleto().toLowerCase().contains(nome.toLowerCase()))
+                .toList();
+
+            if (encontrados.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                    "Nenhum cliente encontrado com \"" + nome + "\".\nVerifique o nome e tente novamente.",
+                    "Cliente não encontrado", JOptionPane.WARNING_MESSAGE);
+                clienteSelecionado = null;
+
+            } else if (encontrados.size() == 1) {
+                // Apenas um resultado — seleciona automaticamente
+                clienteSelecionado = encontrados.get(0);
+                txtCliente.setText(clienteSelecionado.getNomeCompleto());
+
+            } else {
+                // Vários resultados — abre diálogo para o usuário escolher
+                String[] opcoes = encontrados.stream()
+                    .map(c -> c.getNomeCompleto() + " — " + c.getTelefone())
+                    .toArray(String[]::new);
+
+                String escolha = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Mais de um cliente encontrado. Selecione:",
+                    "Selecionar cliente",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null, opcoes, opcoes[0]);
+
+                if (escolha != null) {
+                    int idx = java.util.Arrays.asList(opcoes).indexOf(escolha);
+                    clienteSelecionado = encontrados.get(idx);
+                    txtCliente.setText(clienteSelecionado.getNomeCompleto());
+                } else {
+                    clienteSelecionado = null;
+                }
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao buscar cliente: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+            clienteSelecionado = null;
+        }
     }
 
     // ── Rodapé de ações ───────────────────────────────────────────────────────
@@ -184,65 +231,66 @@ public class PanelCadastroVeiculo extends JPanel {
         return p;
     }
 
-    // Coleta os dados do formulário, busca o cliente pelo nome digitado,
-    // monta o VeiculoModel e chama o VeiculoController para salvar no banco
+    // ── Salvar no banco ────────────────────────────────────────────────────────
     private void salvarVeiculo() {
+        // 1. Verifica se o idModelo foi definido nas telas de seleção
+        Long idModelo = frame.getIdModeloSelecionado();
+        if (idModelo == null) {
+            JOptionPane.showMessageDialog(this,
+                "Selecione uma marca e um modelo antes de cadastrar o veículo.",
+                "Atenção", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 2. Validações básicas na view antes de ir ao backend
+        String placa   = txtPlaca.getText().replace("-", "").toUpperCase().trim();
+        String cor     = txtCor.getText().trim();
+        String chassi  = txtChassi.getText().trim().toUpperCase();
+
+        if (placa.isEmpty() || cor.isEmpty() || chassi.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "Preencha todos os campos obrigatórios (*).",
+                "Atenção", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (chassi.length() != 17) {
+            JOptionPane.showMessageDialog(this,
+                "O chassi deve conter exatamente 17 caracteres. Você digitou " + chassi.length() + ".",
+                "Atenção", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 3. Garante que o cliente foi selecionado (busca se ainda não foi)
+        if (clienteSelecionado == null) {
+            buscarClientePorNome();
+        }
+        if (clienteSelecionado == null) {
+            JOptionPane.showMessageDialog(this,
+                "Selecione um cliente proprietário válido.",
+                "Atenção", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 4. Monta e persiste o VeiculoModel
         try {
-            // Verifica se o idModelo foi definido nas telas de seleção
-            Long idModelo = frame.getIdModeloSelecionado();
-            if (idModelo == null) {
-                JOptionPane.showMessageDialog(this,
-                    "Selecione uma marca e um modelo antes de cadastrar o veículo.",
-                    "Atenção", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            // Busca o cliente pelo nome digitado — pega o primeiro que bater
-            String nomeCliente = txtCliente.getText().trim();
-            if (nomeCliente.isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                    "Informe o nome do cliente proprietário.",
-                    "Atenção", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            ClienteController clienteController = ContextoAplicacao.getBean(ClienteController.class);
-            List<ClienteModel> clientes = clienteController.findAll();
-            ClienteModel clienteEncontrado = null;
-            for (ClienteModel c : clientes) {
-                if (c.getNomeCompleto().toLowerCase().contains(nomeCliente.toLowerCase())) {
-                    clienteEncontrado = c;
-                    break;
-                }
-            }
-
-            if (clienteEncontrado == null) {
-                JOptionPane.showMessageDialog(this,
-                    "Nenhum cliente encontrado com o nome informado.",
-                    "Atenção", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            // Monta o VeiculoModel com os dados do formulário
             VeiculoModel veiculo = new VeiculoModel();
-            // Normaliza a placa: remove hífen e converte para maiúsculas
-            veiculo.setPlaca(txtPlaca.getText().replace("-", "").toUpperCase().trim());
-            veiculo.setCor(txtCor.getText().trim());
-            veiculo.setChassi(txtChassi.getText().trim().toUpperCase());
+            veiculo.setPlaca(placa);
+            veiculo.setCor(cor);
+            veiculo.setChassi(chassi);
             veiculo.setIdModelo(idModelo);
-            veiculo.setIdCliente(clienteEncontrado.getId());
+            veiculo.setIdCliente(clienteSelecionado.getId());
 
-            // Salva o veículo no banco via VeiculoController
             VeiculoController veiculoController = ContextoAplicacao.getBean(VeiculoController.class);
             veiculoController.insert(veiculo);
 
             JOptionPane.showMessageDialog(this,
                 "Veículo cadastrado com sucesso!",
                 "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+
             frame.mostrarTela(MainFrame.TELA_LISTA_CLIENTES);
 
         } catch (FieldValidationException | RuleValidationException valEx) {
-            // Exibe a mensagem de validação do backend
             JOptionPane.showMessageDialog(this,
                 valEx.getMessage(),
                 "Erro de validação", JOptionPane.WARNING_MESSAGE);
@@ -354,7 +402,7 @@ public class PanelCadastroVeiculo extends JPanel {
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
                 g2.setColor(MainFrame.COR_NAVY);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                FontMetrics fm = g2.getFontMetrics();
+                FontMetrics fm = g2.getFontMetrics();;
                 g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
                     (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();

@@ -8,7 +8,6 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -16,66 +15,60 @@ import javax.swing.UIManager;
 
 public class MainFrame extends JFrame {
 
-    public static final Color COR_NAVY = new Color(0x1a2744);
+    public static final Color COR_NAVY      = new Color(0x1a2744);
     public static final Color COR_NAVY_DARK = new Color(0x111d38);
-    public static final Color COR_GOLD = new Color(0xc9a86c);
-    public static final Color COR_GREEN = new Color(0x2d4a3e);
-    public static final Color COR_CREAM = new Color(0xf5f0e6);
+    public static final Color COR_GOLD      = new Color(0xc9a86c);
+    public static final Color COR_GREEN     = new Color(0x2d4a3e);
+    public static final Color COR_CREAM     = new Color(0xf5f0e6);
     public static final Color COR_CREAM_ALT = new Color(0xeae5d8);
-    public static final Color COR_MUTED = new Color(0x8899bb);
-    public static final Color COR_CARD_BG = new Color(0x223060);
-    public static final Color COR_BORDER = new Color(0xd0c9b8);
+    public static final Color COR_MUTED     = new Color(0x8899bb);
+    public static final Color COR_CARD_BG   = new Color(0x223060);
+    public static final Color COR_BORDER    = new Color(0xd0c9b8);
 
-    public static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 18);
-    public static final Font FONT_MEDIUM = new Font("Segoe UI", Font.BOLD, 13);
+    public static final Font FONT_TITLE  = new Font("Segoe UI", Font.BOLD,  18);
+    public static final Font FONT_MEDIUM = new Font("Segoe UI", Font.BOLD,  13);
     public static final Font FONT_NORMAL = new Font("Segoe UI", Font.PLAIN, 12);
-    public static final Font FONT_SMALL = new Font("Segoe UI", Font.PLAIN, 11);
+    public static final Font FONT_SMALL  = new Font("Segoe UI", Font.PLAIN, 11);
 
     private final CardLayout cardLayout;
-    private final JPanel painelPrincipal;
-    private PanelSelecaoModelo selecaoModelo;
-    private PanelSplash splash;
-    private PanelCadastroVeiculo cadastroVeiculo;
+    private final JPanel     painelPrincipal;
 
-    // Promovido a campo de classe para recarregar a lista ao voltar para a tela
-    private PanelListaClientes listaClientes;
+    // ── Painéis que precisam ser recarregados ao navegar ──────────────────────
+    private PanelSplash               splash;
+    private PanelSelecaoModelo        selecaoModelo;
+    private PanelCadastroVeiculo      cadastroVeiculo;
+    private PanelListaClientes        listaClientes;
+    private PanelCadastroCliente      cadastroCliente;
+    private PanelListaOS              listaOS;
+    private PanelComposicaoOS         composicaoOS;
+    private PanelCadastroColaborador  cadastroColab;
+    private PanelCadastroFornecedor   cadastroFornecedor;
+    private PanelCadastroPeca         cadastroPeca;
+    private PanelCadastroServicos     cadastroServicos;
 
-    // Promovido a campo de classe para recarregar a lista ao voltar para a tela de cadastro
-    private PanelCadastroCliente cadastroCliente;
-
-    // Promovido a campo de classe para recarregar a lista de OS ao voltar para a tela
-    private PanelListaOS listaOS;
-
-    // Promovido a campo de classe para recarregar clientes/colaboradores/serviços ao abrir nova OS
-    private PanelComposicaoOS composicaoOS;
-
-    // ── Seleção de marca/modelo — nome (exibição visual) ──────────────────────
-    private String marcaSelecionada = "";
+    // ── Seleção de marca/modelo ───────────────────────────────────────────────
+    private String marcaSelecionada  = "";
     private String modeloSelecionado = "";
+    private Long   idMarcaSelecionada  = null;
+    private Long   idModeloSelecionado = null;
 
-    public String getMarcaSelecionada() { return marcaSelecionada; }
-    public void setMarcaSelecionada(String marca) { this.marcaSelecionada = marca != null ? marca : ""; }
-    public String getModeloSelecionado() { return modeloSelecionado; }
-    public void setModeloSelecionado(String modelo) { this.modeloSelecionado = modelo != null ? modelo : ""; }
-
-    // ── Seleção de marca/modelo — id (persistência) ───────────────────────────
-    // Populados pela View quando a integração com o backend estiver ativa.
-    // Null enquanto a UI estiver desconectada do banco.
-    private Long idMarcaSelecionada = null;
-    private Long idModeloSelecionado = null;
-
-    public Long getIdMarcaSelecionada() { return idMarcaSelecionada; }
-    public void setIdMarcaSelecionada(Long id) { this.idMarcaSelecionada = id; }
-    public Long getIdModeloSelecionado() { return idModeloSelecionado; }
-    public void setIdModeloSelecionado(Long id) { this.idModeloSelecionado = id; }
+    public String getMarcaSelecionada()               { return marcaSelecionada; }
+    public void   setMarcaSelecionada(String m)       { this.marcaSelecionada  = m != null ? m : ""; }
+    public String getModeloSelecionado()              { return modeloSelecionado; }
+    public void   setModeloSelecionado(String m)      { this.modeloSelecionado = m != null ? m : ""; }
+    public Long   getIdMarcaSelecionada()             { return idMarcaSelecionada; }
+    public void   setIdMarcaSelecionada(Long id)      { this.idMarcaSelecionada  = id; }
+    public Long   getIdModeloSelecionado()            { return idModeloSelecionado; }
+    public void   setIdModeloSelecionado(Long id)     { this.idModeloSelecionado = id; }
 
     private static MainFrame instancia;
-    public static MainFrame getInstance() { return instancia; }
+    public  static MainFrame getInstance()            { return instancia; }
 
     private static String usuarioLogado = "";
-    public static String getUsuarioLogado() { return usuarioLogado; }
-    public static void setUsuarioLogado(String usuario) { usuarioLogado = usuario; }
+    public  static String getUsuarioLogado()          { return usuarioLogado; }
+    public  static void   setUsuarioLogado(String u)  { usuarioLogado = u; }
 
+    // ── Constantes de tela ────────────────────────────────────────────────────
     public static final String TELA_LOGIN          = "LOGIN";
     public static final String TELA_SPLASH         = "SPLASH";
     public static final String TELA_DASHBOARD      = "DASHBOARD";
@@ -101,76 +94,80 @@ public class MainFrame extends JFrame {
         setLocationRelativeTo(null);
         setResizable(true);
 
-        cardLayout = new CardLayout();
+        cardLayout      = new CardLayout();
         painelPrincipal = new JPanel(cardLayout);
 
-        PanelLogin login                          = new PanelLogin(this);
-        splash                                    = new PanelSplash(this);
-        PanelDashboard dashboard                  = new PanelDashboard(this);
-        PanelSelecaoMarca selecaoMarca            = new PanelSelecaoMarca(this);
-        selecaoModelo                             = new PanelSelecaoModelo(this);
-        // Inicializado como campo de classe para reload ao retornar à tela
-        listaOS = new PanelListaOS(this);
-        // Inicializado como campo de classe para recarregar dados ao abrir nova OS
-        composicaoOS                              = new PanelComposicaoOS(this);
+        // ── Instancia todos os painéis ────────────────────────────────────────
+        PanelLogin        login        = new PanelLogin(this);
+        splash                         = new PanelSplash(this);
+        PanelDashboard    dashboard    = new PanelDashboard(this);
+        PanelSelecaoMarca selecaoMarca = new PanelSelecaoMarca(this);
+        selecaoModelo                  = new PanelSelecaoModelo(this);
+        listaOS                        = new PanelListaOS(this);
+        composicaoOS                   = new PanelComposicaoOS(this);
+        listaClientes                  = new PanelListaClientes(this);
+        cadastroCliente                = new PanelCadastroCliente(this);
+        cadastroVeiculo                = new PanelCadastroVeiculo(this);
+        cadastroColab                  = new PanelCadastroColaborador(this);
+        cadastroFornecedor             = new PanelCadastroFornecedor(this);
+        cadastroPeca                   = new PanelCadastroPeca(this);
+        cadastroServicos               = new PanelCadastroServicos(this);
+        PanelMarcasModelos marcasMod   = new PanelMarcasModelos(this);
 
-        // Inicializado como campo de classe para permitir reload da lista ao retornar à tela
-        listaClientes                             = new PanelListaClientes(this);
-
-        // Inicializado como campo de classe para permitir reload da lista ao retornar à tela de cadastro
-        cadastroCliente                           = new PanelCadastroCliente(this);
-
-        cadastroVeiculo                           = new PanelCadastroVeiculo(this);
-        PanelCadastroPeca cadastroPeca            = new PanelCadastroPeca(this);
-        PanelCadastroColaborador cadastroColab    = new PanelCadastroColaborador(this);
-        PanelCadastroFornecedor cadastroFornecedor= new PanelCadastroFornecedor(this);
-        PanelCadastroServicos cadastroServicos    = new PanelCadastroServicos(this);
-        PanelMarcasModelos marcasModelos          = new PanelMarcasModelos(this);
-
-        painelPrincipal.add(login,              TELA_LOGIN);
-        painelPrincipal.add(splash,             TELA_SPLASH);
-        painelPrincipal.add(dashboard,          TELA_DASHBOARD);
-        painelPrincipal.add(selecaoMarca,       TELA_MARCA);
-        painelPrincipal.add(selecaoModelo,      TELA_MODELO);
-        painelPrincipal.add(listaOS,            TELA_LISTA_OS);
-        painelPrincipal.add(composicaoOS,       TELA_COMPOSICAO);
-        painelPrincipal.add(listaClientes,      TELA_LISTA_CLIENTES);
-        painelPrincipal.add(cadastroCliente,    TELA_CLIENTE);
-        painelPrincipal.add(cadastroVeiculo,    TELA_VEICULO);
-        painelPrincipal.add(cadastroPeca,       TELA_PECA);
-        painelPrincipal.add(cadastroColab,      TELA_COLABORADOR);
-        painelPrincipal.add(cadastroFornecedor, TELA_FORNECEDOR);
-        painelPrincipal.add(cadastroServicos,   TELA_SERVICOS);
-        painelPrincipal.add(marcasModelos,      TELA_MARCAS_MOD);
+        // ── Registra no CardLayout ────────────────────────────────────────────
+        painelPrincipal.add(login,             TELA_LOGIN);
+        painelPrincipal.add(splash,            TELA_SPLASH);
+        painelPrincipal.add(dashboard,         TELA_DASHBOARD);
+        painelPrincipal.add(selecaoMarca,      TELA_MARCA);
+        painelPrincipal.add(selecaoModelo,     TELA_MODELO);
+        painelPrincipal.add(listaOS,           TELA_LISTA_OS);
+        painelPrincipal.add(composicaoOS,      TELA_COMPOSICAO);
+        painelPrincipal.add(listaClientes,     TELA_LISTA_CLIENTES);
+        painelPrincipal.add(cadastroCliente,   TELA_CLIENTE);
+        painelPrincipal.add(cadastroVeiculo,   TELA_VEICULO);
+        painelPrincipal.add(cadastroPeca,      TELA_PECA);
+        painelPrincipal.add(cadastroColab,     TELA_COLABORADOR);
+        painelPrincipal.add(cadastroFornecedor,TELA_FORNECEDOR);
+        painelPrincipal.add(cadastroServicos,  TELA_SERVICOS);
+        painelPrincipal.add(marcasMod,         TELA_MARCAS_MOD);
 
         add(painelPrincipal);
         mostrarTela(TELA_SPLASH);
     }
 
     public void mostrarTela(String nomeTela) {
-        if (TELA_MODELO.equals(nomeTela))
-            selecaoModelo.carregarModelos();
         if (TELA_SPLASH.equals(nomeTela) && splash != null)
             splash.reiniciar();
+
+        if (TELA_MODELO.equals(nomeTela))
+            selecaoModelo.carregarModelos();
+
         if (TELA_VEICULO.equals(nomeTela))
             cadastroVeiculo.preencherSelecoes();
 
-        // Recarrega clientes, colaboradores e serviços do banco ao abrir a tela de composição
-        if (TELA_COMPOSICAO.equals(nomeTela))
-            composicaoOS.carregarDados();
-
-        // Recarrega a lista de OS do banco ao navegar para essa tela
         if (TELA_LISTA_OS.equals(nomeTela))
             listaOS.carregarOS();
 
-        // Recarrega a lista de clientes do banco ao navegar para essa tela,
-        // garantindo que cadastros ou edições feitas antes apareçam atualizados
+        if (TELA_COMPOSICAO.equals(nomeTela))
+            composicaoOS.carregarDados();
+
         if (TELA_LISTA_CLIENTES.equals(nomeTela))
             listaClientes.carregarClientes();
 
-        // Recarrega a lista da tela de cadastro de cliente ao navegar para ela
         if (TELA_CLIENTE.equals(nomeTela))
             cadastroCliente.carregarClientes();
+
+        if (TELA_COLABORADOR.equals(nomeTela))
+            cadastroColab.carregarColaboradores();
+
+        if (TELA_FORNECEDOR.equals(nomeTela))
+            cadastroFornecedor.carregarFornecedores();
+
+        if (TELA_PECA.equals(nomeTela))
+            cadastroPeca.carregarPecas();
+
+        if (TELA_SERVICOS.equals(nomeTela))
+            cadastroServicos.carregarServicos();
 
         cardLayout.show(painelPrincipal, nomeTela);
         SidebarPanel.atualizarTodas();
@@ -182,9 +179,8 @@ public class MainFrame extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {}
+            try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
+            catch (Exception ignored) {}
             new MainFrame().setVisible(true);
         });
     }

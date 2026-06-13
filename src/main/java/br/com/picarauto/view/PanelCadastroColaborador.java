@@ -1,7 +1,7 @@
 package br.com.picarauto.view;
 
 /**
- * Lista e cadastro de colaboradores — busca em tempo real e JRadioButton de função.
+ * Lista e cadastro de colaboradores — integrado ao backend via ColaboradorController.
  *
  * @author Cassiano
  */
@@ -12,6 +12,17 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+
+// Imports do backend
+import br.com.picarauto.util.ContextoAplicacao;
+import br.com.picarauto.controller.ColaboradorController;
+import br.com.picarauto.model.ColaboradorModel;
+import br.com.picarauto.model.FuncaoColaboradorModel;
+import br.com.picarauto.repository.IFuncaoColaboradorRepository;
 
 public class PanelCadastroColaborador extends JPanel {
 
@@ -23,6 +34,9 @@ public class PanelCadastroColaborador extends JPanel {
     private TableRowSorter<DefaultTableModel> sorter;
     private JComboBox<String> cmbOrdenar;
 
+    // Mantém a lista carregada do banco na mesma ordem das linhas da tabela
+    private List<ColaboradorModel> colaboradoresAtuais;
+
     private static final String[] COLUNAS = {"Nome", "CPF", "Função", "Telefone", ""};
 
     private static final String[] FUNCOES = {
@@ -30,13 +44,7 @@ public class PanelCadastroColaborador extends JPanel {
         "Borracheiro", "Auxiliar", "Lavador", "Recepcionista"
     };
 
-    private static final Object[][] DADOS_MOCK = {
-        {"João Mecânico",     "123.456.789-00", "Mecânico",    "(47) 99111-2222"},
-        {"Pedro Eletricista", "987.654.321-00", "Eletricista", "(47) 98222-3333"},
-        {"Carlos Funileiro",  "321.654.987-00", "Funileiro",   "(47) 99444-5555"},
-        {"Maria Pintora",     "456.123.789-00", "Pintor",      "(47) 97555-7777"},
-        {"Luiz Borracheiro",  "789.321.456-00", "Borracheiro", "(47) 99666-8888"},
-    };
+    private static final DateTimeFormatter FMT_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public PanelCadastroColaborador(MainFrame frame) {
         this.frame = frame;
@@ -139,17 +147,17 @@ public class PanelCadastroColaborador extends JPanel {
         });
 
         JButton btnNovo = criarBotaoNavy("Novo colaborador", 150, 34);
-        btnNovo.addActionListener(e -> abrirFormNovoColaborador());
+        btnNovo.addActionListener(e -> abrirFormColaborador(null));
 
         JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
         painelBusca.setBackground(new Color(0xF5F0E6));
         painelBusca.add(txtBusca, BorderLayout.CENTER);
         painelBusca.add(btnNovo, BorderLayout.EAST);
 
-        String[] funcoes = {"Padrão", "A-Z (Nome)", "Z-A (Nome)",
+        String[] opcoes = {"Padrão", "A-Z (Nome)", "Z-A (Nome)",
             "Função: Mecânico", "Função: Eletricista", "Função: Funileiro", "Função: Pintor",
             "Função: Borracheiro", "Função: Auxiliar", "Função: Lavador", "Função: Recepcionista"};
-        cmbOrdenar = new JComboBox<>(funcoes);
+        cmbOrdenar = new JComboBox<>(opcoes);
         cmbOrdenar.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         cmbOrdenar.setBackground(Color.WHITE);
         cmbOrdenar.setPreferredSize(new Dimension(200, 32));
@@ -193,7 +201,6 @@ public class PanelCadastroColaborador extends JPanel {
         modelo = new DefaultTableModel(COLUNAS, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        for (Object[] row : DADOS_MOCK) modelo.addRow(row);
 
         tabela = new JTable(modelo);
         sorter = new TableRowSorter<>(modelo);
@@ -218,17 +225,58 @@ public class PanelCadastroColaborador extends JPanel {
         tabela.getColumnModel().getColumn(4).setPreferredWidth(60);
         tabela.getColumnModel().getColumn(4).setCellRenderer(new EditarRenderer());
 
+        // Clique na coluna "Editar" abre o form de edição
+        tabela.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                int col = tabela.columnAtPoint(e.getPoint());
+                int row = tabela.rowAtPoint(e.getPoint());
+                if (col == 4 && row >= 0 && colaboradoresAtuais != null) {
+                    int modelRow = tabela.convertRowIndexToModel(row);
+                    if (modelRow < colaboradoresAtuais.size()) {
+                        abrirFormColaborador(colaboradoresAtuais.get(modelRow));
+                    }
+                }
+            }
+        });
+
         JScrollPane scroll = new JScrollPane(tabela);
         scroll.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1));
         scroll.getViewport().setBackground(Color.WHITE);
         return scroll;
     }
 
-    // ── Diálogo de cadastro ───────────────────────────────────────────────────
-    private void abrirFormNovoColaborador() {
+    // ── Carrega do banco ───────────────────────────────────────────────────────
+    public void carregarColaboradores() {
+        modelo.setRowCount(0);
+        try {
+            ColaboradorController controller = ContextoAplicacao.getBean(ColaboradorController.class);
+            colaboradoresAtuais = controller.findAll();
+
+            for (ColaboradorModel c : colaboradoresAtuais) {
+                String funcao = c.getFuncao() != null ? c.getFuncao().getFuncao() : "";
+                modelo.addRow(new Object[]{
+                    c.getNomeCompleto(),
+                    c.getCpf(),
+                    funcao,
+                    c.getTelefone(),
+                    ""
+                });
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar colaboradores: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // ── Diálogo de cadastro / edição ──────────────────────────────────────────
+    private void abrirFormColaborador(ColaboradorModel colaboradorExistente) {
+        boolean editando = colaboradorExistente != null;
+        String titulo = editando ? "Editar Colaborador" : "Novo Colaborador";
+
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-            "Novo Colaborador", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(460, 500);
+            titulo, java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(480, 560);
         dialog.setLocationRelativeTo(this);
 
         JPanel form = new JPanel();
@@ -238,33 +286,52 @@ public class PanelCadastroColaborador extends JPanel {
 
         JTextField txtNome     = criarCampo();
         JTextField txtCPF      = criarCampo();
-        JTextField txtNasc     = criarCampo();
+        JTextField txtAdmissao = criarCampo();
         JTextField txtTelefone = criarCampo();
         JTextField txtEmail    = criarCampo();
         JTextField txtEndereco = criarCampo();
+        JTextField txtSalario  = criarCampo();
 
-        JPanel grid = new JPanel(new GridLayout(3, 2, 14, 10));
+        // Preenche os campos se estiver editando
+        if (editando) {
+            txtNome.setText(colaboradorExistente.getNomeCompleto());
+            txtCPF.setText(colaboradorExistente.getCpf());
+            txtCPF.setEditable(false); // CPF não pode mudar
+            txtCPF.setBackground(new Color(0xEEEEEE));
+            if (colaboradorExistente.getDataAdmissao() != null)
+                txtAdmissao.setText(colaboradorExistente.getDataAdmissao().format(FMT_DATA));
+            txtTelefone.setText(colaboradorExistente.getTelefone());
+            txtEmail.setText(colaboradorExistente.getEmail());
+            txtEndereco.setText(colaboradorExistente.getEndereco());
+            txtSalario.setText(String.valueOf(colaboradorExistente.getSalario()));
+        }
+
+        JPanel grid = new JPanel(new GridLayout(4, 2, 14, 10));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 240));
 
-        grid.add(criarGrupo("Nome completo", txtNome));
-        grid.add(criarGrupo("CPF",           txtCPF));
-        grid.add(criarGrupo("Data nasc.",    txtNasc));
-        grid.add(criarGrupo("Telefone",      txtTelefone));
-        grid.add(criarGrupo("E-mail",        txtEmail));
-        grid.add(criarGrupo("Endereço",     txtEndereco));
+        grid.add(criarGrupo("Nome completo *", txtNome));
+        grid.add(criarGrupo("CPF (só números) *", txtCPF));
+        grid.add(criarGrupo("Data admissão (dd/mm/aaaa) *", txtAdmissao));
+        grid.add(criarGrupo("Telefone *", txtTelefone));
+        grid.add(criarGrupo("E-mail *", txtEmail));
+        grid.add(criarGrupo("Endereço *", txtEndereco));
+        grid.add(criarGrupo("Salário *", txtSalario));
 
         // JRadioButton 2×4 para Função
         JPanel funcaoGrid = new JPanel(new GridLayout(4, 2, 8, 6));
         funcaoGrid.setBackground(MainFrame.COR_CREAM);
         funcaoGrid.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1), "Função",
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1), "Função *",
             TitledBorder.LEFT, TitledBorder.TOP,
             new Font("Segoe UI", Font.BOLD, 11), MainFrame.COR_NAVY));
 
         ButtonGroup grupo = new ButtonGroup();
         JRadioButton[] radios = new JRadioButton[FUNCOES.length];
+        String funcaoAtual = editando && colaboradorExistente.getFuncao() != null
+            ? colaboradorExistente.getFuncao().getFuncao() : FUNCOES[0];
+
         for (int i = 0; i < FUNCOES.length; i++) {
             radios[i] = new JRadioButton(FUNCOES[i]);
             radios[i].setFont(MainFrame.FONT_NORMAL);
@@ -273,8 +340,9 @@ public class PanelCadastroColaborador extends JPanel {
             radios[i].setOpaque(true);
             grupo.add(radios[i]);
             funcaoGrid.add(radios[i]);
+            if (FUNCOES[i].equals(funcaoAtual)) radios[i].setSelected(true);
         }
-        radios[0].setSelected(true);
+        if (!editando) radios[0].setSelected(true);
 
         JPanel funcaoWrap = new JPanel(new BorderLayout());
         funcaoWrap.setOpaque(false);
@@ -286,18 +354,120 @@ public class PanelCadastroColaborador extends JPanel {
         rodape.setOpaque(false);
         rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // Botão excluir — só aparece na edição
+        if (editando) {
+            JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
+            btnExcluir.setForeground(new Color(0xCC2222));
+            btnExcluir.addActionListener(e -> {
+                int conf = JOptionPane.showConfirmDialog(dialog,
+                    "Deseja excluir o colaborador " + colaboradorExistente.getNomeCompleto() + "?",
+                    "Confirmar exclusão", JOptionPane.YES_NO_OPTION);
+                if (conf == JOptionPane.YES_OPTION) {
+                    try {
+                        ColaboradorController controller = ContextoAplicacao.getBean(ColaboradorController.class);
+                        controller.delete(colaboradorExistente.getId());
+                        dialog.dispose();
+                        carregarColaboradores();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(dialog,
+                            "Erro ao excluir: " + ex.getMessage(),
+                            "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            rodape.add(btnExcluir);
+        }
+
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
-            String nome = txtNome.getText().trim();
-            if (!nome.isEmpty()) {
-                String funcao = "";
-                for (JRadioButton r : radios) if (r.isSelected()) { funcao = r.getText(); break; }
-                modelo.addRow(new Object[]{nome, txtCPF.getText().trim(), funcao, txtTelefone.getText().trim()});
+            // Validação básica na view
+            String nome     = txtNome.getText().trim();
+            String cpf      = txtCPF.getText().trim();
+            String admissao = txtAdmissao.getText().trim();
+            String telefone = txtTelefone.getText().trim();
+            String email    = txtEmail.getText().trim();
+            String endereco = txtEndereco.getText().trim();
+            String salarioStr = txtSalario.getText().trim();
+
+            if (nome.isEmpty() || cpf.isEmpty() || admissao.isEmpty()
+                    || telefone.isEmpty() || email.isEmpty()
+                    || endereco.isEmpty() || salarioStr.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Preencha todos os campos obrigatórios (*)",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
             }
-            dialog.dispose();
+
+            LocalDate dataAdmissao;
+            try {
+                dataAdmissao = LocalDate.parse(admissao, FMT_DATA);
+            } catch (DateTimeParseException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Data de admissão inválida. Use o formato dd/mm/aaaa.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            double salario;
+            try {
+                salario = Double.parseDouble(salarioStr.replace(",", "."));
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Salário inválido. Use apenas números (ex: 2500.00)",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Descobre qual função foi selecionada e busca ou cria no banco
+            String funcaoSelecionada = "";
+            for (JRadioButton r : radios) if (r.isSelected()) { funcaoSelecionada = r.getText(); break; }
+
+            try {
+                // Busca a FuncaoColaboradorModel pelo nome
+                final IFuncaoColaboradorRepository funcaoRepo =
+                    ContextoAplicacao.getBean(IFuncaoColaboradorRepository.class);
+                final String funcaoFinal = funcaoSelecionada;
+                FuncaoColaboradorModel funcaoModel = funcaoRepo
+                    .findAll()
+                    .stream()
+                    .filter(f -> f.getFuncao().equalsIgnoreCase(funcaoFinal))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        // Cria a função se não existir
+                        FuncaoColaboradorModel nova = new FuncaoColaboradorModel();
+                        nova.setFuncao(funcaoFinal);
+                        return funcaoRepo.save(nova);
+                    });
+
+                ColaboradorController controller = ContextoAplicacao.getBean(ColaboradorController.class);
+
+                ColaboradorModel col = editando ? colaboradorExistente : new ColaboradorModel();
+                col.setNomeCompleto(nome);
+                if (!editando) col.setCpf(cpf);
+                col.setDataAdmissao(dataAdmissao);
+                col.setTelefone(telefone);
+                col.setEmail(email);
+                col.setEndereco(endereco);
+                col.setSalario(salario);
+                col.setFuncao(funcaoModel);
+
+                if (editando) {
+                    controller.update(col);
+                } else {
+                    controller.insert(col);
+                }
+
+                dialog.dispose();
+                carregarColaboradores();
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Erro ao salvar: " + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         rodape.add(btnCanc);
@@ -396,7 +566,7 @@ public class PanelCadastroColaborador extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_NAVY);
+                g2.setColor(getForeground());
                 g2.setStroke(new java.awt.BasicStroke(1.5f));
                 g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
                 g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));

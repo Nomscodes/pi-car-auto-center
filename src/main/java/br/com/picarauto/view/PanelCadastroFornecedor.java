@@ -1,7 +1,7 @@
 package br.com.picarauto.view;
 
 /**
- * Lista e cadastro de fornecedores — busca em tempo real e tabela estilizada.
+ * Lista e cadastro de fornecedores — integrado ao backend.
  *
  * @author Cassiano
  */
@@ -12,6 +12,13 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.util.List;
+
+import br.com.picarauto.util.ContextoAplicacao;
+import br.com.picarauto.controller.FornecedorController;
+import br.com.picarauto.model.FornecedorModel;
+import br.com.picarauto.model.exception.FieldValidationException;
+import br.com.picarauto.model.exception.RuleValidationException;
 
 public class PanelCadastroFornecedor extends JPanel {
 
@@ -23,16 +30,9 @@ public class PanelCadastroFornecedor extends JPanel {
     private TableRowSorter<DefaultTableModel> sorter;
     private JComboBox<String> cmbOrdenar;
 
-    private static final String[] COLUNAS = {"Razão Social", "CNPJ", "Telefone", "E-mail", ""};
+    private List<FornecedorModel> fornecedoresAtuais;
 
-    private static final Object[][] DADOS_MOCK = {
-        {"Petrobrás Distribuidora", "12.345.678/0001-99", "(47) 3300-4444", "contato@petrobras.com"},
-        {"Bosch do Brasil",         "98.765.432/0001-11", "(47) 3311-5555", "contato@bosch.com.br"},
-        {"Frasle S.A.",             "45.678.901/0001-22", "(47) 3322-6666", "contato@frasle.com"},
-        {"NGK do Brasil",           "23.456.789/0001-33", "(47) 3333-7777", "contato@ngk.com.br"},
-        {"Gates Borracha",          "67.890.123/0001-44", "(47) 3344-8888", "contato@gates.com"},
-        {"Mahle Metal Leve",        "34.567.890/0001-55", "(47) 3355-9999", "contato@mahle.com"},
-    };
+    private static final String[] COLUNAS = {"Razão Social", "CNPJ", "Telefone", "E-mail", ""};
 
     public PanelCadastroFornecedor(MainFrame frame) {
         this.frame = frame;
@@ -43,26 +43,21 @@ public class PanelCadastroFornecedor extends JPanel {
 
     private void construirUI() {
         add(criarTopbar(), BorderLayout.NORTH);
-
         JPanel inner = new JPanel(new BorderLayout());
         inner.setBackground(MainFrame.COR_CREAM);
         inner.add(criarConteudo(), BorderLayout.CENTER);
         inner.add(new SidebarPanel(frame, MainFrame.TELA_FORNECEDOR), BorderLayout.EAST);
-
         add(inner, BorderLayout.CENTER);
     }
 
-    // ── Topbar ────────────────────────────────────────────────────────────────
     private JPanel criarTopbar() {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setBackground(MainFrame.COR_NAVY);
         bar.setPreferredSize(new Dimension(0, 48));
         bar.setBorder(new EmptyBorder(0, 20, 0, 20));
-
         JLabel lbl = new JLabel("AV CAR AUTO CENTER  —  Fornecedores");
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lbl.setForeground(Color.WHITE);
-
         bar.add(lbl, BorderLayout.WEST);
         bar.add(criarUsuarioPanel(), BorderLayout.EAST);
         return bar;
@@ -75,7 +70,6 @@ public class PanelCadastroFornecedor extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2.setColor(MainFrame.COR_NAVY);
                 g2.fillOval(0, 0, 30, 30);
                 String car = new String(Character.toChars(0x1F697));
@@ -94,12 +88,10 @@ public class PanelCadastroFornecedor extends JPanel {
         return p;
     }
 
-    // ── Conteúdo ──────────────────────────────────────────────────────────────
     private JPanel criarConteudo() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(MainFrame.COR_CREAM);
         p.setBorder(new EmptyBorder(16, 16, 16, 16));
-
         p.add(criarBarraFerr(), BorderLayout.NORTH);
         p.add(criarScrollTabela(), BorderLayout.CENTER);
         return p;
@@ -108,7 +100,6 @@ public class PanelCadastroFornecedor extends JPanel {
     private JPanel criarBarraFerr() {
         txtBusca = new JTextField();
         txtBusca.setPreferredSize(new Dimension(0, 36));
-        txtBusca.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         txtBusca.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(0xD0C9B8)),
             BorderFactory.createEmptyBorder(4, 10, 4, 10)));
@@ -118,14 +109,10 @@ public class PanelCadastroFornecedor extends JPanel {
         txtBusca.setForeground(Color.GRAY);
         txtBusca.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override public void focusGained(java.awt.event.FocusEvent e) {
-                if ("Pesquisar...".equals(txtBusca.getText())) {
-                    txtBusca.setText(""); txtBusca.setForeground(new Color(0x333333));
-                }
+                if ("Pesquisar...".equals(txtBusca.getText())) { txtBusca.setText(""); txtBusca.setForeground(new Color(0x333333)); }
             }
             @Override public void focusLost(java.awt.event.FocusEvent e) {
-                if (txtBusca.getText().isEmpty()) {
-                    txtBusca.setText("Pesquisar..."); txtBusca.setForeground(Color.GRAY);
-                }
+                if (txtBusca.getText().isEmpty()) { txtBusca.setText("Pesquisar..."); txtBusca.setForeground(Color.GRAY); }
             }
         });
         txtBusca.getDocument().addDocumentListener(new DocumentListener() {
@@ -135,7 +122,7 @@ public class PanelCadastroFornecedor extends JPanel {
         });
 
         JButton btnNovo = criarBotaoNavy("Novo fornecedor", 150, 34);
-        btnNovo.addActionListener(e -> abrirFormNovoFornecedor());
+        btnNovo.addActionListener(e -> abrirFormFornecedor(null));
 
         JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
         painelBusca.setBackground(new Color(0xF5F0E6));
@@ -166,13 +153,9 @@ public class PanelCadastroFornecedor extends JPanel {
         if (sel == null) sel = "Padrão";
         String txt = txtBusca.getText().trim();
         boolean hasText = !txt.isEmpty() && !"Pesquisar...".equals(txt);
-
         sorter.setSortKeys(java.util.Collections.emptyList());
-        if ("A-Z (Nome)".equals(sel))
-            sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
-        else if ("Z-A (Nome)".equals(sel))
-            sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
-
+        if ("A-Z (Nome)".equals(sel)) sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
+        else if ("Z-A (Nome)".equals(sel)) sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
         sorter.setRowFilter(hasText ? RowFilter.regexFilter("(?i)" + txt) : null);
     }
 
@@ -180,8 +163,6 @@ public class PanelCadastroFornecedor extends JPanel {
         modelo = new DefaultTableModel(COLUNAS, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        for (Object[] row : DADOS_MOCK) modelo.addRow(row);
-
         tabela = new JTable(modelo);
         sorter = new TableRowSorter<>(modelo);
         tabela.setRowSorter(sorter);
@@ -205,67 +186,142 @@ public class PanelCadastroFornecedor extends JPanel {
         tabela.getColumnModel().getColumn(4).setPreferredWidth(60);
         tabela.getColumnModel().getColumn(4).setCellRenderer(new EditarRenderer());
 
+        tabela.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                int col = tabela.columnAtPoint(e.getPoint());
+                int row = tabela.rowAtPoint(e.getPoint());
+                if (col == 4 && row >= 0 && fornecedoresAtuais != null) {
+                    int modelRow = tabela.convertRowIndexToModel(row);
+                    if (modelRow < fornecedoresAtuais.size())
+                        abrirFormFornecedor(fornecedoresAtuais.get(modelRow));
+                }
+            }
+        });
+
         JScrollPane scroll = new JScrollPane(tabela);
         scroll.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1));
         scroll.getViewport().setBackground(Color.WHITE);
         return scroll;
     }
 
-    // ── Diálogo de cadastro ───────────────────────────────────────────────────
-    private void abrirFormNovoFornecedor() {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-            "Novo Fornecedor", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(440, 360);
-        dialog.setLocationRelativeTo(this);
+    public void carregarFornecedores() {
+        modelo.setRowCount(0);
+        try {
+            FornecedorController controller = ContextoAplicacao.getBean(FornecedorController.class);
+            fornecedoresAtuais = controller.findAll();
+            for (FornecedorModel f : fornecedoresAtuais) {
+                modelo.addRow(new Object[]{
+                    f.getNomeFornecedor(),
+                    f.getCnpj() != null ? f.getCnpj() : "-",
+                    f.getTelefone(),
+                    f.getEmail(),
+                    ""
+                });
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao carregar fornecedores: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
-        JPanel form = new JPanel();
-        form.setBackground(MainFrame.COR_CREAM);
-        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
-        form.setBorder(new EmptyBorder(20, 24, 20, 24));
+    private void abrirFormFornecedor(FornecedorModel existente) {
+        boolean editando = existente != null;
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+            editando ? "Editar Fornecedor" : "Novo Fornecedor",
+            java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(440, 380);
+        dialog.setLocationRelativeTo(this);
 
         JTextField txtRazao    = criarCampo();
         JTextField txtCNPJ     = criarCampo();
         JTextField txtTelefone = criarCampo();
         JTextField txtEmail    = criarCampo();
-        JTextField txtEndereco = criarCampo();
-        JTextField txtCidade   = criarCampo();
 
-        JPanel grid = new JPanel(new GridLayout(3, 2, 14, 10));
+        if (editando) {
+            txtRazao.setText(existente.getNomeFornecedor());
+            txtCNPJ.setText(existente.getCnpj() != null ? existente.getCnpj() : "");
+            txtCNPJ.setEditable(false);
+            txtCNPJ.setBackground(new Color(0xEEEEEE));
+            txtTelefone.setText(existente.getTelefone());
+            txtEmail.setText(existente.getEmail());
+        }
+
+        JPanel grid = new JPanel(new GridLayout(2, 2, 14, 10));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
-
-        grid.add(criarGrupo("Razão Social", txtRazao));
-        grid.add(criarGrupo("CNPJ",         txtCNPJ));
-        grid.add(criarGrupo("Telefone",     txtTelefone));
-        grid.add(criarGrupo("E-mail",       txtEmail));
-        grid.add(criarGrupo("Endereço",    txtEndereco));
-        grid.add(criarGrupo("Cidade",       txtCidade));
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
+        grid.add(criarGrupo("Razão Social *", txtRazao));
+        grid.add(criarGrupo("CNPJ (só números)", txtCNPJ));
+        grid.add(criarGrupo("Telefone *", txtTelefone));
+        grid.add(criarGrupo("E-mail *", txtEmail));
 
         JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rodape.setOpaque(false);
         rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        if (editando) {
+            JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
+            btnExcluir.setForeground(new Color(0xCC2222));
+            btnExcluir.addActionListener(e -> {
+                int conf = JOptionPane.showConfirmDialog(dialog,
+                    "Deseja excluir o fornecedor " + existente.getNomeFornecedor() + "?",
+                    "Confirmar exclusão", JOptionPane.YES_NO_OPTION);
+                if (conf == JOptionPane.YES_OPTION) {
+                    try {
+                        ContextoAplicacao.getBean(FornecedorController.class).delete(existente.getId());
+                        dialog.dispose();
+                        carregarFornecedores();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(dialog, "Erro ao excluir: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            rodape.add(btnExcluir);
+        }
 
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
-            String razao = txtRazao.getText().trim();
-            if (!razao.isEmpty()) {
-                modelo.addRow(new Object[]{
-                    razao,
-                    txtCNPJ.getText().trim(),
-                    txtTelefone.getText().trim(),
-                    txtEmail.getText().trim()
-                });
+            String razao    = txtRazao.getText().trim();
+            String cnpj     = txtCNPJ.getText().replaceAll("\\D", "").trim();
+            String telefone = txtTelefone.getText().trim();
+            String email    = txtEmail.getText().trim();
+
+            if (razao.isEmpty() || telefone.isEmpty() || email.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Preencha todos os campos obrigatórios (*).",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
             }
-            dialog.dispose();
+
+            try {
+                FornecedorController controller = ContextoAplicacao.getBean(FornecedorController.class);
+                FornecedorModel f = editando ? existente : new FornecedorModel();
+                f.setNomeFornecedor(razao);
+                if (!editando) f.setCnpj(cnpj.isEmpty() ? null : cnpj);
+                f.setTelefone(telefone);
+                f.setEmail(email);
+
+                if (editando) controller.update(f);
+                else          controller.insert(f);
+
+                dialog.dispose();
+                carregarFornecedores();
+            } catch (FieldValidationException | RuleValidationException valEx) {
+                JOptionPane.showMessageDialog(dialog, valEx.getMessage(), "Erro de validação", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Erro ao salvar: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         rodape.add(btnCanc);
         rodape.add(btnSalv);
 
+        JPanel form = new JPanel();
+        form.setBackground(MainFrame.COR_CREAM);
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBorder(new EmptyBorder(20, 24, 20, 24));
         form.add(grid);
         form.add(Box.createVerticalStrut(14));
         form.add(rodape);
@@ -274,7 +330,6 @@ public class PanelCadastroFornecedor extends JPanel {
         dialog.setVisible(true);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
     private JPanel criarGrupo(String label, JTextField campo) {
         JPanel g = new JPanel();
         g.setOpaque(false);
@@ -285,9 +340,7 @@ public class PanelCadastroFornecedor extends JPanel {
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         campo.setAlignmentX(Component.LEFT_ALIGNMENT);
         campo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-        g.add(lbl);
-        g.add(Box.createVerticalStrut(4));
-        g.add(campo);
+        g.add(lbl); g.add(Box.createVerticalStrut(4)); g.add(campo);
         return g;
     }
 
@@ -296,8 +349,7 @@ public class PanelCadastroFornecedor extends JPanel {
         f.setFont(MainFrame.FONT_NORMAL);
         f.setBackground(Color.WHITE);
         f.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
-            new EmptyBorder(6, 10, 6, 10)));
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1), new EmptyBorder(6, 10, 6, 10)));
         f.setPreferredSize(new Dimension(0, 34));
         return f;
     }
@@ -312,16 +364,12 @@ public class PanelCadastroFornecedor extends JPanel {
                 g2.setColor(Color.WHITE);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
-                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
-        btn.setOpaque(true);
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setOpaque(true); btn.setContentAreaFilled(false); btn.setBorderPainted(false);
+        btn.setFocusPainted(false); btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(w, h));
         return btn;
     }
@@ -336,16 +384,12 @@ public class PanelCadastroFornecedor extends JPanel {
                 g2.setColor(MainFrame.COR_NAVY);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
-                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
-        btn.setOpaque(true);
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setOpaque(true); btn.setContentAreaFilled(false); btn.setBorderPainted(false);
+        btn.setFocusPainted(false); btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(w, h));
         return btn;
     }
@@ -355,29 +399,24 @@ public class PanelCadastroFornecedor extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_NAVY);
+                g2.setColor(getForeground());
                 g2.setStroke(new java.awt.BasicStroke(1.5f));
                 g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
                 g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
-                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
-        btn.setOpaque(false);
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setFocusPainted(false);
-        btn.setForeground(MainFrame.COR_NAVY);
+        btn.setOpaque(false); btn.setContentAreaFilled(false); btn.setBorderPainted(false);
+        btn.setFocusPainted(false); btn.setForeground(MainFrame.COR_NAVY);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(w, h));
         return btn;
     }
 
     static class EditarRenderer extends DefaultTableCellRenderer {
-        @Override public Component getTableCellRendererComponent(
-                JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+        @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             JLabel lbl = new JLabel("Editar", SwingConstants.CENTER);
             lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
             lbl.setForeground(MainFrame.COR_NAVY);
