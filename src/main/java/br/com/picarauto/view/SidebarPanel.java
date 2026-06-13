@@ -26,18 +26,18 @@ public class SidebarPanel extends JPanel {
     private static final List<SidebarPanel> INSTANCIAS = new ArrayList<>();
 
     private static final Object[][] ITENS = {
-        {"⊞", "Dashboard",       MainFrame.TELA_DASHBOARD,      "PRINCIPAL"},
-        {"≡", "Ordens de Serv.", MainFrame.TELA_LISTA_OS,       "PRINCIPAL"},
-        {"♟", "Clientes",        MainFrame.TELA_LISTA_CLIENTES, "CADASTROS"},
-        {"▣", "Veículos",   MainFrame.TELA_MARCA,          "CADASTROS"},
-        {"⚙", "Peças",      MainFrame.TELA_PECA,           "CADASTROS"},
-        {"◈", "Colaboradores",   MainFrame.TELA_COLABORADOR,    "CADASTROS"},
-        {"◫", "Fornecedores",    MainFrame.TELA_FORNECEDOR,     "CADASTROS"},
-        {"◆", "Marcas/Modelos",  MainFrame.TELA_MARCAS_MOD,     "CONFIG"},
-        {"◧", "Serviços",   MainFrame.TELA_SERVICOS,       "CONFIG"},
-        {"◉", "Rastreabilidade", MainFrame.TELA_RASTREABILIDADE, "CONFIG"},
+        {"\u229e", "Dashboard",       MainFrame.TELA_DASHBOARD,      "PRINCIPAL"},
+        {"\u2261", "Ordens de Serv.", MainFrame.TELA_LISTA_OS,       "PRINCIPAL"},
+        {"\u265f", "Clientes",        MainFrame.TELA_LISTA_CLIENTES, "CADASTROS"},
+        {"\u25a3", "Ve\u00edculos",  MainFrame.TELA_MARCA,          "CADASTROS"},
+        {"\u2699", "Pe\u00e7as",     MainFrame.TELA_PECA,           "CADASTROS"},
+        {"\u25c8", "Colaboradores",   MainFrame.TELA_COLABORADOR,    "CADASTROS"},
+        {"\u25eb", "Fornecedores",    MainFrame.TELA_FORNECEDOR,     "CADASTROS"},
+        {"\u25c6", "Marcas/Modelos",  MainFrame.TELA_MARCAS_MOD,     "CONFIG"},
+        {"\u25e7", "Servi\u00e7os",  MainFrame.TELA_SERVICOS,       "CONFIG"},
+        {"\u25eb", "Lista de Ve\u00edculos", MainFrame.TELA_LISTA_VEICULOS, "CONFIG"},
+        {"\u25c9", "Rastreabilidade", MainFrame.TELA_RASTREABILIDADE, "CONFIG"},
     };
-
     public SidebarPanel(MainFrame frame, String telaAtiva) {
         this.frame     = frame;
         this.telaAtiva = telaAtiva;

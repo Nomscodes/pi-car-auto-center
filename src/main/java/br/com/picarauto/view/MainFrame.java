@@ -33,7 +33,7 @@ public class MainFrame extends JFrame {
     private final CardLayout cardLayout;
     private final JPanel     painelPrincipal;
 
-    // ── Painéis que precisam ser recarregados ao navegar ──────────────────────
+    // ── Painéis que precisam ser recarregados ao navegar
     private PanelSplash               splash;
     private PanelSelecaoModelo        selecaoModelo;
     private PanelCadastroVeiculo      cadastroVeiculo;
@@ -46,8 +46,9 @@ public class MainFrame extends JFrame {
     private PanelCadastroPeca         cadastroPeca;
     private PanelCadastroServicos     cadastroServicos;
     private PanelRastreabilidade      rastreabilidade;
+    private PanelListaVeiculos        listaVeiculos;
 
-    // ── Seleção de marca/modelo ───────────────────────────────────────────────
+    // ── Seleção de marca/modelo
     private String marcaSelecionada  = "";
     private String modeloSelecionado = "";
     private Long   idMarcaSelecionada  = null;
@@ -69,12 +70,11 @@ public class MainFrame extends JFrame {
     public  static String getUsuarioLogado()          { return usuarioLogado; }
     public  static void   setUsuarioLogado(String u)  { usuarioLogado = u; }
 
-    // - Panel cadastro Cliente
     public PanelCadastroCliente getCadastroClientePanel() {
         return cadastroCliente;
     }
 
-    // ── Constantes de tela ────────────────────────────────────────────────────
+    // ── Constantes de tela
     public static final String TELA_LOGIN           = "LOGIN";
     public static final String TELA_SPLASH          = "SPLASH";
     public static final String TELA_DASHBOARD       = "DASHBOARD";
@@ -85,6 +85,7 @@ public class MainFrame extends JFrame {
     public static final String TELA_LISTA_CLIENTES  = "LISTA_CLIENTES";
     public static final String TELA_CLIENTE         = "CLIENTE";
     public static final String TELA_VEICULO         = "VEICULO";
+    public static final String TELA_LISTA_VEICULOS  = "LISTA_VEICULOS";
     public static final String TELA_PECA            = "PECA";
     public static final String TELA_COLABORADOR     = "COLABORADOR";
     public static final String TELA_FORNECEDOR      = "FORNECEDOR";
@@ -104,7 +105,6 @@ public class MainFrame extends JFrame {
         cardLayout      = new CardLayout();
         painelPrincipal = new JPanel(cardLayout);
 
-        // ── Instancia todos os painéis ────────────────────────────────────────
         PanelLogin        login        = new PanelLogin(this);
         splash                         = new PanelSplash(this);
         PanelDashboard    dashboard    = new PanelDashboard(this);
@@ -121,8 +121,8 @@ public class MainFrame extends JFrame {
         cadastroServicos               = new PanelCadastroServicos(this);
         PanelMarcasModelos marcasMod   = new PanelMarcasModelos(this);
         rastreabilidade                = new PanelRastreabilidade(this);
+        listaVeiculos                  = new PanelListaVeiculos(this);
 
-        // ── Registra no CardLayout ────────────────────────────────────────────
         painelPrincipal.add(login,             TELA_LOGIN);
         painelPrincipal.add(splash,            TELA_SPLASH);
         painelPrincipal.add(dashboard,         TELA_DASHBOARD);
@@ -139,6 +139,7 @@ public class MainFrame extends JFrame {
         painelPrincipal.add(cadastroServicos,  TELA_SERVICOS);
         painelPrincipal.add(marcasMod,         TELA_MARCAS_MOD);
         painelPrincipal.add(rastreabilidade,   TELA_RASTREABILIDADE);
+        painelPrincipal.add(listaVeiculos,     TELA_LISTA_VEICULOS);
 
         add(painelPrincipal);
         mostrarTela(TELA_SPLASH);
@@ -148,9 +149,6 @@ public class MainFrame extends JFrame {
         if (TELA_SPLASH.equals(nomeTela) && splash != null)
             splash.reiniciar();
 
-        // Todas as chamadas ao banco só ocorrem após o Spring estar inicializado.
-        // Durante a construção dos painéis (antes do Spring subir), isReady() é false
-        // e nenhuma chamada ao banco é feita, evitando IllegalStateException.
         if (br.com.picarauto.util.ContextoAplicacao.isReady()) {
 
             if (TELA_MODELO.equals(nomeTela))
@@ -185,6 +183,9 @@ public class MainFrame extends JFrame {
 
             if (TELA_RASTREABILIDADE.equals(nomeTela))
                 rastreabilidade.carregarDados();
+
+            if (TELA_LISTA_VEICULOS.equals(nomeTela))
+                listaVeiculos.carregarVeiculos();
         }
 
         cardLayout.show(painelPrincipal, nomeTela);
