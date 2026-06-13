@@ -35,6 +35,7 @@ public class SidebarPanel extends JPanel {
         {"◫", "Fornecedores",    MainFrame.TELA_FORNECEDOR,     "CADASTROS"},
         {"◆", "Marcas/Modelos",  MainFrame.TELA_MARCAS_MOD,     "CONFIG"},
         {"◧", "Serviços",   MainFrame.TELA_SERVICOS,       "CONFIG"},
+        {"◉", "Rastreabilidade", MainFrame.TELA_RASTREABILIDADE, "CONFIG"},
     };
 
     public SidebarPanel(MainFrame frame, String telaAtiva) {

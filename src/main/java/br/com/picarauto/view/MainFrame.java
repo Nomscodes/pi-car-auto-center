@@ -45,6 +45,7 @@ public class MainFrame extends JFrame {
     private PanelCadastroFornecedor   cadastroFornecedor;
     private PanelCadastroPeca         cadastroPeca;
     private PanelCadastroServicos     cadastroServicos;
+    private PanelRastreabilidade      rastreabilidade;
 
     // ── Seleção de marca/modelo ───────────────────────────────────────────────
     private String marcaSelecionada  = "";
@@ -67,28 +68,29 @@ public class MainFrame extends JFrame {
     private static String usuarioLogado = "";
     public  static String getUsuarioLogado()          { return usuarioLogado; }
     public  static void   setUsuarioLogado(String u)  { usuarioLogado = u; }
-    
+
     // - Panel cadastro Cliente
     public PanelCadastroCliente getCadastroClientePanel() {
         return cadastroCliente;
     }
 
     // ── Constantes de tela ────────────────────────────────────────────────────
-    public static final String TELA_LOGIN          = "LOGIN";
-    public static final String TELA_SPLASH         = "SPLASH";
-    public static final String TELA_DASHBOARD      = "DASHBOARD";
-    public static final String TELA_LISTA_OS       = "LISTA_OS";
-    public static final String TELA_MARCA          = "MARCA";
-    public static final String TELA_MODELO         = "MODELO";
-    public static final String TELA_COMPOSICAO     = "COMPOSICAO";
-    public static final String TELA_LISTA_CLIENTES = "LISTA_CLIENTES";
-    public static final String TELA_CLIENTE        = "CLIENTE";
-    public static final String TELA_VEICULO        = "VEICULO";
-    public static final String TELA_PECA           = "PECA";
-    public static final String TELA_COLABORADOR    = "COLABORADOR";
-    public static final String TELA_FORNECEDOR     = "FORNECEDOR";
-    public static final String TELA_SERVICOS       = "SERVICOS";
-    public static final String TELA_MARCAS_MOD     = "MARCAS_MOD";
+    public static final String TELA_LOGIN           = "LOGIN";
+    public static final String TELA_SPLASH          = "SPLASH";
+    public static final String TELA_DASHBOARD       = "DASHBOARD";
+    public static final String TELA_LISTA_OS        = "LISTA_OS";
+    public static final String TELA_MARCA           = "MARCA";
+    public static final String TELA_MODELO          = "MODELO";
+    public static final String TELA_COMPOSICAO      = "COMPOSICAO";
+    public static final String TELA_LISTA_CLIENTES  = "LISTA_CLIENTES";
+    public static final String TELA_CLIENTE         = "CLIENTE";
+    public static final String TELA_VEICULO         = "VEICULO";
+    public static final String TELA_PECA            = "PECA";
+    public static final String TELA_COLABORADOR     = "COLABORADOR";
+    public static final String TELA_FORNECEDOR      = "FORNECEDOR";
+    public static final String TELA_SERVICOS        = "SERVICOS";
+    public static final String TELA_MARCAS_MOD      = "MARCAS_MOD";
+    public static final String TELA_RASTREABILIDADE = "RASTREABILIDADE";
 
     public MainFrame() {
         instancia = this;
@@ -118,6 +120,7 @@ public class MainFrame extends JFrame {
         cadastroPeca                   = new PanelCadastroPeca(this);
         cadastroServicos               = new PanelCadastroServicos(this);
         PanelMarcasModelos marcasMod   = new PanelMarcasModelos(this);
+        rastreabilidade                = new PanelRastreabilidade(this);
 
         // ── Registra no CardLayout ────────────────────────────────────────────
         painelPrincipal.add(login,             TELA_LOGIN);
@@ -135,6 +138,7 @@ public class MainFrame extends JFrame {
         painelPrincipal.add(cadastroFornecedor,TELA_FORNECEDOR);
         painelPrincipal.add(cadastroServicos,  TELA_SERVICOS);
         painelPrincipal.add(marcasMod,         TELA_MARCAS_MOD);
+        painelPrincipal.add(rastreabilidade,   TELA_RASTREABILIDADE);
 
         add(painelPrincipal);
         mostrarTela(TELA_SPLASH);
@@ -178,6 +182,9 @@ public class MainFrame extends JFrame {
 
             if (TELA_SERVICOS.equals(nomeTela))
                 cadastroServicos.carregarServicos();
+
+            if (TELA_RASTREABILIDADE.equals(nomeTela))
+                rastreabilidade.carregarDados();
         }
 
         cardLayout.show(painelPrincipal, nomeTela);
