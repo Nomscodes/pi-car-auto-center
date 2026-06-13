@@ -294,23 +294,29 @@ public class PanelListaClientes extends JPanel {
     // e preenche a tabela. Chamado ao entrar na tela e após cadastros/edições.
     public void carregarClientes() {
         modelo.setRowCount(0);
-        ClienteController controller = ContextoAplicacao.getBean(ClienteController.class);
-        clientesAtuais = controller.findAll();
+        try {
+            ClienteController controller = ContextoAplicacao.getBean(ClienteController.class);
+            clientesAtuais = controller.findAll();
 
-        for (ClienteModel c : clientesAtuais) {
-            String tipo, doc;
-            if (c instanceof PessoaFisicaModel pf) {
-                tipo = "PF";
-                doc  = pf.getCpf();
-            } else if (c instanceof PessoaJuridicaModel pj) {
-                tipo = "PJ";
-                doc  = pj.getCnpj();
-            } else {
-                tipo = "?";
-                doc  = "-";
+            for (ClienteModel c : clientesAtuais) {
+                String tipo, doc;
+                if (c instanceof PessoaFisicaModel pf) {
+                    tipo = "PF";
+                    doc  = pf.getCpf();
+                } else if (c instanceof PessoaJuridicaModel pj) {
+                    tipo = "PJ";
+                    doc  = pj.getCnpj();
+                } else {
+                    tipo = "?";
+                    doc  = "-";
+                }
+                // 6 valores — um para cada coluna incluindo a coluna "Editar"
+                modelo.addRow(new Object[]{ c.getNomeCompleto(), tipo, doc, c.getTelefone(), "-", "" });
             }
-            // Coluna "Veículos" ainda sem contagem real — será integrada futuramente
-            modelo.addRow(new Object[]{ c.getNomeCompleto(), tipo, doc, c.getTelefone(), "-" });
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar clientes: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
