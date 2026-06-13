@@ -67,6 +67,11 @@ public class MainFrame extends JFrame {
     private static String usuarioLogado = "";
     public  static String getUsuarioLogado()          { return usuarioLogado; }
     public  static void   setUsuarioLogado(String u)  { usuarioLogado = u; }
+    
+    // - Panel cadastro Cliente
+    public PanelCadastroCliente getCadastroClientePanel() {
+        return cadastroCliente;
+    }
 
     // ── Constantes de tela ────────────────────────────────────────────────────
     public static final String TELA_LOGIN          = "LOGIN";
@@ -139,35 +144,41 @@ public class MainFrame extends JFrame {
         if (TELA_SPLASH.equals(nomeTela) && splash != null)
             splash.reiniciar();
 
-        if (TELA_MODELO.equals(nomeTela))
-            selecaoModelo.carregarModelos();
+        // Todas as chamadas ao banco só ocorrem após o Spring estar inicializado.
+        // Durante a construção dos painéis (antes do Spring subir), isReady() é false
+        // e nenhuma chamada ao banco é feita, evitando IllegalStateException.
+        if (br.com.picarauto.util.ContextoAplicacao.isReady()) {
 
-        if (TELA_VEICULO.equals(nomeTela))
-            cadastroVeiculo.preencherSelecoes();
+            if (TELA_MODELO.equals(nomeTela))
+                selecaoModelo.carregarModelos();
 
-        if (TELA_LISTA_OS.equals(nomeTela))
-            listaOS.carregarOS();
+            if (TELA_VEICULO.equals(nomeTela))
+                cadastroVeiculo.preencherSelecoes();
 
-        if (TELA_COMPOSICAO.equals(nomeTela))
-            composicaoOS.carregarDados();
+            if (TELA_LISTA_OS.equals(nomeTela))
+                listaOS.carregarOS();
 
-        if (TELA_LISTA_CLIENTES.equals(nomeTela))
-            listaClientes.carregarClientes();
+            if (TELA_COMPOSICAO.equals(nomeTela))
+                composicaoOS.carregarDados();
 
-        if (TELA_CLIENTE.equals(nomeTela))
-            cadastroCliente.carregarClientes();
+            if (TELA_LISTA_CLIENTES.equals(nomeTela))
+                listaClientes.carregarClientes();
 
-        if (TELA_COLABORADOR.equals(nomeTela))
-            cadastroColab.carregarColaboradores();
+            if (TELA_CLIENTE.equals(nomeTela))
+                cadastroCliente.carregarClientes();
 
-        if (TELA_FORNECEDOR.equals(nomeTela))
-            cadastroFornecedor.carregarFornecedores();
+            if (TELA_COLABORADOR.equals(nomeTela))
+                cadastroColab.carregarColaboradores();
 
-        if (TELA_PECA.equals(nomeTela))
-            cadastroPeca.carregarPecas();
+            if (TELA_FORNECEDOR.equals(nomeTela))
+                cadastroFornecedor.carregarFornecedores();
 
-        if (TELA_SERVICOS.equals(nomeTela))
-            cadastroServicos.carregarServicos();
+            if (TELA_PECA.equals(nomeTela))
+                cadastroPeca.carregarPecas();
+
+            if (TELA_SERVICOS.equals(nomeTela))
+                cadastroServicos.carregarServicos();
+        }
 
         cardLayout.show(painelPrincipal, nomeTela);
         SidebarPanel.atualizarTodas();
