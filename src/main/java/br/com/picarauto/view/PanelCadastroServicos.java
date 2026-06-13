@@ -103,8 +103,8 @@ public class PanelCadastroServicos extends JPanel {
         abas.setOpaque(false);
         btnAbaInternos = criarBotaoAba("Internos");
         btnAbaExternos = criarBotaoAba("Externos");
-        btnAbaInternos.addActionListener(e -> { abaInterno = true;  carregarServicos(); btnAbaInternos.repaint(); btnAbaExternos.repaint(); });
-        btnAbaExternos.addActionListener(e -> { abaInterno = false; carregarServicos(); btnAbaInternos.repaint(); btnAbaExternos.repaint(); });
+        btnAbaInternos.addActionListener(e -> { abaInterno = true;  if (br.com.picarauto.util.ContextoAplicacao.isReady()) carregarServicos(); btnAbaInternos.repaint(); btnAbaExternos.repaint(); });
+        btnAbaExternos.addActionListener(e -> { abaInterno = false; if (br.com.picarauto.util.ContextoAplicacao.isReady()) carregarServicos(); btnAbaInternos.repaint(); btnAbaExternos.repaint(); });
         abas.add(btnAbaInternos); abas.add(btnAbaExternos);
 
         txtBusca = new JTextField();
