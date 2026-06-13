@@ -2,6 +2,7 @@ package br.com.picarauto.view;
 
 /**
  * Lista e cadastro de fornecedores — integrado ao backend.
+ * Máscaras em tempo real: CNPJ (00.000.000/0000-00) e telefone ((00) 00000-0000).
  *
  * @author Cassiano
  */
@@ -13,7 +14,6 @@ import java.awt.geom.RoundRectangle2D;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.util.List;
-
 import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.FornecedorController;
 import br.com.picarauto.model.FornecedorModel;
@@ -50,6 +50,7 @@ public class PanelCadastroFornecedor extends JPanel {
         add(inner, BorderLayout.CENTER);
     }
 
+    // ── Topbar ────────────────────────────────────────────────────────────────
     private JPanel criarTopbar() {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setBackground(MainFrame.COR_NAVY);
@@ -70,6 +71,7 @@ public class PanelCadastroFornecedor extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2.setColor(MainFrame.COR_NAVY);
                 g2.fillOval(0, 0, 30, 30);
                 String car = new String(Character.toChars(0x1F697));
@@ -88,6 +90,7 @@ public class PanelCadastroFornecedor extends JPanel {
         return p;
     }
 
+    // ── Conteúdo ──────────────────────────────────────────────────────────────
     private JPanel criarConteudo() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(MainFrame.COR_CREAM);
@@ -109,10 +112,14 @@ public class PanelCadastroFornecedor extends JPanel {
         txtBusca.setForeground(Color.GRAY);
         txtBusca.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override public void focusGained(java.awt.event.FocusEvent e) {
-                if ("Pesquisar...".equals(txtBusca.getText())) { txtBusca.setText(""); txtBusca.setForeground(new Color(0x333333)); }
+                if ("Pesquisar...".equals(txtBusca.getText())) {
+                    txtBusca.setText(""); txtBusca.setForeground(new Color(0x333333));
+                }
             }
             @Override public void focusLost(java.awt.event.FocusEvent e) {
-                if (txtBusca.getText().isEmpty()) { txtBusca.setText("Pesquisar..."); txtBusca.setForeground(Color.GRAY); }
+                if (txtBusca.getText().isEmpty()) {
+                    txtBusca.setText("Pesquisar..."); txtBusca.setForeground(Color.GRAY);
+                }
             }
         });
         txtBusca.getDocument().addDocumentListener(new DocumentListener() {
@@ -154,11 +161,14 @@ public class PanelCadastroFornecedor extends JPanel {
         String txt = txtBusca.getText().trim();
         boolean hasText = !txt.isEmpty() && !"Pesquisar...".equals(txt);
         sorter.setSortKeys(java.util.Collections.emptyList());
-        if ("A-Z (Nome)".equals(sel)) sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
-        else if ("Z-A (Nome)".equals(sel)) sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
+        if ("A-Z (Nome)".equals(sel))
+            sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
+        else if ("Z-A (Nome)".equals(sel))
+            sorter.setSortKeys(java.util.Arrays.asList(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
         sorter.setRowFilter(hasText ? RowFilter.regexFilter("(?i)" + txt) : null);
     }
 
+    // ── Tabela ────────────────────────────────────────────────────────────────
     private JScrollPane criarScrollTabela() {
         modelo = new DefaultTableModel(COLUNAS, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -204,6 +214,7 @@ public class PanelCadastroFornecedor extends JPanel {
         return scroll;
     }
 
+    // ── Carrega do banco ───────────────────────────────────────────────────────
     public void carregarFornecedores() {
         modelo.setRowCount(0);
         try {
@@ -212,24 +223,26 @@ public class PanelCadastroFornecedor extends JPanel {
             for (FornecedorModel f : fornecedoresAtuais) {
                 modelo.addRow(new Object[]{
                     f.getNomeFornecedor(),
-                    f.getCnpj() != null ? f.getCnpj() : "-",
-                    f.getTelefone(),
+                    f.getCnpj() != null ? formatarCnpj(f.getCnpj()) : "-",
+                    formatarTelefone(f.getTelefone()),
                     f.getEmail(),
                     ""
                 });
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar fornecedores: " + ex.getMessage(),
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar fornecedores: " + ex.getMessage(),
                 "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    // ── Diálogo cadastro / edição ─────────────────────────────────────────────
     private void abrirFormFornecedor(FornecedorModel existente) {
         boolean editando = existente != null;
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
             editando ? "Editar Fornecedor" : "Novo Fornecedor",
             java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(440, 380);
+        dialog.setSize(460, 360);
         dialog.setLocationRelativeTo(this);
 
         JTextField txtRazao    = criarCampo();
@@ -237,12 +250,20 @@ public class PanelCadastroFornecedor extends JPanel {
         JTextField txtTelefone = criarCampo();
         JTextField txtEmail    = criarCampo();
 
+        // Aplica máscaras em tempo real
+        aplicarMascaraCnpj(txtCNPJ);
+        aplicarMascaraTelefone(txtTelefone);
+
+        // Preenche os campos se for edição
         if (editando) {
             txtRazao.setText(existente.getNomeFornecedor());
-            txtCNPJ.setText(existente.getCnpj() != null ? existente.getCnpj() : "");
+            // Exibe CNPJ já formatado; o campo é somente leitura
+            if (existente.getCnpj() != null && !existente.getCnpj().isBlank())
+                txtCNPJ.setText(formatarCnpj(existente.getCnpj()));
             txtCNPJ.setEditable(false);
             txtCNPJ.setBackground(new Color(0xEEEEEE));
-            txtTelefone.setText(existente.getTelefone());
+            // Exibe telefone formatado
+            txtTelefone.setText(formatarTelefone(existente.getTelefone()));
             txtEmail.setText(existente.getEmail());
         }
 
@@ -250,10 +271,10 @@ public class PanelCadastroFornecedor extends JPanel {
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
         grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
-        grid.add(criarGrupo("Razão Social *", txtRazao));
-        grid.add(criarGrupo("CNPJ (só números)", txtCNPJ));
-        grid.add(criarGrupo("Telefone *", txtTelefone));
-        grid.add(criarGrupo("E-mail *", txtEmail));
+        grid.add(criarGrupo("Razão Social *",      txtRazao));
+        grid.add(criarGrupo("CNPJ",     txtCNPJ));
+        grid.add(criarGrupo("Telefone *",          txtTelefone));
+        grid.add(criarGrupo("E-mail *",            txtEmail));
 
         JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rodape.setOpaque(false);
@@ -272,7 +293,9 @@ public class PanelCadastroFornecedor extends JPanel {
                         dialog.dispose();
                         carregarFornecedores();
                     } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(dialog, "Erro ao excluir: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialog,
+                            "Erro ao excluir: " + ex.getMessage(),
+                            "Erro", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             });
@@ -285,12 +308,14 @@ public class PanelCadastroFornecedor extends JPanel {
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             String razao    = txtRazao.getText().trim();
+            // Remove máscara antes de enviar ao backend
             String cnpj     = txtCNPJ.getText().replaceAll("\\D", "").trim();
-            String telefone = txtTelefone.getText().trim();
+            String telefone = txtTelefone.getText().replaceAll("\\D", "").trim();
             String email    = txtEmail.getText().trim();
 
             if (razao.isEmpty() || telefone.isEmpty() || email.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Preencha todos os campos obrigatórios (*).",
+                JOptionPane.showMessageDialog(dialog,
+                    "Preencha todos os campos obrigatórios (*).",
                     "Atenção", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -300,18 +325,20 @@ public class PanelCadastroFornecedor extends JPanel {
                 FornecedorModel f = editando ? existente : new FornecedorModel();
                 f.setNomeFornecedor(razao);
                 if (!editando) f.setCnpj(cnpj.isEmpty() ? null : cnpj);
+                // Envia telefone só com dígitos; a validation do backend não formata telefone
+                // de fornecedor (sem helper de formatação lá), então guardamos o dígito puro
                 f.setTelefone(telefone);
                 f.setEmail(email);
-
                 if (editando) controller.update(f);
                 else          controller.insert(f);
-
                 dialog.dispose();
                 carregarFornecedores();
             } catch (FieldValidationException | RuleValidationException valEx) {
-                JOptionPane.showMessageDialog(dialog, valEx.getMessage(), "Erro de validação", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(dialog,
+                    valEx.getMessage(), "Erro de validação", JOptionPane.WARNING_MESSAGE);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(dialog, "Erro ao salvar: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog,
+                    "Erro ao salvar: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -330,6 +357,114 @@ public class PanelCadastroFornecedor extends JPanel {
         dialog.setVisible(true);
     }
 
+    // ── Máscaras em tempo real ────────────────────────────────────────────────
+
+    /**
+     * Máscara de CNPJ: 00.000.000/0000-00
+     * Aceita apenas dígitos e formata automaticamente.
+     */
+    private void aplicarMascaraCnpj(JTextField campo) {
+        campo.setDocument(new javax.swing.text.PlainDocument() {
+            @Override
+            public void insertString(int offs, String str, javax.swing.text.AttributeSet a)
+                    throws javax.swing.text.BadLocationException {
+                if (str == null) return;
+                String apenasDigitos = str.replaceAll("\\D", "");
+                String atual = getText(0, getLength()).replaceAll("\\D", "");
+                if (atual.length() >= 14) return;
+                int espaco = 14 - atual.length();
+                if (apenasDigitos.length() > espaco)
+                    apenasDigitos = apenasDigitos.substring(0, espaco);
+                if (!apenasDigitos.isEmpty())
+                    super.insertString(offs, apenasDigitos, a);
+            }
+        });
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+            private void formatar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    String raw = campo.getText().replaceAll("\\D", "");
+                    if (raw.length() > 14) raw = raw.substring(0, 14);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < raw.length(); i++) {
+                        if (i == 2 || i == 5) sb.append('.');
+                        if (i == 8) sb.append('/');
+                        if (i == 12) sb.append('-');
+                        sb.append(raw.charAt(i));
+                    }
+                    campo.setText(sb.toString());
+                    campo.setCaretPosition(campo.getText().length());
+                    atualizando = false;
+                });
+            }
+            @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void changedUpdate(DocumentEvent e) {}
+        });
+    }
+
+    /**
+     * Máscara de telefone: (00) 00000-0000 ou (00) 0000-0000
+     */
+    private void aplicarMascaraTelefone(JTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+            private void formatar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    String raw = campo.getText().replaceAll("\\D", "");
+                    if (raw.length() > 11) raw = raw.substring(0, 11);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < raw.length(); i++) {
+                        if (i == 0) sb.append('(');
+                        if (i == 2) sb.append(") ");
+                        boolean celular = raw.length() == 11;
+                        if ((celular && i == 7) || (!celular && i == 6)) sb.append('-');
+                        sb.append(raw.charAt(i));
+                    }
+                    campo.setText(sb.toString());
+                    campo.setCaretPosition(campo.getText().length());
+                    atualizando = false;
+                });
+            }
+            @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void changedUpdate(DocumentEvent e) {}
+        });
+    }
+
+    // ── Helpers de formatação para exibição na tabela e no form de edição ─────
+
+    /**
+     * Formata CNPJ com 14 dígitos: 00.000.000/0000-00
+     */
+    private String formatarCnpj(String cnpj) {
+        if (cnpj == null) return "";
+        String d = cnpj.replaceAll("\\D", "");
+        if (d.length() != 14) return cnpj;
+        return d.substring(0, 2) + "." + d.substring(2, 5) + "." + d.substring(5, 8)
+             + "/" + d.substring(8, 12) + "-" + d.substring(12);
+    }
+
+    /**
+     * Formata telefone com DDD.
+     * 11 dígitos (celular): (00) 00000-0000
+     * 10 dígitos (fixo):    (00) 0000-0000
+     */
+    private String formatarTelefone(String telefone) {
+        if (telefone == null) return "";
+        String d = telefone.replaceAll("\\D", "");
+        if (d.length() == 11)
+            return "(" + d.substring(0, 2) + ") " + d.substring(2, 7) + "-" + d.substring(7);
+        if (d.length() == 10)
+            return "(" + d.substring(0, 2) + ") " + d.substring(2, 6) + "-" + d.substring(6);
+        return telefone;
+    }
+
+    // ── Helpers de UI ─────────────────────────────────────────────────────────
     private JPanel criarGrupo(String label, JTextField campo) {
         JPanel g = new JPanel();
         g.setOpaque(false);
@@ -340,7 +475,9 @@ public class PanelCadastroFornecedor extends JPanel {
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         campo.setAlignmentX(Component.LEFT_ALIGNMENT);
         campo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-        g.add(lbl); g.add(Box.createVerticalStrut(4)); g.add(campo);
+        g.add(lbl);
+        g.add(Box.createVerticalStrut(4));
+        g.add(campo);
         return g;
     }
 
@@ -349,7 +486,8 @@ public class PanelCadastroFornecedor extends JPanel {
         f.setFont(MainFrame.FONT_NORMAL);
         f.setBackground(Color.WHITE);
         f.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1), new EmptyBorder(6, 10, 6, 10)));
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
+            new EmptyBorder(6, 10, 6, 10)));
         f.setPreferredSize(new Dimension(0, 34));
         return f;
     }
@@ -364,7 +502,8 @@ public class PanelCadastroFornecedor extends JPanel {
                 g2.setColor(Color.WHITE);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
@@ -384,7 +523,8 @@ public class PanelCadastroFornecedor extends JPanel {
                 g2.setColor(MainFrame.COR_NAVY);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
@@ -404,7 +544,8 @@ public class PanelCadastroFornecedor extends JPanel {
                 g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
                 g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
@@ -416,7 +557,8 @@ public class PanelCadastroFornecedor extends JPanel {
     }
 
     static class EditarRenderer extends DefaultTableCellRenderer {
-        @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+        @Override public Component getTableCellRendererComponent(
+                JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             JLabel lbl = new JLabel("Editar", SwingConstants.CENTER);
             lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
             lbl.setForeground(MainFrame.COR_NAVY);
