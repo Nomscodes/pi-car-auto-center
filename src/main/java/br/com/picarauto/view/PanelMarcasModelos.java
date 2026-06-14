@@ -3,15 +3,40 @@ package br.com.picarauto.view;
 /**
  * Gerenciamento de marcas e modelos — abas Marcas / Modelos com busca e tabela.
  *
- * @author Cassiano
+ * ALTERAÇÕES em relação à versão original (Cassiano):
+ *  - Removidos arrays estáticos DADOS_MARCAS / DADOS_MODELOS
+ *  - Integração real com MarcaController e ModeloController via ContextoAplicacao
+ *  - recarregarTabela() carrega do banco
+ *  - Combos de marca populados do banco
+ *  - Validação de campos vazios e de ano nos formulários
+ *  - Mouse listener na coluna "Editar" abre diálogo de edição/exclusão
+ *
+ * @author Cassiano 
  */
+
+// [NOVO] imports do backend
+import br.com.picarauto.controller.MarcaController;
+import br.com.picarauto.controller.ModeloController;
+import br.com.picarauto.model.MarcaModel;
+import br.com.picarauto.model.ModeloModel;
+import br.com.picarauto.model.exception.FieldValidationException;
+import br.com.picarauto.model.exception.RuleValidationException;
+import br.com.picarauto.util.ContextoAplicacao;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.*;
-import java.awt.*;
-import java.awt.geom.RoundRectangle2D;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.table.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class PanelMarcasModelos extends JPanel {
 
@@ -19,38 +44,24 @@ public class PanelMarcasModelos extends JPanel {
 
     private boolean abaMarcas = true;
     private JTextField txtBusca;
-    private JTable     tabela;
+    private JTable tabela;
     private DefaultTableModel modelo;
     private TableRowSorter<DefaultTableModel> sorter;
     private JComboBox<String> cmbOrdenar;
     private JButton btnAbaMarcas;
     private JButton btnAbaModelos;
 
+    // [NOVO] Listas paralelas às linhas da tabela — permitem mapear linha → entidade
+    private List<MarcaModel>  listaMarcas  = new ArrayList<>();
+    private List<ModeloModel> listaModelos = new ArrayList<>();
+
+    // [MANTIDO] cabeçalhos das colunas — igual ao original
     private static final String[] COLUNAS_MARCAS  = {"Marca", "Modelos cadastrados", ""};
     private static final String[] COLUNAS_MODELOS = {"Modelo", "Marca", "Ano", ""};
 
-    private static final Object[][] DADOS_MARCAS = {
-        {"Chevrolet",  "Onix, Tracker, Cruze, S10, Spin"},
-        {"Volkswagen", "Gol, Polo, T-Cross, Virtus, Nivus"},
-        {"Fiat",       "Argo, Pulse, Cronos, Toro, Strada"},
-        {"Ford",       "Ka, EcoSport, Ranger, Territory"},
-        {"Toyota",     "Corolla, Hilux, SW4, Yaris, RAV4"},
-        {"Honda",      "Civic, HR-V, City, Fit, CR-V"},
-        {"Hyundai",    "HB20, Creta, Tucson, Santa Fe"},
-        {"Renault",    "Kwid, Sandero, Logan, Duster"},
-    };
+    // [REMOVIDO] arrays DADOS_MARCAS e DADOS_MODELOS — substituídos por consulta ao banco
 
-    private static final Object[][] DADOS_MODELOS = {
-        {"Onix",    "Chevrolet",  "2017–2026"},
-        {"Tracker", "Chevrolet",  "2020–2026"},
-        {"Gol",     "Volkswagen", "1980–2026"},
-        {"Polo",    "Volkswagen", "2017–2026"},
-        {"Argo",    "Fiat",       "2017–2026"},
-        {"HB20",    "Hyundai",    "2012–2026"},
-        {"Creta",   "Hyundai",    "2016–2026"},
-        {"Kwid",    "Renault",    "2016–2026"},
-    };
-
+    // ── Construtor ────────────────────────────────────────────────────────────
     public PanelMarcasModelos(MainFrame frame) {
         this.frame = frame;
         setBackground(MainFrame.COR_CREAM);
@@ -58,6 +69,16 @@ public class PanelMarcasModelos extends JPanel {
         construirUI();
     }
 
+    // [NOVO] Obtém controllers do contexto Spring — mesmo padrão dos outros painéis
+    private MarcaController getMarcaController() {
+        return ContextoAplicacao.getBean(MarcaController.class);
+    }
+
+    private ModeloController getModeloController() {
+        return ContextoAplicacao.getBean(ModeloController.class);
+    }
+
+    // ── Construção da UI — sem alterações ─────────────────────────────────────
     private void construirUI() {
         add(criarTopbar(), BorderLayout.NORTH);
 
@@ -69,7 +90,7 @@ public class PanelMarcasModelos extends JPanel {
         add(inner, BorderLayout.CENTER);
     }
 
-    // ── Topbar ────────────────────────────────────────────────────────────────
+    // ── Topbar — sem alterações ───────────────────────────────────────────────
     private JPanel criarTopbar() {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setBackground(MainFrame.COR_NAVY);
@@ -111,17 +132,17 @@ public class PanelMarcasModelos extends JPanel {
         return p;
     }
 
-    // ── Conteúdo ──────────────────────────────────────────────────────────────
+    // ── Conteúdo — sem alterações ─────────────────────────────────────────────
     private JPanel criarConteudo() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(MainFrame.COR_CREAM);
         p.setBorder(new EmptyBorder(16, 16, 16, 16));
-
         p.add(criarBarraFerr(), BorderLayout.NORTH);
         p.add(criarScrollTabela(), BorderLayout.CENTER);
         return p;
     }
 
+    // ── Barra de ferramentas — sem alterações de UI ───────────────────────────
     private JPanel criarBarraFerr() {
         JPanel abas = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         abas.setOpaque(false);
@@ -129,18 +150,19 @@ public class PanelMarcasModelos extends JPanel {
         btnAbaMarcas  = criarBotaoAba("Marcas");
         btnAbaModelos = criarBotaoAba("Modelos");
         btnAbaMarcas.addActionListener(e -> {
-            abaMarcas = true;  recarregarTabela();
+            abaMarcas = true;
+            recarregarTabela();
             if (cmbOrdenar != null) cmbOrdenar.setSelectedIndex(0);
             btnAbaMarcas.repaint(); btnAbaModelos.repaint();
         });
         btnAbaModelos.addActionListener(e -> {
-            abaMarcas = false; recarregarTabela();
+            abaMarcas = false;
+            recarregarTabela();
             if (cmbOrdenar != null) cmbOrdenar.setSelectedIndex(0);
             btnAbaMarcas.repaint(); btnAbaModelos.repaint();
         });
-        JButton[] btns = { btnAbaMarcas, btnAbaModelos };
-        abas.add(btns[0]);
-        abas.add(btns[1]);
+        abas.add(btnAbaMarcas);
+        abas.add(btnAbaModelos);
 
         txtBusca = new JTextField();
         txtBusca.setPreferredSize(new Dimension(0, 36));
@@ -198,7 +220,7 @@ public class PanelMarcasModelos extends JPanel {
         JPanel meio = new JPanel(new BorderLayout(0, 6));
         meio.setOpaque(false);
         meio.add(painelBusca, BorderLayout.NORTH);
-        meio.add(filtroRow, BorderLayout.SOUTH);
+        meio.add(filtroRow,   BorderLayout.SOUTH);
 
         JPanel barra = new JPanel(new BorderLayout(0, 10));
         barra.setOpaque(false);
@@ -208,6 +230,7 @@ public class PanelMarcasModelos extends JPanel {
         return barra;
     }
 
+    // ── Botão aba — sem alterações ────────────────────────────────────────────
     private JButton criarBotaoAba(String texto) {
         JButton btn = new JButton(texto) {
             @Override protected void paintComponent(Graphics g) {
@@ -237,6 +260,7 @@ public class PanelMarcasModelos extends JPanel {
         return btn;
     }
 
+    // ── Filtros — sem alterações ──────────────────────────────────────────────
     private void aplicarFiltros() {
         if (sorter == null) return;
         String sel = cmbOrdenar == null ? "Padrão" : (String) cmbOrdenar.getSelectedItem();
@@ -253,6 +277,7 @@ public class PanelMarcasModelos extends JPanel {
         sorter.setRowFilter(hasText ? RowFilter.regexFilter("(?i)" + txt) : null);
     }
 
+    // ── Tabela — [ALTERADO] adicionado mouse listener na col "Editar" ─────────
     private JScrollPane criarScrollTabela() {
         String[] cols = abaMarcas ? COLUNAS_MARCAS : COLUNAS_MODELOS;
         modelo = new DefaultTableModel(cols, 0) {
@@ -261,7 +286,7 @@ public class PanelMarcasModelos extends JPanel {
         recarregarTabela();
 
         tabela = new JTable(modelo);
-        sorter = new TableRowSorter<>(modelo);
+        sorter  = new TableRowSorter<>(modelo);
         tabela.setRowSorter(sorter);
         tabela.setFont(MainFrame.FONT_NORMAL);
         tabela.setRowHeight(32);
@@ -284,20 +309,71 @@ public class PanelMarcasModelos extends JPanel {
         tabela.getColumnModel().getColumn(lastCol).setPreferredWidth(60);
         tabela.getColumnModel().getColumn(lastCol).setCellRenderer(new EditarRenderer());
 
+        // [NOVO] Clique na coluna "Editar" abre diálogo de edição/exclusão
+        tabela.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                int viewRow = tabela.rowAtPoint(e.getPoint());
+                int viewCol = tabela.columnAtPoint(e.getPoint());
+                if (viewRow < 0 || viewCol != tabela.getColumnCount() - 1) return;
+
+                int modelRow = tabela.convertRowIndexToModel(viewRow);
+
+                if (abaMarcas && modelRow < listaMarcas.size())
+                    abrirDialogEditarMarca(listaMarcas.get(modelRow));
+                else if (!abaMarcas && modelRow < listaModelos.size())
+                    abrirDialogEditarModelo(listaModelos.get(modelRow));
+            }
+        });
+
         JScrollPane scroll = new JScrollPane(tabela);
         scroll.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1));
         scroll.getViewport().setBackground(Color.WHITE);
         return scroll;
     }
 
+    // ── [NOVO] Carregamento real do banco ─────────────────────────────────────
     private void recarregarTabela() {
         if (modelo == null) return;
         modelo.setRowCount(0);
-        Object[][] dados = abaMarcas ? DADOS_MARCAS : DADOS_MODELOS;
-        for (Object[] row : dados) modelo.addRow(row);
+        listaMarcas.clear();
+        listaModelos.clear();
+
+        try {
+            if (abaMarcas) {
+                listaMarcas = new ArrayList<>(getMarcaController().findAll());
+                ModeloController mc = getModeloController();
+                for (MarcaModel m : listaMarcas) {
+                    List<ModeloModel> modsPorMarca = mc.findAllByIdMarca(m.getId());
+                    String nomesModelos = modsPorMarca.stream()
+                            .map(ModeloModel::getNomeModelo)
+                            .collect(Collectors.joining(", "));
+                    modelo.addRow(new Object[]{
+                        m.getNome(),
+                        nomesModelos.isEmpty() ? "—" : nomesModelos,
+                        ""
+                    });
+                }
+            } else {
+                listaModelos = new ArrayList<>(getModeloController().findAll());
+                Map<Long, String> nomesMarca = getMarcaController().findAll().stream()
+                        .collect(Collectors.toMap(MarcaModel::getId, MarcaModel::getNome));
+                for (ModeloModel m : listaModelos) {
+                    modelo.addRow(new Object[]{
+                        m.getNomeModelo(),
+                        nomesMarca.getOrDefault(m.getIdMarca(), "—"),
+                        m.getAnoModelo(),
+                        ""
+                    });
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar dados do banco:\n" + e.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
-    // ── Diálogos de cadastro ──────────────────────────────────────────────────
+    // ── Nova Marca — [RESTAURADO] campos Nome + Sigla como no original ────────
     private void abrirFormNovaMarca() {
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
             "Nova Marca", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
@@ -314,26 +390,45 @@ public class PanelMarcasModelos extends JPanel {
         grid.add(criarGrupo("Nome da marca", txtNome));
         grid.add(criarGrupo("Sigla (ex.: GM)", txtSigla));
 
-        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        rodape.setOpaque(false);
-        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             String nome = txtNome.getText().trim();
-            if (!nome.isEmpty()) {
+
+            if (nome.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog,
+                    "O nome da marca é obrigatório.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                txtNome.requestFocus();
+                return;
+            }
+
+            try {
+                MarcaModel novaMarca = new MarcaModel();
+                novaMarca.setNome(nome);
+                getMarcaController().insert(novaMarca);
+
                 abaMarcas = true;
                 recarregarTabela();
                 btnAbaMarcas.repaint();
                 btnAbaModelos.repaint();
-                modelo.addRow(new Object[]{nome, "—"});
+                dialog.dispose();
+
+            } catch (FieldValidationException | RuleValidationException ex) {
+                JOptionPane.showMessageDialog(dialog, ex.getMessage(),
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Erro ao salvar marca:\n" + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
             }
-            dialog.dispose();
         });
 
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rodape.setOpaque(false);
+        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
         rodape.add(btnCanc);
         rodape.add(btnSalv);
 
@@ -349,36 +444,61 @@ public class PanelMarcasModelos extends JPanel {
         dialog.setVisible(true);
     }
 
+    // ── [ALTERADO] Novo Modelo — combo do banco + validações + salva no banco ─
     private void abrirFormNovoModelo() {
+
+        List<MarcaModel> marcasDispBD;
+        try {
+            marcasDispBD = getMarcaController().findAll();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar marcas:\n" + e.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (marcasDispBD.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "Cadastre ao menos uma marca antes de adicionar um modelo.",
+                "Atenção", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
             "Novo Modelo", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setSize(440, 280);
         dialog.setLocationRelativeTo(this);
 
-        // Populate marca combo from static data
-        String[] marcasDisp = new String[DADOS_MARCAS.length];
-        for (int i = 0; i < DADOS_MARCAS.length; i++)
-            marcasDisp[i] = (String) DADOS_MARCAS[i][0];
+        final List<MarcaModel> marcasRef = marcasDispBD;
 
-        JComboBox<String> cmbMarca = new JComboBox<>(marcasDisp);
+        String[] nomesMarcas = marcasRef.stream()
+                .map(MarcaModel::getNome)
+                .toArray(String[]::new);
+
+        JComboBox<String> cmbMarca = new JComboBox<>(nomesMarcas);
         cmbMarca.setFont(MainFrame.FONT_NORMAL);
         cmbMarca.setBackground(Color.WHITE);
         cmbMarca.setPreferredSize(new Dimension(0, 34));
         cmbMarca.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
 
-        // Pre-select brand from selected row when on Marcas tab
         if (abaMarcas && tabela.getSelectedRow() >= 0) {
             int modelRow = tabela.convertRowIndexToModel(tabela.getSelectedRow());
-            cmbMarca.setSelectedItem(modelo.getValueAt(modelRow, 0));
+            if (modelRow < listaMarcas.size()) {
+                String nomeSel = listaMarcas.get(modelRow).getNome();
+                cmbMarca.setSelectedItem(nomeSel);
+            }
         }
 
         JTextField txtNome = criarCampo();
-        JTextField txtAno  = criarCampo();
+
+        JTextField txtAno = criarCampo();
+        int anoMax = LocalDate.now().getYear() + 1;
+        txtAno.setToolTipText("Entre 1900 e " + anoMax);
 
         JPanel grupoMarca = new JPanel();
         grupoMarca.setOpaque(false);
         grupoMarca.setLayout(new BoxLayout(grupoMarca, BoxLayout.Y_AXIS));
-        JLabel lblMarca = new JLabel("Marca");
+        JLabel lblMarca = new JLabel("Marca *");
         lblMarca.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblMarca.setForeground(new Color(0x444444));
         lblMarca.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -391,37 +511,88 @@ public class PanelMarcasModelos extends JPanel {
         gridTop.setOpaque(false);
         gridTop.setAlignmentX(Component.LEFT_ALIGNMENT);
         gridTop.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        gridTop.add(criarGrupo("Nome do modelo", txtNome));
+        gridTop.add(criarGrupo("Nome do modelo *", txtNome));
         gridTop.add(grupoMarca);
 
         JPanel gridBot = new JPanel(new GridLayout(1, 2, 14, 0));
         gridBot.setOpaque(false);
         gridBot.setAlignmentX(Component.LEFT_ALIGNMENT);
         gridBot.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        gridBot.add(criarGrupo("Ano (ex.: 2020–2026)", txtAno));
+        gridBot.add(criarGrupo("Ano do modelo * (ex: " + anoMax + ")", txtAno));
         gridBot.add(new JPanel() {{ setOpaque(false); }});
-
-        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        rodape.setOpaque(false);
-        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
-            String nome = txtNome.getText().trim();
-            if (!nome.isEmpty()) {
-                String marca = (String) cmbMarca.getSelectedItem();
+            String nome   = txtNome.getText().trim();
+            String anoTxt = txtAno.getText().trim();
+
+            if (nome.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog,
+                    "O nome do modelo é obrigatório.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                txtNome.requestFocus();
+                return;
+            }
+            if (anoTxt.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog,
+                    "O ano do modelo é obrigatório.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                txtAno.requestFocus();
+                return;
+            }
+
+            int anoValor;
+            try {
+                anoValor = Integer.parseInt(anoTxt);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "O ano deve conter apenas números inteiros (ex: 2025).",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                txtAno.requestFocus();
+                return;
+            }
+
+            if (anoValor < 1900 || anoValor > anoMax) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Ano inválido. Informe um valor entre 1900 e " + anoMax + ".",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                txtAno.requestFocus();
+                return;
+            }
+
+            try {
+                int idxMarca = cmbMarca.getSelectedIndex();
+                MarcaModel marcaSel = marcasRef.get(idxMarca);
+
+                ModeloModel novoModelo = new ModeloModel();
+                novoModelo.setNomeModelo(nome);
+                novoModelo.setAnoModelo(anoValor);
+                novoModelo.setIdMarca(marcaSel.getId());
+
+                getModeloController().insert(novoModelo);
+
                 abaMarcas = false;
                 recarregarTabela();
                 btnAbaMarcas.repaint();
                 btnAbaModelos.repaint();
-                modelo.addRow(new Object[]{nome, marca != null ? marca : "", txtAno.getText().trim()});
+                dialog.dispose();
+
+            } catch (FieldValidationException | RuleValidationException ex) {
+                JOptionPane.showMessageDialog(dialog, ex.getMessage(),
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Erro ao salvar modelo:\n" + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
             }
-            dialog.dispose();
         });
 
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rodape.setOpaque(false);
+        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
         rodape.add(btnCanc);
         rodape.add(btnSalv);
 
@@ -439,7 +610,257 @@ public class PanelMarcasModelos extends JPanel {
         dialog.setVisible(true);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── [NOVO] Editar / Excluir Marca ─────────────────────────────────────────
+    private void abrirDialogEditarMarca(MarcaModel marcaAtual) {
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+            "Editar Marca", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(420, 230);
+        dialog.setLocationRelativeTo(this);
+
+        JTextField txtNome = criarCampo();
+        txtNome.setText(marcaAtual.getNome());
+
+        JPanel grid = new JPanel(new GridLayout(1, 1, 14, 0));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        grid.add(criarGrupo("Nome da marca *", txtNome));
+
+        JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
+        btnExcluir.setForeground(new Color(0xCC3333));
+        btnExcluir.addActionListener(e -> {
+            int conf = JOptionPane.showConfirmDialog(dialog,
+                "Deseja excluir \"" + marcaAtual.getNome() + "\"?\nO registro será desativado.",
+                "Confirmar exclusão", JOptionPane.YES_NO_OPTION);
+            if (conf == JOptionPane.YES_OPTION) {
+                try {
+                    getMarcaController().delete(marcaAtual.getId());
+                    recarregarTabela();
+                    dialog.dispose();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Erro ao excluir:\n" + ex.getMessage(),
+                        "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
+        btnCanc.addActionListener(e -> dialog.dispose());
+
+        JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
+        btnSalv.addActionListener(e -> {
+            String nome = txtNome.getText().trim();
+            if (nome.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog,
+                    "O nome da marca é obrigatório.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                txtNome.requestFocus();
+                return;
+            }
+            try {
+                marcaAtual.setNome(nome);
+                getMarcaController().update(marcaAtual);
+                recarregarTabela();
+                dialog.dispose();
+            } catch (FieldValidationException | RuleValidationException ex) {
+                JOptionPane.showMessageDialog(dialog, ex.getMessage(),
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Erro ao atualizar:\n" + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rodape.setOpaque(false);
+        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rodape.add(btnExcluir);
+        rodape.add(btnCanc);
+        rodape.add(btnSalv);
+
+        JPanel form = new JPanel();
+        form.setBackground(MainFrame.COR_CREAM);
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBorder(new EmptyBorder(20, 24, 20, 24));
+        form.add(grid);
+        form.add(Box.createVerticalStrut(14));
+        form.add(rodape);
+
+        dialog.add(form);
+        dialog.setVisible(true);
+    }
+
+    // ── [NOVO] Editar / Excluir Modelo ────────────────────────────────────────
+    private void abrirDialogEditarModelo(ModeloModel modeloAtual) {
+        List<MarcaModel> marcasDispBD;
+        try {
+            marcasDispBD = getMarcaController().findAll();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar marcas:\n" + e.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+            "Editar Modelo", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(440, 300);
+        dialog.setLocationRelativeTo(this);
+
+        final List<MarcaModel> marcasRef = marcasDispBD;
+        String[] nomesMarcas = marcasRef.stream().map(MarcaModel::getNome).toArray(String[]::new);
+
+        JComboBox<String> cmbMarca = new JComboBox<>(nomesMarcas);
+        cmbMarca.setFont(MainFrame.FONT_NORMAL);
+        cmbMarca.setBackground(Color.WHITE);
+        cmbMarca.setPreferredSize(new Dimension(0, 34));
+        cmbMarca.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+
+        for (int i = 0; i < marcasRef.size(); i++) {
+            if (marcasRef.get(i).getId().equals(modeloAtual.getIdMarca())) {
+                cmbMarca.setSelectedIndex(i);
+                break;
+            }
+        }
+
+        JTextField txtNome = criarCampo();
+        txtNome.setText(modeloAtual.getNomeModelo());
+
+        int anoMax = LocalDate.now().getYear() + 1;
+        JTextField txtAno = criarCampo();
+        txtAno.setText(modeloAtual.getAnoModelo() != null
+            ? String.valueOf(modeloAtual.getAnoModelo()) : "");
+        txtAno.setToolTipText("Entre 1900 e " + anoMax);
+
+        JPanel grupoMarca = new JPanel();
+        grupoMarca.setOpaque(false);
+        grupoMarca.setLayout(new BoxLayout(grupoMarca, BoxLayout.Y_AXIS));
+        JLabel lblMarca = new JLabel("Marca *");
+        lblMarca.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblMarca.setForeground(new Color(0x444444));
+        lblMarca.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cmbMarca.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grupoMarca.add(lblMarca);
+        grupoMarca.add(Box.createVerticalStrut(4));
+        grupoMarca.add(cmbMarca);
+
+        JPanel gridTop = new JPanel(new GridLayout(1, 2, 14, 0));
+        gridTop.setOpaque(false);
+        gridTop.setAlignmentX(Component.LEFT_ALIGNMENT);
+        gridTop.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        gridTop.add(criarGrupo("Nome do modelo *", txtNome));
+        gridTop.add(grupoMarca);
+
+        JPanel gridBot = new JPanel(new GridLayout(1, 2, 14, 0));
+        gridBot.setOpaque(false);
+        gridBot.setAlignmentX(Component.LEFT_ALIGNMENT);
+        gridBot.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        gridBot.add(criarGrupo("Ano do modelo * (ex: " + anoMax + ")", txtAno));
+        gridBot.add(new JPanel() {{ setOpaque(false); }});
+
+        JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
+        btnExcluir.setForeground(new Color(0xCC3333));
+        btnExcluir.addActionListener(e -> {
+            int conf = JOptionPane.showConfirmDialog(dialog,
+                "Deseja excluir \"" + modeloAtual.getNomeModelo() + "\"?\nO registro será desativado.",
+                "Confirmar exclusão", JOptionPane.YES_NO_OPTION);
+            if (conf == JOptionPane.YES_OPTION) {
+                try {
+                    getModeloController().delete(modeloAtual.getId());
+                    recarregarTabela();
+                    dialog.dispose();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Erro ao excluir:\n" + ex.getMessage(),
+                        "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
+        btnCanc.addActionListener(e -> dialog.dispose());
+
+        JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
+        btnSalv.addActionListener(e -> {
+            String nome   = txtNome.getText().trim();
+            String anoTxt = txtAno.getText().trim();
+
+            if (nome.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog,
+                    "O nome do modelo é obrigatório.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                txtNome.requestFocus();
+                return;
+            }
+            if (anoTxt.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog,
+                    "O ano do modelo é obrigatório.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                txtAno.requestFocus();
+                return;
+            }
+            int anoValor;
+            try {
+                anoValor = Integer.parseInt(anoTxt);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "O ano deve conter apenas números inteiros.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                txtAno.requestFocus();
+                return;
+            }
+            if (anoValor < 1900 || anoValor > anoMax) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Ano inválido. Informe um valor entre 1900 e " + anoMax + ".",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                txtAno.requestFocus();
+                return;
+            }
+
+            try {
+                int idxMarca = cmbMarca.getSelectedIndex();
+                modeloAtual.setNomeModelo(nome);
+                modeloAtual.setAnoModelo(anoValor);
+                modeloAtual.setIdMarca(marcasRef.get(idxMarca).getId());
+
+                getModeloController().update(modeloAtual);
+                recarregarTabela();
+                dialog.dispose();
+
+            } catch (FieldValidationException | RuleValidationException ex) {
+                JOptionPane.showMessageDialog(dialog, ex.getMessage(),
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Erro ao atualizar:\n" + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rodape.setOpaque(false);
+        rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rodape.add(btnExcluir);
+        rodape.add(btnCanc);
+        rodape.add(btnSalv);
+
+        JPanel form = new JPanel();
+        form.setBackground(MainFrame.COR_CREAM);
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBorder(new EmptyBorder(20, 24, 20, 24));
+        form.add(gridTop);
+        form.add(Box.createVerticalStrut(10));
+        form.add(gridBot);
+        form.add(Box.createVerticalStrut(14));
+        form.add(rodape);
+
+        dialog.add(form);
+        dialog.setVisible(true);
+    }
+
+    // ── Helpers de UI — sem alterações ───────────────────────────────────────
     private JPanel criarGrupo(String label, JTextField campo) {
         JPanel g = new JPanel();
         g.setOpaque(false);
@@ -496,9 +917,9 @@ public class PanelMarcasModelos extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_NAVY);
+                g2.setColor(getForeground());
                 g2.setStroke(new java.awt.BasicStroke(1.5f));
-                g2.draw(new java.awt.geom.RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
+                g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
                 g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(getText(), (getWidth() - fm.stringWidth(getText())) / 2,
@@ -540,6 +961,7 @@ public class PanelMarcasModelos extends JPanel {
         return btn;
     }
 
+    // ── Renderer "Editar" — sem alterações ───────────────────────────────────
     static class EditarRenderer extends DefaultTableCellRenderer {
         @Override public Component getTableCellRendererComponent(
                 JTable t, Object v, boolean sel, boolean foc, int r, int c) {
