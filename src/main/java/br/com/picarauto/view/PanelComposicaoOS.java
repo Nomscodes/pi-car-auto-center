@@ -58,8 +58,8 @@ public class PanelComposicaoOS extends JPanel {
         {"Civic", "HR-V", "City", "Fit", "CR-V"},
     };
 
-    private JComboBox<String> cmbCliente, cmbColaborador, cmbMarca, cmbModelo, cmbStatus;
-    private JTextField        txtPlaca, txtData;
+    private JComboBox<String> cmbCliente, cmbColaborador, cmbMarca, cmbModelo, cmbStatus, cmbPlaca;
+    private JTextField        txtData;
     private DefaultTableModel modeloServicos, modeloPecas;
     private JLabel            lblTotal;
     private JTextArea         txtObs;
@@ -196,7 +196,8 @@ public class PanelComposicaoOS extends JPanel {
     // Limpa os campos do formulário para uma nova OS
     private void limparFormulario() {
         txtData.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        txtPlaca.setText("");
+        cmbPlaca.removeAllItems();
+        cmbPlaca.addItem("Selecione...");
         if (txtObs != null) txtObs.setText("");
         modeloServicos.setRowCount(0);
         modeloPecas.setRowCount(0);
@@ -222,7 +223,7 @@ public class PanelComposicaoOS extends JPanel {
             "ORCAMENTO", "EXECUCAO", "PAGAMENTO", "FINALIZADO"
         });
 
-        txtPlaca = criarCampo();
+        cmbPlaca = criarCombo(new String[]{"Selecione..."});
         txtData  = criarCampo();
         txtData.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
@@ -257,7 +258,7 @@ public class PanelComposicaoOS extends JPanel {
         row2.add(criarGrupoCombo("Modelo", cmbModelo));
 
         JPanel row3 = criarGridRow(3);
-        row3.add(criarGrupoCampo("Placa do veículo",  txtPlaca));
+        row3.add(criarGrupoCombo("Placa do veículo",  cmbPlaca));
         row3.add(criarGrupoCampo("Data Abertura",      txtData));
         row3.add(criarGrupoCombo("Status",             cmbStatus));
 
@@ -269,19 +270,19 @@ public class PanelComposicaoOS extends JPanel {
         return card;
     }
 
-    // Busca os veículos vinculados ao cliente selecionado e preenche o campo de placa
+    // Busca os veículos vinculados ao cliente selecionado e preenche o combo de placas
     private void carregarVeiculosDoCliente(Long idCliente) {
         try {
             VeiculoController vc = ContextoAplicacao.getBean(VeiculoController.class);
             veiculosDisponiveis = vc.findAll().stream()
-                .filter(v -> idCliente.equals(v.getIdCliente()))
+                .filter(v -> idCliente != null && idCliente.equals(v.getIdCliente()))
                 .toList();
-            // Se o cliente tiver apenas um veículo, preenche automaticamente
-            if (veiculosDisponiveis.size() == 1) {
-                txtPlaca.setText(veiculosDisponiveis.get(0).getPlaca());
-            } else {
-                txtPlaca.setText("");
-            }
+            cmbPlaca.removeAllItems();
+            cmbPlaca.addItem("Selecione...");
+            for (VeiculoModel v : veiculosDisponiveis)
+                cmbPlaca.addItem(v.getPlaca());
+            if (veiculosDisponiveis.size() == 1)
+                cmbPlaca.setSelectedIndex(1);
         } catch (Exception ex) {
             veiculosDisponiveis = new ArrayList<>();
         }
@@ -411,12 +412,12 @@ public class PanelComposicaoOS extends JPanel {
             }
             ClienteModel cliente = clientesDisponiveis.get(idxCliente - 1);
 
-            // Busca o veículo pela placa digitada — obrigatório para montar a OS
-            String placaDigitada = txtPlaca.getText().replace("-", "").toUpperCase().trim();
-            if (placaDigitada.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Informe a placa do veículo.", "Atenção", JOptionPane.WARNING_MESSAGE);
+            // Busca o veículo pela placa selecionada no combo
+            if (cmbPlaca.getSelectedIndex() <= 0) {
+                JOptionPane.showMessageDialog(this, "Selecione a placa do veículo.", "Atenção", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            String placaDigitada = cmbPlaca.getSelectedItem().toString().replace("-", "").toUpperCase().trim();
 
             VeiculoController vc = ContextoAplicacao.getBean(VeiculoController.class);
             List<VeiculoModel> todosVeiculos = vc.findAll();
