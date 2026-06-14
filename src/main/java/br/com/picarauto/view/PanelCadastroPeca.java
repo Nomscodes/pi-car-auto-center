@@ -44,7 +44,8 @@ public class PanelCadastroPeca extends JPanel {
     // Colunas: Código Nacional, Modelo, Marca, Ano Veículo, Preço, Garantia, Editar
     private static final String[] COLUNAS = {"Código", "Modelo", "Marca", "Ano Veículo", "Preço Unit.", "Garantia (m)", ""};
 
-    // NOVO: ano do primeiro veículo de fabricação em série (referência para validação de "anoVeiculo"/"anoModelo")
+    // Ano de criação do primeiro carro do mundo (Benz Patent-Motorwagen, 1886) — limite inferior
+    // para os campos "anoVeiculo" e "anoModelo". O limite superior é o ano atual.
     private static final int ANO_PRIMEIRO_VEICULO_FABRICADO = 1886;
 
     public PanelCadastroPeca(MainFrame frame) {
@@ -258,7 +259,7 @@ public class PanelCadastroPeca extends JPanel {
         JTextField txtAnoVeic   = criarCampoDigitos(4);   // ALTERADO: só dígitos, máx. 4 (Ano Veículo - AAAA)
         JTextField txtAnoMod    = criarCampoDigitos(4);   // ALTERADO: só dígitos, máx. 4 (Ano Modelo - AAAA)
         JTextField txtPreco     = criarCampoPreco();      // ALTERADO: máscara monetária R$ 0,00
-        JTextField txtGarantia  = criarCampo();
+        JTextField txtGarantia  = criarCampoDigitos(3);   // ALTERADO: só dígitos, máx. 3 (Garantia em meses)
 
         // Combo de fornecedor
         JComboBox<String> cmbFornecedor = new JComboBox<>();
@@ -369,21 +370,37 @@ public class PanelCadastroPeca extends JPanel {
                 int anoM     = Integer.parseInt(anoMStr);
                 // ALTERADO: preço agora é extraído do texto mascarado (R$ x.xxx,xx) em vez de Double.parseDouble direto
                 double preco = extrairValorPreco(txtPreco.getText());
-                int garant   = Integer.parseInt(txtGarantia.getText().trim());
 
-                // NOVO: ano do veículo não pode ser anterior ao ano do primeiro veículo fabricado
-                if (anoV < ANO_PRIMEIRO_VEICULO_FABRICADO) {
+                String garantStr = txtGarantia.getText().trim();
+                if (garantStr.isEmpty()) {
                     JOptionPane.showMessageDialog(dialog,
-                        "O ano do veículo não pode ser anterior a " + ANO_PRIMEIRO_VEICULO_FABRICADO
-                            + " (ano do primeiro veículo fabricado).",
+                        "Informe a garantia em meses (apenas números, 0 ou maior).",
+                        "Atenção", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                int garant = Integer.parseInt(garantStr);
+                if (garant < 0) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "A garantia não pode ser negativa. Informe um número de 0 ou maior.",
+                        "Atenção", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                int anoAtual = java.time.LocalDate.now().getYear();
+
+                // NOVO: ano do veículo deve estar entre a criação do primeiro carro do mundo e o ano atual
+                if (anoV < ANO_PRIMEIRO_VEICULO_FABRICADO || anoV > anoAtual) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "O ano do veículo deve estar entre " + ANO_PRIMEIRO_VEICULO_FABRICADO
+                            + " e " + anoAtual + ".",
                         "Atenção", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
                 // NOVO: mesma regra para o ano do modelo
-                if (anoM < ANO_PRIMEIRO_VEICULO_FABRICADO) {
+                if (anoM < ANO_PRIMEIRO_VEICULO_FABRICADO || anoM > anoAtual) {
                     JOptionPane.showMessageDialog(dialog,
-                        "O ano do modelo não pode ser anterior a " + ANO_PRIMEIRO_VEICULO_FABRICADO
-                            + " (ano do primeiro veículo fabricado).",
+                        "O ano do modelo deve estar entre " + ANO_PRIMEIRO_VEICULO_FABRICADO
+                            + " e " + anoAtual + ".",
                         "Atenção", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
