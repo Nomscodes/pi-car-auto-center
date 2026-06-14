@@ -253,6 +253,9 @@ public class PanelCadastroFornecedor extends JPanel {
         // Aplica máscaras em tempo real
         aplicarMascaraCnpj(txtCNPJ);
         aplicarMascaraTelefone(txtTelefone);
+        aplicarMascaraCnpj(txtCNPJ);
+        aplicarMascaraTelefone(txtTelefone);
+        aplicarCapitalizacaoNome(txtRazao);
 
         // Preenche os campos se for edição
         if (editando) {
@@ -433,6 +436,38 @@ public class PanelCadastroFornecedor extends JPanel {
             @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
             @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
             @Override public void changedUpdate(DocumentEvent e) {}
+        });
+    }
+    
+    // ── Capitalização da razão social ─────────────────────────────────────────
+    private void aplicarCapitalizacaoNome(JTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+
+            @Override public void insertUpdate(DocumentEvent e)  { capitalizar(); }
+            @Override public void removeUpdate(DocumentEvent e)  {}
+            @Override public void changedUpdate(DocumentEvent e) {}
+
+            private void capitalizar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        String texto = campo.getText();
+                        if (!texto.isEmpty()) {
+                            String capitalizado = Character.toUpperCase(texto.charAt(0))
+                                    + texto.substring(1);
+                            if (!capitalizado.equals(texto)) {
+                                int caret = campo.getCaretPosition();
+                                campo.setText(capitalizado);
+                                campo.setCaretPosition(Math.min(caret, capitalizado.length()));
+                            }
+                        }
+                    } finally {
+                        atualizando = false;
+                    }
+                });
+            }
         });
     }
 
