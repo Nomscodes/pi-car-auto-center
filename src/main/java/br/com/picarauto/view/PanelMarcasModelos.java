@@ -14,7 +14,6 @@ package br.com.picarauto.view;
  * @author Cassiano 
  */
 
-// [NOVO] imports do backend
 import br.com.picarauto.controller.MarcaController;
 import br.com.picarauto.controller.ModeloController;
 import br.com.picarauto.model.MarcaModel;
@@ -51,17 +50,12 @@ public class PanelMarcasModelos extends JPanel {
     private JButton btnAbaMarcas;
     private JButton btnAbaModelos;
 
-    // [NOVO] Listas paralelas às linhas da tabela — permitem mapear linha → entidade
     private List<MarcaModel>  listaMarcas  = new ArrayList<>();
     private List<ModeloModel> listaModelos = new ArrayList<>();
 
-    // [MANTIDO] cabeçalhos das colunas — igual ao original
     private static final String[] COLUNAS_MARCAS  = {"Marca", "Modelos cadastrados", ""};
     private static final String[] COLUNAS_MODELOS = {"Modelo", "Marca", "Ano", ""};
 
-    // [REMOVIDO] arrays DADOS_MARCAS e DADOS_MODELOS — substituídos por consulta ao banco
-
-    // ── Construtor ────────────────────────────────────────────────────────────
     public PanelMarcasModelos(MainFrame frame) {
         this.frame = frame;
         setBackground(MainFrame.COR_CREAM);
@@ -69,7 +63,6 @@ public class PanelMarcasModelos extends JPanel {
         construirUI();
     }
 
-    // [NOVO] Obtém controllers do contexto Spring — mesmo padrão dos outros painéis
     private MarcaController getMarcaController() {
         return ContextoAplicacao.getBean(MarcaController.class);
     }
@@ -78,7 +71,6 @@ public class PanelMarcasModelos extends JPanel {
         return ContextoAplicacao.getBean(ModeloController.class);
     }
 
-    // ── Construção da UI — sem alterações ─────────────────────────────────────
     private void construirUI() {
         add(criarTopbar(), BorderLayout.NORTH);
 
@@ -90,7 +82,6 @@ public class PanelMarcasModelos extends JPanel {
         add(inner, BorderLayout.CENTER);
     }
 
-    // ── Topbar — sem alterações ───────────────────────────────────────────────
     private JPanel criarTopbar() {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setBackground(MainFrame.COR_NAVY);
@@ -132,7 +123,6 @@ public class PanelMarcasModelos extends JPanel {
         return p;
     }
 
-    // ── Conteúdo — sem alterações ─────────────────────────────────────────────
     private JPanel criarConteudo() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(MainFrame.COR_CREAM);
@@ -142,7 +132,6 @@ public class PanelMarcasModelos extends JPanel {
         return p;
     }
 
-    // ── Barra de ferramentas — sem alterações de UI ───────────────────────────
     private JPanel criarBarraFerr() {
         JPanel abas = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         abas.setOpaque(false);
@@ -230,7 +219,6 @@ public class PanelMarcasModelos extends JPanel {
         return barra;
     }
 
-    // ── Botão aba — sem alterações ────────────────────────────────────────────
     private JButton criarBotaoAba(String texto) {
         JButton btn = new JButton(texto) {
             @Override protected void paintComponent(Graphics g) {
@@ -260,7 +248,6 @@ public class PanelMarcasModelos extends JPanel {
         return btn;
     }
 
-    // ── Filtros — sem alterações ──────────────────────────────────────────────
     private void aplicarFiltros() {
         if (sorter == null) return;
         String sel = cmbOrdenar == null ? "Padrão" : (String) cmbOrdenar.getSelectedItem();
@@ -277,7 +264,6 @@ public class PanelMarcasModelos extends JPanel {
         sorter.setRowFilter(hasText ? RowFilter.regexFilter("(?i)" + txt) : null);
     }
 
-    // ── Tabela — [ALTERADO] adicionado mouse listener na col "Editar" ─────────
     private JScrollPane criarScrollTabela() {
         String[] cols = abaMarcas ? COLUNAS_MARCAS : COLUNAS_MODELOS;
         modelo = new DefaultTableModel(cols, 0) {
@@ -309,7 +295,6 @@ public class PanelMarcasModelos extends JPanel {
         tabela.getColumnModel().getColumn(lastCol).setPreferredWidth(60);
         tabela.getColumnModel().getColumn(lastCol).setCellRenderer(new EditarRenderer());
 
-        // [NOVO] Clique na coluna "Editar" abre diálogo de edição/exclusão
         tabela.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
                 int viewRow = tabela.rowAtPoint(e.getPoint());
@@ -331,7 +316,6 @@ public class PanelMarcasModelos extends JPanel {
         return scroll;
     }
 
-    // ── [NOVO] Carregamento real do banco ─────────────────────────────────────
     private void recarregarTabela() {
         if (modelo == null) return;
         modelo.setRowCount(0);
@@ -373,7 +357,7 @@ public class PanelMarcasModelos extends JPanel {
         }
     }
 
-    // ── Nova Marca — [RESTAURADO] campos Nome + Sigla como no original ────────
+    // ── Nova Marca — sigla só visual, não vai ao banco ────────────────────────
     private void abrirFormNovaMarca() {
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
             "Nova Marca", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
@@ -381,7 +365,7 @@ public class PanelMarcasModelos extends JPanel {
         dialog.setLocationRelativeTo(this);
 
         JTextField txtNome  = criarCampo();
-        JTextField txtSigla = criarCampo();
+        JTextField txtSigla = criarCampo(); // apenas visual, não salvo no banco
 
         JPanel grid = new JPanel(new GridLayout(1, 2, 14, 0));
         grid.setOpaque(false);
@@ -407,7 +391,7 @@ public class PanelMarcasModelos extends JPanel {
 
             try {
                 MarcaModel novaMarca = new MarcaModel();
-                novaMarca.setNome(nome);
+                novaMarca.setNome(capitalizarPalavras(nome)); // sigla não é enviada ao banco
                 getMarcaController().insert(novaMarca);
 
                 abaMarcas = true;
@@ -444,7 +428,7 @@ public class PanelMarcasModelos extends JPanel {
         dialog.setVisible(true);
     }
 
-    // ── [ALTERADO] Novo Modelo — combo do banco + validações + salva no banco ─
+    // ── Novo Modelo ───────────────────────────────────────────────────────────
     private void abrirFormNovoModelo() {
 
         List<MarcaModel> marcasDispBD;
@@ -568,7 +552,7 @@ public class PanelMarcasModelos extends JPanel {
                 MarcaModel marcaSel = marcasRef.get(idxMarca);
 
                 ModeloModel novoModelo = new ModeloModel();
-                novoModelo.setNomeModelo(nome);
+                novoModelo.setNomeModelo(capitalizarPalavras(nome));
                 novoModelo.setAnoModelo(anoValor);
                 novoModelo.setIdMarca(marcaSel.getId());
 
@@ -610,7 +594,7 @@ public class PanelMarcasModelos extends JPanel {
         dialog.setVisible(true);
     }
 
-    // ── [NOVO] Editar / Excluir Marca ─────────────────────────────────────────
+    // ── Editar / Excluir Marca ────────────────────────────────────────────────
     private void abrirDialogEditarMarca(MarcaModel marcaAtual) {
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
             "Editar Marca", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
@@ -692,7 +676,7 @@ public class PanelMarcasModelos extends JPanel {
         dialog.setVisible(true);
     }
 
-    // ── [NOVO] Editar / Excluir Modelo ────────────────────────────────────────
+    // ── Editar / Excluir Modelo ───────────────────────────────────────────────
     private void abrirDialogEditarModelo(ModeloModel modeloAtual) {
         List<MarcaModel> marcasDispBD;
         try {
@@ -860,7 +844,22 @@ public class PanelMarcasModelos extends JPanel {
         dialog.setVisible(true);
     }
 
-    // ── Helpers de UI — sem alterações ───────────────────────────────────────
+    // ── Helper de capitalização ───────────────────────────────────────────────
+    private String capitalizarPalavras(String texto) {
+        if (texto == null || texto.isEmpty()) return texto;
+        String[] palavras = texto.split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String p : palavras) {
+            if (!p.isEmpty()) {
+                sb.append(Character.toUpperCase(p.charAt(0)))
+                  .append(p.substring(1).toLowerCase());
+                sb.append(" ");
+            }
+        }
+        return sb.toString().trim();
+    }
+
+    // ── Helpers de UI ─────────────────────────────────────────────────────────
     private JPanel criarGrupo(String label, JTextField campo) {
         JPanel g = new JPanel();
         g.setOpaque(false);
@@ -961,7 +960,6 @@ public class PanelMarcasModelos extends JPanel {
         return btn;
     }
 
-    // ── Renderer "Editar" — sem alterações ───────────────────────────────────
     static class EditarRenderer extends DefaultTableCellRenderer {
         @Override public Component getTableCellRendererComponent(
                 JTable t, Object v, boolean sel, boolean foc, int r, int c) {
