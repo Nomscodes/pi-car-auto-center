@@ -635,26 +635,6 @@ public class PanelCadastroCliente extends JPanel {
      * Máscara de CNPJ em tempo real: 00.000.000/0000-00
      */
     private void aplicarMascaraCnpj(JTextField campo) {
-        campo.setDocument(new javax.swing.text.PlainDocument() {
-            @Override
-            public void insertString(int offs, String str, javax.swing.text.AttributeSet a)
-                    throws javax.swing.text.BadLocationException {
-                if (str == null) return;
-                // Remove não-dígitos do que está sendo inserido
-                String apenasDigitos = str.replaceAll("\\D", "");
-                // Conta quantos dígitos já existem no campo
-                String atual = getText(0, getLength()).replaceAll("\\D", "");
-                if (atual.length() >= 14) return;
-                // Trunca se ultrapassar 14 dígitos
-                int espaco = 14 - atual.length();
-                if (apenasDigitos.length() > espaco)
-                    apenasDigitos = apenasDigitos.substring(0, espaco);
-                if (!apenasDigitos.isEmpty())
-                    super.insertString(offs, apenasDigitos, a);
-            }
-        });
-        // O DocumentListener de formatação continua funcionando normalmente
-        // pois o setDocument apenas substitui o modelo de texto, não os listeners
         campo.getDocument().addDocumentListener(new DocumentListener() {
             private boolean atualizando = false;
             private void formatar() {
