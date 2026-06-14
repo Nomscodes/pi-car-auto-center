@@ -48,8 +48,9 @@ public class PessoaJuridicaValidation extends GenericValidation<PessoaJuridicaMo
 
         // ── Data de abertura ──────────────────────────────────────────────────
         if (entity.getDataAbertura() == null)
-            throw new FieldValidationException("dataAbertura",
-                    "A data de abertura é obrigatória.");
+         throw new FieldValidationException("dataAbertura","A data de abertura é obrigatória.");
+        if (entity.getDataAbertura().isAfter(java.time.LocalDate.now()))
+         throw new FieldValidationException("dataAbertura","A data de abertura não pode ser uma data futura.");
 
         // ── Telefone ──────────────────────────────────────────────────────────
         // Armazenado formatado (length = 20 em PessoaModel).
