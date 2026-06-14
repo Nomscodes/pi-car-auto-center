@@ -16,11 +16,13 @@ import java.awt.geom.RoundRectangle2D;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-// Imports do backend para carregar OS do banco
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Locale;
+
 import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.OrdemServicoController;
 import br.com.picarauto.model.OrdemServicoModel;
-import java.util.List;
 
 public class PanelListaOS extends JPanel {
 
@@ -30,10 +32,12 @@ public class PanelListaOS extends JPanel {
     private DefaultTableModel modelo;
     private TableRowSorter<DefaultTableModel> sorter;
 
-    // Guarda as OS carregadas do banco na mesma ordem das linhas da tabela
     private List<OrdemServicoModel> osAtuais;
 
     private static final String[] COLUNAS = {"Nº OS", "Cliente", "Veículo", "Data", "Status", "Valor", ""};
+
+    private static final NumberFormat FMT_MOEDA =
+        NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
 
     public PanelListaOS(MainFrame frame) {
         this.frame = frame;
@@ -53,7 +57,6 @@ public class PanelListaOS extends JPanel {
         add(inner, BorderLayout.CENTER);
     }
 
-    // ── Topbar ────────────────────────────────────────────────────────────────
     private JPanel criarTopbar() {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setBackground(MainFrame.COR_NAVY);
@@ -95,7 +98,6 @@ public class PanelListaOS extends JPanel {
         return p;
     }
 
-    // ── Conteúdo ──────────────────────────────────────────────────────────────
     private JPanel criarConteudo() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(MainFrame.COR_CREAM);
@@ -153,20 +155,17 @@ public class PanelListaOS extends JPanel {
         cmbOrdem.addActionListener(e -> {
             if (sorter == null) return;
             switch ((String) cmbOrdem.getSelectedItem()) {
-                case "Cliente A → Z"    -> sorter.setSortKeys(List.of(new RowSorter.SortKey(1, SortOrder.ASCENDING)));
-                case "Cliente Z → A"    -> sorter.setSortKeys(List.of(new RowSorter.SortKey(1, SortOrder.DESCENDING)));
-                case "Nº OS crescente"  -> sorter.setSortKeys(List.of(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
-                case "Nº OS decrescente"-> sorter.setSortKeys(List.of(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
-                default                 -> sorter.setSortKeys(java.util.Collections.emptyList());
+                case "Cliente A → Z"     -> sorter.setSortKeys(List.of(new RowSorter.SortKey(1, SortOrder.ASCENDING)));
+                case "Cliente Z → A"     -> sorter.setSortKeys(List.of(new RowSorter.SortKey(1, SortOrder.DESCENDING)));
+                case "Nº OS crescente"   -> sorter.setSortKeys(List.of(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
+                case "Nº OS decrescente" -> sorter.setSortKeys(List.of(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
+                default                  -> sorter.setSortKeys(java.util.Collections.emptyList());
             }
         });
 
+        // [FIX] navega direto para composição, igual ao botão da sidebar
         JButton btnNova = criarBotaoNavy("Nova OS", 110, 34);
-        // Navega para seleção de marca com modoNovaOS=true em vez de abrir dialog local
-        btnNova.addActionListener(e -> {
-            PanelSelecaoMarca.modoNovaOS = true;
-            frame.mostrarTela(MainFrame.TELA_MARCA);
-        });
+        btnNova.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_COMPOSICAO));
 
         JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         direita.setOpaque(false);
@@ -185,11 +184,6 @@ public class PanelListaOS extends JPanel {
         modelo = new DefaultTableModel(COLUNAS, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-
-        // A tabela começa vazia — o carregamento do banco só ocorre quando o usuário
-        // navegar para essa tela via MainFrame.mostrarTela(TELA_LISTA_OS),
-        // que chama carregarOS(). Isso evita o erro "contexto não inicializado pelo Spring"
-        // que ocorre quando o painel é construído antes do Spring terminar de subir.
 
         tabela = new JTable(modelo);
         sorter = new TableRowSorter<>(modelo);
@@ -218,7 +212,6 @@ public class PanelListaOS extends JPanel {
         tabela.getColumnModel().getColumn(4).setCellRenderer(new StatusPillRenderer());
         tabela.getColumnModel().getColumn(6).setCellRenderer(new AcaoRenderer());
 
-        // Detecta clique na coluna "Ver OS" e navega para PanelComposicaoOS
         tabela.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
                 int viewRow = tabela.rowAtPoint(e.getPoint());
@@ -237,8 +230,6 @@ public class PanelListaOS extends JPanel {
         return scroll;
     }
 
-    // Busca todas as OS ativas do banco com placa e nome do cliente já populados,
-    // e preenche a tabela. Chamado pelo MainFrame ao navegar para TELA_LISTA_OS.
     public void carregarOS() {
         modelo.setRowCount(0);
         try {
@@ -247,14 +238,16 @@ public class PanelListaOS extends JPanel {
 
             for (OrdemServicoModel os : osAtuais) {
                 String numOS   = "#" + String.format("%04d", os.getId());
-                String cliente = os.getNomeCliente()  != null ? os.getNomeCliente()  : "-";
-                String veiculo = os.getPlacaVeiculo() != null ? os.getPlacaVeiculo() : "-";
+                String cliente = os.getNomeCliente() != null
+                    ? capitalizarNome(os.getNomeCliente()) : "-";
+                String veiculo = os.getPlacaVeiculo() != null
+                    ? formatarPlaca(os.getPlacaVeiculo()) : "-";
                 String data    = os.getDataAbertura() != null
                     ? os.getDataAbertura().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                     : "-";
                 String status  = os.getStatus() != null ? os.getStatus().name() : "-";
                 String valor   = os.getValorTotal() != null
-                    ? String.format("R$ %.2f", os.getValorTotal())
+                    ? FMT_MOEDA.format(os.getValorTotal())
                     : "-";
                 modelo.addRow(new Object[]{ numOS, cliente, veiculo, data, status, valor });
             }
@@ -265,7 +258,26 @@ public class PanelListaOS extends JPanel {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    private static String formatarPlaca(String placa) {
+        if (placa == null || placa.length() < 7) return placa != null ? placa : "—";
+        String p = placa.toUpperCase().replace("-", "").trim();
+        if (p.length() == 7) return p.substring(0, 3) + "-" + p.substring(3);
+        return placa;
+    }
+
+    private static String capitalizarNome(String nome) {
+        if (nome == null || nome.isBlank()) return nome;
+        String[] partes = nome.trim().toLowerCase().split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String p : partes) {
+            if (!p.isEmpty()) {
+                if (sb.length() > 0) sb.append(" ");
+                sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1));
+            }
+        }
+        return sb.toString();
+    }
+
     private JButton criarBotaoNavy(String texto, int w, int h) {
         JButton btn = new JButton(texto) {
             @Override protected void paintComponent(Graphics g) {
@@ -291,17 +303,16 @@ public class PanelListaOS extends JPanel {
         return btn;
     }
 
-    // ── Renderers ─────────────────────────────────────────────────────────────
     static class StatusPillRenderer extends DefaultTableCellRenderer {
         @Override public Component getTableCellRendererComponent(
                 JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             String raw = v == null ? "" : v.toString();
             String label = switch (raw) {
-                case "ORCAMENTO" -> "Orçamento";
-                case "EXECUCAO"  -> "Execução";
-                case "PAGAMENTO" -> "Pagamento";
-                case "FINALIZADO"-> "Finalizado";
-                default          -> raw;
+                case "ORCAMENTO"  -> "Orçamento";
+                case "EXECUCAO"   -> "Execução";
+                case "PAGAMENTO"  -> "Pagamento";
+                case "FINALIZADO" -> "Finalizado";
+                default           -> raw;
             };
             JLabel lbl = new JLabel(label, SwingConstants.CENTER) {
                 @Override protected void paintComponent(Graphics g) {
