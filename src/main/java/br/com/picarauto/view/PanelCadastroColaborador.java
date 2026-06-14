@@ -16,6 +16,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.text.DecimalFormatSymbols;
+import java.text.DecimalFormat;
+import java.util.Locale;
 
 // Imports do backend
 import br.com.picarauto.util.ContextoAplicacao;
@@ -292,6 +295,10 @@ public class PanelCadastroColaborador extends JPanel {
         JTextField txtEndereco = criarCampo();
         JTextField txtSalario  = criarCampo();
 
+        aplicarCapitalizacaoNome(txtNome);
+        aplicarMascaraSalario(txtSalario);
+
+
         // Preenche os campos se estiver editando
         if (editando) {
             txtNome.setText(colaboradorExistente.getNomeCompleto());
@@ -303,7 +310,8 @@ public class PanelCadastroColaborador extends JPanel {
             txtTelefone.setText(colaboradorExistente.getTelefone());
             txtEmail.setText(colaboradorExistente.getEmail());
             txtEndereco.setText(colaboradorExistente.getEndereco());
-            txtSalario.setText(String.valueOf(colaboradorExistente.getSalario()));
+            long centavosExistente = Math.round(colaboradorExistente.getSalario() * 100);
+            txtSalario.setText(String.valueOf(centavosExistente));
         }
 
         JPanel grid = new JPanel(new GridLayout(4, 2, 14, 10));
@@ -404,22 +412,39 @@ public class PanelCadastroColaborador extends JPanel {
             LocalDate dataAdmissao;
             try {
                 dataAdmissao = LocalDate.parse(admissao, FMT_DATA);
+
+                // Valida intervalos de dia e mês manualmente antes do parse aceitar datas inválidas
+                // (o MaskFormatter aceita "32/13/2024" como texto — LocalDate.parse rejeita,
+                //  mas a mensagem padrão não é amigável)
+                int dia = dataAdmissao.getDayOfMonth();
+                int mes = dataAdmissao.getMonthValue();
+                if (dia < 1 || dia > 31 || mes < 1 || mes > 12) {
+                    throw new DateTimeParseException("Dia ou mês fora do intervalo", admissao, 0);
+                }
+
+                // Não permite datas futuras
+                if (dataAdmissao.isAfter(LocalDate.now())) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "A data de admissão não pode ser uma data futura.",
+                        "Atenção", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
             } catch (DateTimeParseException ex) {
                 JOptionPane.showMessageDialog(dialog,
-                    "Data de admissão inválida. Use o formato dd/mm/aaaa.",
+                    "Data de admissão inválida. Verifique dia (01-31) e mês (01-12).",
                     "Atenção", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            double salario;
-            try {
-                salario = Double.parseDouble(salarioStr.replace(",", "."));
-            } catch (NumberFormatException ex) {
+            double salario = extrairSalario(txtSalario);
+            if (salario <= 0) {
                 JOptionPane.showMessageDialog(dialog,
-                    "Salário inválido. Use apenas números (ex: 2500.00)",
+                    "Informe um salário válido.",
                     "Atenção", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+
 
             // Descobre qual função foi selecionada e busca ou cria no banco
             String funcaoSelecionada = "";
@@ -526,8 +551,87 @@ public class PanelCadastroColaborador extends JPanel {
             f.setPreferredSize(new Dimension(0, 34));
             return f;
         } catch (java.text.ParseException ex) {
-            return criarCampo(); // fallback sem máscara
+            return criarCampo();
         }
+    }
+
+    // ── Validação de data em tempo real ──────────────────────────────────────
+    /**
+     * Corrige dia, mês e ano enquanto o usuário digita, sem deixar
+     * valores absurdos chegarem ao botão Salvar.
+     *
+     * Regras:
+     *  - Dia:  01-31  (corrige para 31 se ultrapassar)
+     *  - Mês:  01-12  (corrige para 12 se ultrapassar)
+     *  - Ano:  até o ano atual (corrige para o ano atual se ultrapassar)
+     */
+    private void aplicarValidacaoData(JFormattedTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+
+            @Override public void insertUpdate(DocumentEvent e)  { validar(); }
+            @Override public void removeUpdate(DocumentEvent e)  {}
+            @Override public void changedUpdate(DocumentEvent e) {}
+
+            private void validar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        String texto = campo.getText();
+                        // Formato esperado: DD/MM/AAAA (com _ como placeholder)
+                        // Só age quando o segmento está completamente preenchido
+
+                        // Extrai cada parte, ignorando placeholders
+                        String diaStr  = texto.substring(0, 2);
+                        String mesStr  = texto.substring(3, 5);
+                        String anoStr  = texto.substring(6, 10);
+
+                        StringBuilder corrigido = new StringBuilder(texto);
+                        int anoAtual = LocalDate.now().getYear();
+
+                        // Corrige dia ao terminar de digitar os 2 dígitos
+                        if (!diaStr.contains("_")) {
+                            int dia = Integer.parseInt(diaStr);
+                            if (dia < 1)       substituir(corrigido, 0, "01");
+                            else if (dia > 31) substituir(corrigido, 0, "31");
+                        }
+
+                        // Corrige mês ao terminar de digitar os 2 dígitos
+                        if (!mesStr.contains("_")) {
+                            int mes = Integer.parseInt(mesStr);
+                            if (mes < 1)       substituir(corrigido, 3, "01");
+                            else if (mes > 12) substituir(corrigido, 3, "12");
+                        }
+
+                        // Corrige ano ao terminar de digitar os 4 dígitos
+                        if (!anoStr.contains("_")) {
+                            int ano = Integer.parseInt(anoStr);
+                            if (ano > anoAtual) {
+                                substituir(corrigido, 6, String.valueOf(anoAtual));
+                            }
+                        }
+
+                        String resultado = corrigido.toString();
+                        if (!resultado.equals(texto)) {
+                            campo.setText(resultado);
+                            // Reposiciona o caret no fim do campo para não travar o cursor
+                            campo.setCaretPosition(resultado.length());
+                        }
+
+                    } catch (NumberFormatException | StringIndexOutOfBoundsException ignored) {
+                        // Campo ainda incompleto, não faz nada
+                    } finally {
+                        atualizando = false;
+                    }
+                });
+            }
+
+            /** Substitui 'tamanho' caracteres a partir de 'inicio' no StringBuilder. */
+            private void substituir(StringBuilder sb, int inicio, String valor) {
+                sb.replace(inicio, inicio + valor.length(), valor);
+            }
+        });
     }
     private JButton criarBotaoNavy(String texto, int w, int h) {
         JButton btn = new JButton(texto) {
@@ -613,4 +717,94 @@ public class PanelCadastroColaborador extends JPanel {
             return lbl;
         }
     }
+
+    // ── Capitalização do nome ─────────────────────────────────────────────────
+    private void aplicarCapitalizacaoNome(JTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+
+            @Override public void insertUpdate(DocumentEvent e)  { capitalizar(); }
+            @Override public void removeUpdate(DocumentEvent e)  {}
+            @Override public void changedUpdate(DocumentEvent e) {}
+
+            private void capitalizar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        String texto = campo.getText();
+                        if (!texto.isEmpty()) {
+                            String capitalizado = Character.toUpperCase(texto.charAt(0))
+                                    + texto.substring(1);
+                            if (!capitalizado.equals(texto)) {
+                                int caret = campo.getCaretPosition();
+                                campo.setText(capitalizado);
+                                campo.setCaretPosition(Math.min(caret, capitalizado.length()));
+                            }
+                        }
+                    } finally {
+                        atualizando = false;
+                    }
+                });
+            }
+        });
+    }
+
+    // ── Máscara de salário ────────────────────────────────────────────────────
+    /**
+     * Formata o campo como moeda brasileira enquanto o usuário digita.
+     * Estratégia: trata o valor como centavos (inteiro) e divide por 100.0
+     * para montar o double. Ex.: usuário digita "3000" → campo exibe "R$ 30,00"
+     * → usuário digita "300000" → "R$ 3.000,00".
+     *
+     * Para extrair o double na hora de salvar, use extrairSalario(txtSalario).
+     */
+    private void aplicarMascaraSalario(JTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+
+            @Override public void insertUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e)  { formatar(); }
+            @Override public void changedUpdate(DocumentEvent e) {}
+
+            private void formatar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        // Extrai só dígitos
+                        String apenasDigitos = campo.getText().replaceAll("[^\\d]", "");
+                        if (apenasDigitos.isEmpty()) {
+                            campo.setText("");
+                            return;
+                        }
+                        // Interpreta como centavos
+                        long centavos = Long.parseLong(apenasDigitos);
+                        double valor = centavos / 100.0;
+
+                        DecimalFormat df = new DecimalFormat(
+                            "R$ #,##0.00",
+                            new DecimalFormatSymbols(new Locale("pt", "BR")));
+                        String formatado = df.format(valor);
+
+                        campo.setText(formatado);
+                        campo.setCaretPosition(formatado.length());
+                    } finally {
+                        atualizando = false;
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Extrai o valor double do campo de salário formatado.
+     * Retorna -1 se o campo estiver vazio ou inválido.
+     */
+    private double extrairSalario(JTextField campo) {
+        String apenasDigitos = campo.getText().replaceAll("[^\\d]", "");
+        if (apenasDigitos.isEmpty()) return -1;
+        return Long.parseLong(apenasDigitos) / 100.0;
+    }
 }
+
