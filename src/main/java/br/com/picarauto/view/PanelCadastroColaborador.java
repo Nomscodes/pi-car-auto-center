@@ -412,6 +412,16 @@ public class PanelCadastroColaborador extends JPanel {
             LocalDate dataAdmissao;
             try {
                 dataAdmissao = LocalDate.parse(admissao, FMT_DATA);
+
+                // Valida intervalos de dia e mês manualmente antes do parse aceitar datas inválidas
+                // (o MaskFormatter aceita "32/13/2024" como texto — LocalDate.parse rejeita,
+                //  mas a mensagem padrão não é amigável)
+                int dia = dataAdmissao.getDayOfMonth();
+                int mes = dataAdmissao.getMonthValue();
+                if (dia < 1 || dia > 31 || mes < 1 || mes > 12) {
+                    throw new DateTimeParseException("Dia ou mês fora do intervalo", admissao, 0);
+                }
+
                 // Não permite datas futuras
                 if (dataAdmissao.isAfter(LocalDate.now())) {
                     JOptionPane.showMessageDialog(dialog,
@@ -539,12 +549,6 @@ public class PanelCadastroColaborador extends JPanel {
                 BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
                 new EmptyBorder(6, 10, 6, 10)));
             f.setPreferredSize(new Dimension(0, 34));
-
-            // Aplica validação em tempo real apenas para campos de data
-            if ("##/##/####".equals(mascara)) {
-                aplicarValidacaoData(f);
-            }
-
             return f;
         } catch (java.text.ParseException ex) {
             return criarCampo();
@@ -803,3 +807,4 @@ public class PanelCadastroColaborador extends JPanel {
         return Long.parseLong(apenasDigitos) / 100.0;
     }
 }
+
