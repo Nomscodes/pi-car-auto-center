@@ -42,14 +42,23 @@ public class PessoaFisicaValidation extends GenericValidation<PessoaFisicaModel,
 
         // ── RG ────────────────────────────────────────────────────────────────
         if (entity.getRg() == null || entity.getRg().isBlank())
-            throw new FieldValidationException("rg",
-                    "O RG é de preenchimento obrigatório.");
-        entity.setRg(entity.getRg().trim());
+            throw new FieldValidationException("rg","O RG é de preenchimento obrigatório.");
+            String rgLimpo = entity.getRg().trim().toUpperCase().replaceAll("[.\\-/\\s]", "");
+            if (!rgLimpo.matches("\\d{5,9}|\\d{4,8}X"))
+             throw new FieldValidationException("rg",
+                "RG inválido. Use até 9 dígitos numéricos, podendo terminar em X (ex.: 12345678 ou 1234567X).");
+             entity.setRg(rgLimpo);
 
         // ── Data de nascimento ────────────────────────────────────────────────
         if (entity.getDataNascimento() == null)
+           throw new FieldValidationException("dataNascimento","A data de nascimento é obrigatória.");
+            if (entity.getDataNascimento().isAfter(java.time.LocalDate.now()))
             throw new FieldValidationException("dataNascimento",
-                    "A data de nascimento é obrigatória.");
+            "A data de nascimento não pode ser uma data futura.");
+            if (java.time.Period.between(entity.getDataNascimento(), java.time.LocalDate.now()).getYears() < 18)
+            throw new FieldValidationException("dataNascimento",
+            "O cliente deve ter no mínimo 18 anos.");
+        
 
         // ── Telefone ──────────────────────────────────────────────────────────
         // Armazenado formatado (length = 20 em PessoaModel).

@@ -450,6 +450,18 @@ public class PanelCadastroCliente extends JPanel {
                             "Atenção", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
+                    if (dataNasc.isAfter(LocalDate.now())) {
+                        JOptionPane.showMessageDialog(dialog,
+                            "A data de nascimento não pode ser uma data futura.",
+                            "Atenção", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    if (java.time.Period.between(dataNasc, LocalDate.now()).getYears() < 18) {
+                        JOptionPane.showMessageDialog(dialog,
+                            "O cliente deve ter no mínimo 18 anos.",
+                            "Atenção", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
 
                     PessoaFisicaModel pf = (clienteExistente instanceof PessoaFisicaModel existing)
                         ? existing : new PessoaFisicaModel();
@@ -491,6 +503,12 @@ public class PanelCadastroCliente extends JPanel {
                     catch (DateTimeParseException ex) {
                         JOptionPane.showMessageDialog(dialog,
                             "Data de abertura inválida. Use dd/mm/aaaa.",
+                            "Atenção", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    if (dataAbertura.isAfter(LocalDate.now())) {
+                        JOptionPane.showMessageDialog(dialog,
+                            "A data de abertura não pode ser uma data futura.",
                             "Atenção", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
@@ -698,6 +716,7 @@ public class PanelCadastroCliente extends JPanel {
 
     /**
      * Máscara de data em tempo real: dd/mm/aaaa
+     * Limita dia (01-31) e mês (01-12) enquanto o usuário digita.
      */
     private void aplicarMascaraData(JTextField campo) {
         campo.getDocument().addDocumentListener(new DocumentListener() {
@@ -708,6 +727,21 @@ public class PanelCadastroCliente extends JPanel {
                 SwingUtilities.invokeLater(() -> {
                     String raw = campo.getText().replaceAll("\\D", "");
                     if (raw.length() > 8) raw = raw.substring(0, 8);
+
+                    // Valida/ajusta o dia (primeiros 2 dígitos): 01-31
+                    if (raw.length() >= 2) {
+                        int dia = Integer.parseInt(raw.substring(0, 2));
+                        if (dia == 0) raw = "01" + raw.substring(2);
+                        else if (dia > 31) raw = "31" + raw.substring(2);
+                    }
+
+                    // Valida/ajusta o mês (dígitos 3-4): 01-12
+                    if (raw.length() >= 4) {
+                        int mes = Integer.parseInt(raw.substring(2, 4));
+                        if (mes == 0) raw = raw.substring(0, 2) + "01" + raw.substring(4);
+                        else if (mes > 12) raw = raw.substring(0, 2) + "12" + raw.substring(4);
+                    }
+
                     StringBuilder sb = new StringBuilder();
                     for (int i = 0; i < raw.length(); i++) {
                         if (i == 2 || i == 4) sb.append('/');
@@ -747,8 +781,10 @@ public class PanelCadastroCliente extends JPanel {
             public void insertString(int offs, String str, javax.swing.text.AttributeSet a)
                     throws javax.swing.text.BadLocationException {
                 if (str == null) return;
-                if ((getLength() + str.length()) <= 20)
-                    super.insertString(offs, str, a);
+                String filtrado = str.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
+                if (filtrado.isEmpty()) return;
+                if ((getLength() + filtrado.length()) <= 20)
+                    super.insertString(offs, filtrado, a);
             }
         });
     }
