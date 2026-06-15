@@ -374,8 +374,27 @@ public class PanelComposicaoOS extends JPanel {
         toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
         toolbar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
 
+        JTable tabelaServicos = criarTabela(modeloServicos);
+        scrollServ = new JScrollPane(tabelaServicos);
+        scrollServ.setBorder(null);
+        scrollServ.getViewport().setBackground(Color.WHITE);
+
+        JButton btnExcluirServ = criarBotaoOutline("Excluir", 90, 32);
+        btnExcluirServ.addActionListener(e -> {
+            int row = tabelaServicos.getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(this, "Selecione um servi\u00e7o para excluir.", "Aten\u00e7\u00e3o", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            modeloServicos.removeRow(row);
+            recalcularTotal();
+        });
+
         JButton btnAdd = criarBotaoNavy("+ Adicionar servi\u00e7o", 160, 32);
         btnAdd.addActionListener(e -> adicionarServico());
+        toolbar.add(Box.createHorizontalGlue());
+        toolbar.add(btnExcluirServ);
+        toolbar.add(Box.createHorizontalStrut(8));
         toolbar.add(btnAdd);
 
         card.add(scrollServ);
@@ -391,19 +410,36 @@ public class PanelComposicaoOS extends JPanel {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
 
-        JScrollPane scrollPec = new JScrollPane(criarTabela(modeloPecas));
+        JTable tabelaPecas = criarTabela(modeloPecas);
+        JScrollPane scrollPec = new JScrollPane(tabelaPecas);
         scrollPec.setBorder(null);
         scrollPec.getViewport().setBackground(Color.WHITE);
         scrollPec.setAlignmentX(Component.LEFT_ALIGNMENT);
         scrollPec.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
 
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+        JPanel toolbar = new JPanel();
+        toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
         toolbar.setOpaque(false);
         toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
         toolbar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        toolbar.setBorder(new EmptyBorder(8, 8, 8, 8));
+
+        JButton btnExcluirPec = criarBotaoOutline("Excluir", 90, 32);
+        btnExcluirPec.addActionListener(e -> {
+            int row = tabelaPecas.getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(this, "Selecione uma pe\u00e7a para excluir.", "Aten\u00e7\u00e3o", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            modeloPecas.removeRow(row);
+            recalcularTotal();
+        });
 
         JButton btnAdd = criarBotaoNavy("+ Adicionar pe\u00e7a", 150, 32);
         btnAdd.addActionListener(e -> adicionarPeca());
+        toolbar.add(Box.createHorizontalGlue());
+        toolbar.add(btnExcluirPec);
+        toolbar.add(Box.createHorizontalStrut(8));
         toolbar.add(btnAdd);
 
         card.add(scrollPec);
