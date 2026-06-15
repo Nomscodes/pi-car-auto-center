@@ -5,6 +5,7 @@ import java.util.Map;
 
 import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.repository.IOrdemServicoRepository;
+import br.com.picarauto.util.FilaOS;
 import br.com.picarauto.validation.IOrdemServicoValidation;
 
 /**
@@ -38,6 +39,12 @@ public interface IOrdemServicoService extends IGenericService<OrdemServicoModel,
      * da OS: ORCAMENTO → EXECUCAO → PAGAMENTO → FINALIZADO.
      */
     Map<OrdemServicoModel.StatusOrdemServico, List<OrdemServicoModel>> listarAgrupadoPorStatus();
+
+    /**
+     * Retorna a FilaOS em memória para uso nas estruturas de dados e ordenadores.
+     * Populada no @PostConstruct e atualizada a cada novo insert.
+     */
+    FilaOS getFilaEspera();
 
     /**
      * Busca todas as OS ativas do banco e enriquece cada uma com placaVeiculo e
