@@ -170,4 +170,69 @@ public abstract class OrdenadorOS {
 
         return null; // data não encontrada na lista
     }
+
+    /**
+     * Busca TODAS as OS de uma determinada data na lista já ordenada por data.
+     *
+     * Usa a busca binária para encontrar qualquer OS com aquela data em O(log n),
+     * depois expande linearmente para os vizinhos — coleta todas as OS contíguas
+     * com a mesma data sem percorrer a lista inteira.
+     *
+     * @param listaOrdenada lista retornada por OrdenadorPorData.ordenar()
+     * @param data          data de abertura a buscar
+     * @return lista (possivelmente vazia) com todas as OS daquela data
+     */
+    public List<OrdemServicoModel> buscarTodasPorData(
+            List<OrdemServicoModel> listaOrdenada,
+            java.time.LocalDate data) {
+
+        List<OrdemServicoModel> resultado = new ArrayList<>();
+        if (listaOrdenada == null || listaOrdenada.isEmpty() || data == null) return resultado;
+
+        // 1. Busca binária para encontrar qualquer índice com a data
+        int inicio = 0;
+        int fim = listaOrdenada.size() - 1;
+        int indiceEncontrado = -1;
+
+        while (inicio <= fim) {
+            int meio = (inicio + fim) / 2;
+            OrdemServicoModel osMeio = listaOrdenada.get(meio);
+
+            if (osMeio.getDataAbertura() == null) {
+                fim = meio - 1;
+                continue;
+            }
+
+            int comparacao = osMeio.getDataAbertura().compareTo(data);
+            if (comparacao == 0) {
+                indiceEncontrado = meio;
+                break;
+            } else if (comparacao < 0) {
+                inicio = meio + 1;
+            } else {
+                fim = meio - 1;
+            }
+        }
+
+        if (indiceEncontrado == -1) return resultado; // data não existe
+
+        // 2. Expande para a esquerda coletando todos com a mesma data
+        int esq = indiceEncontrado;
+        while (esq > 0 && data.equals(listaOrdenada.get(esq - 1).getDataAbertura())) {
+            esq--;
+        }
+
+        // 3. Expande para a direita coletando todos com a mesma data
+        int dir = indiceEncontrado;
+        while (dir < listaOrdenada.size() - 1 && data.equals(listaOrdenada.get(dir + 1).getDataAbertura())) {
+            dir++;
+        }
+
+        // 4. Coleta o intervalo [esq, dir]
+        for (int i = esq; i <= dir; i++) {
+            resultado.add(listaOrdenada.get(i));
+        }
+
+        return resultado;
+    }
 }
