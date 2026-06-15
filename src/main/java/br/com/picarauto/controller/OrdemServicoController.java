@@ -34,4 +34,14 @@ public class OrdemServicoController extends GenericController<OrdemServicoModel,
     public FilaOS getFilaEspera() {
         return service.getFilaEspera();
     }
+    
+    // NOVO: busca por id usando ArvoreOS — O(log n) em vez de O(n) na fila
+    public OrdemServicoModel buscarPorId(Long id) {
+        return service.buscarPorId(id);
+    }
+
+    // NOVO: busca por placa exata usando TabelaHashOS — O(1)
+    public OrdemServicoModel buscarPorPlacaExata(String placa) {
+        return service.buscarPorPlacaExata(placa);
+    }
 }

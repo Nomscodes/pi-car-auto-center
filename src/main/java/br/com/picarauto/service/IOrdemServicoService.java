@@ -51,4 +51,11 @@ public interface IOrdemServicoService extends IGenericService<OrdemServicoModel,
      * Usada pelo Template Method (OrdenadorPorData) na busca binária por data.
      */
     FilaOS getFilaEspera();
+    
+    // NOVO: expõe busca por id via ArvoreOS — O(log n)
+    OrdemServicoModel buscarPorId(Long id);
+
+    // NOVO: expõe busca por placa exata via TabelaHashOS — O(1)
+    OrdemServicoModel buscarPorPlacaExata(String placa);
+    
 }
