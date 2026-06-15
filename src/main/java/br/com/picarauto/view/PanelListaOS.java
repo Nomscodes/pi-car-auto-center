@@ -23,6 +23,13 @@ import java.util.Locale;
 import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.OrdemServicoController;
 import br.com.picarauto.model.OrdemServicoModel;
+// NOVO: imports do padrão Decorator e repositórios necessários para o resumo
+import br.com.picarauto.decorator.IResumoOS;
+import br.com.picarauto.decorator.ResumoOSBase;
+import br.com.picarauto.decorator.ResumoComPecas;
+import br.com.picarauto.decorator.ResumoComServicosInternos;
+import br.com.picarauto.repository.IItemPedidoPecaRepository;
+import br.com.picarauto.repository.IItemServicoInternoRepository;
 
 public class PanelListaOS extends JPanel {
 
@@ -167,9 +174,14 @@ public class PanelListaOS extends JPanel {
         JButton btnNova = criarBotaoNavy("Nova OS", 110, 34);
         btnNova.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_COMPOSICAO));
 
+        // NOVO: botão que monta a cadeia de decoradores e exibe o resumo da OS selecionada
+        JButton btnResumo = criarBotaoNavy("Gerar Resumo", 130, 34);
+        btnResumo.addActionListener(e -> gerarResumoOS());
+
         JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         direita.setOpaque(false);
         direita.add(cmbOrdem);
+        direita.add(btnResumo); // NOVO
         direita.add(btnNova);
 
         JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
@@ -257,6 +269,86 @@ public class PanelListaOS extends JPanel {
                 "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    // ===================== NOVO: Gerar Resumo via Decorator =====================
+
+    /**
+     * Monta a cadeia de decoradores para a OS selecionada na tabela e
+     * exibe o resultado em um JDialog com JTextArea.
+     *
+     * Padrão de Projeto: Decorator
+     * Composição: ResumoOSBase → ResumoComServicosInternos → ResumoComPecas
+     */
+    private void gerarResumoOS() {
+        int viewRow = tabela.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this,
+                "Selecione uma OS na tabela antes de gerar o resumo.",
+                "Nenhuma OS selecionada", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int modelRow = tabela.convertRowIndexToModel(viewRow);
+        if (osAtuais == null || modelRow >= osAtuais.size()) return;
+
+        OrdemServicoModel os = osAtuais.get(modelRow);
+
+        try {
+            IItemPedidoPecaRepository repoPeca =
+                ContextoAplicacao.getBean(IItemPedidoPecaRepository.class);
+            IItemServicoInternoRepository repoServico =
+                ContextoAplicacao.getBean(IItemServicoInternoRepository.class);
+
+            // Padrão Decorator: composição da cadeia de resumo
+            IResumoOS resumo = new ResumoOSBase(os);
+            resumo = new ResumoComServicosInternos(resumo, os, repoServico);
+            resumo = new ResumoComPecas(resumo, os, repoPeca);
+
+            String texto = resumo.gerar();
+
+            // Exibe o resultado em um JDialog com JTextArea
+            JTextArea area = new JTextArea(texto);
+            area.setFont(new Font("Monospaced", Font.PLAIN, 12));
+            area.setEditable(false);
+            area.setBackground(new Color(0xF5F0E6));
+            area.setBorder(new EmptyBorder(12, 14, 12, 14));
+
+            JScrollPane scroll = new JScrollPane(area);
+            scroll.setPreferredSize(new Dimension(480, 340));
+            scroll.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER));
+
+            JButton btnFechar = criarBotaoNavy("Fechar", 100, 34);
+
+            JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+            rodape.setOpaque(false);
+            rodape.add(btnFechar);
+
+            JPanel conteudo = new JPanel(new BorderLayout(0, 12));
+            conteudo.setBackground(MainFrame.COR_CREAM);
+            conteudo.setBorder(new EmptyBorder(16, 16, 16, 16));
+            conteudo.add(scroll, BorderLayout.CENTER);
+            conteudo.add(rodape, BorderLayout.SOUTH);
+
+            JDialog dialog = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Resumo da OS #" + String.format("%04d", os.getId()),
+                java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+            dialog.setSize(520, 420);
+            dialog.setLocationRelativeTo(this);
+            dialog.setResizable(false);
+            dialog.add(conteudo);
+
+            btnFechar.addActionListener(ev -> dialog.dispose());
+            dialog.setVisible(true);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao gerar resumo: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // ===================== FIM DO BLOCO NOVO =====================
 
     private static String formatarPlaca(String placa) {
         if (placa == null || placa.length() < 7) return placa != null ? placa : "—";
