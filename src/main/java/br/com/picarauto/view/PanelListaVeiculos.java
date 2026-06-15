@@ -38,7 +38,7 @@ public class PanelListaVeiculos extends JPanel {
 
     private List<VeiculoModel> veiculosAtuais;
 
-    private static final String[] COLUNAS = {"Placa", "Cor", "Modelo", "Marca", "Proprietário", ""};
+    private static final String[] COLUNAS = {"Placa", "Cor", "Modelo", "Marca", "Proprietário", "Editar", "Ver"};
 
     public PanelListaVeiculos(MainFrame frame) {
         this.frame = frame;
@@ -187,13 +187,21 @@ public class PanelListaVeiculos extends JPanel {
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, MainFrame.COR_BORDER));
         header.setReorderingAllowed(false);
 
+<<<<<<< Updated upstream
         tabela.getColumnModel().getColumn(5).setPreferredWidth(60);
         tabela.getColumnModel().getColumn(5).setCellRenderer(new EditarRenderer());
+=======
+        tabela.getColumnModel().getColumn(5).setPreferredWidth(70);
+        tabela.getColumnModel().getColumn(5).setCellRenderer(new EditarRenderer());
+        tabela.getColumnModel().getColumn(6).setPreferredWidth(60);
+        tabela.getColumnModel().getColumn(6).setCellRenderer(new VerRenderer());
+>>>>>>> Stashed changes
 
         tabela.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
                 int col = tabela.columnAtPoint(e.getPoint());
                 int row = tabela.rowAtPoint(e.getPoint());
+<<<<<<< Updated upstream
                 if (col == 5 && row >= 0 && veiculosAtuais != null) {
                     int modelRow = tabela.convertRowIndexToModel(row);
                     if (modelRow < veiculosAtuais.size()) {
@@ -204,6 +212,13 @@ public class PanelListaVeiculos extends JPanel {
                             "Detalhes do Veículo", JOptionPane.INFORMATION_MESSAGE);
                     }
                 }
+=======
+                if (row < 0 || veiculosAtuais == null) return;
+                int modelRow = tabela.convertRowIndexToModel(row);
+                if (modelRow >= veiculosAtuais.size()) return;
+                if (col == 5) abrirFormEdicaoVeiculo(veiculosAtuais.get(modelRow));
+                if (col == 6) abrirHistoricoVeiculo(veiculosAtuais.get(modelRow));
+>>>>>>> Stashed changes
             }
         });
 
@@ -250,7 +265,439 @@ public class PanelListaVeiculos extends JPanel {
                 "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+    // ── Diálogo de edição/exclusão de veículo ─────────────────────────────────
+    private void abrirFormEdicaoVeiculo(VeiculoModel veiculo) {
+        VeiculoController vc = ContextoAplicacao.getBean(VeiculoController.class);
+        ClienteController cc = ContextoAplicacao.getBean(ClienteController.class);
+        ModeloController  mc = ContextoAplicacao.getBean(ModeloController.class);
+        MarcaController   mk = ContextoAplicacao.getBean(MarcaController.class);
 
+<<<<<<< Updated upstream
+=======
+        // Resolve nomes atuais
+        List<ClienteModel> todosClientes;
+        List<ModeloModel>  todosModelos;
+        List<MarcaModel>   todasMarcas;
+        try {
+            todosClientes = cc.findAll();
+            todosModelos  = mc.findAll();
+            todasMarcas   = mk.findAll();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao carregar dados: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        ModeloModel modeloAtual = todosModelos.stream()
+            .filter(m -> m.getId().equals(veiculo.getIdModelo()))
+            .findFirst().orElse(null);
+        String nomeModelo = modeloAtual != null ? modeloAtual.getNomeModelo() : "—";
+        String nomeMarca  = modeloAtual != null ? todasMarcas.stream()
+            .filter(m -> m.getId().equals(modeloAtual.getIdMarca()))
+            .map(MarcaModel::getNome).findFirst().orElse("—") : "—";
+
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+            "Editar Veículo", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(500, 420);
+        dialog.setLocationRelativeTo(this);
+
+        // ── Campos ────────────────────────────────────────────────────────────
+        JTextField txtPlaca  = criarCampoDialog();
+        JTextField txtCor    = criarCampoDialog();
+        JTextField txtChassi = criarCampoDialog();
+        JComboBox<String> cmbCliente = new JComboBox<>();
+        cmbCliente.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        cmbCliente.setBackground(Color.WHITE);
+        cmbCliente.setPreferredSize(new Dimension(0, 34));
+
+        // Campos de marca/modelo são somente leitura
+        JTextField txtMarca  = criarCampoDialog(); txtMarca.setEditable(false);
+        txtMarca.setBackground(new Color(0xEEEEEE));
+        JTextField txtModelo = criarCampoDialog(); txtModelo.setEditable(false);
+        txtModelo.setBackground(new Color(0xEEEEEE));
+
+        // Preenche os dados atuais (chassi preenchido DEPOIS do PlainDocument)
+        txtPlaca.setText(formatarPlaca(veiculo.getPlaca()));
+        txtCor.setText(veiculo.getCor());
+        txtMarca.setText(nomeMarca);
+        txtModelo.setText(nomeModelo);
+
+        // Máscaras — o chassi SÓ recebe setText após o PlainDocument estar instalado
+        aplicarMascaraPlacaDialog(txtPlaca);
+        aplicarCapitalizacaoDialog(txtCor);
+        aplicarLimiteChassiDialog(txtChassi);
+        txtChassi.setText(veiculo.getChassi()); // DEPOIS do setDocument
+
+        // Popula combo de clientes
+        cmbCliente.addItem("Selecione um cliente...");
+        int idxSelecionado = 0;
+        for (int i = 0; i < todosClientes.size(); i++) {
+            ClienteModel c = todosClientes.get(i);
+            cmbCliente.addItem(c.getNomeCompleto() + " — " + c.getTelefone());
+            if (c.getId().equals(veiculo.getIdCliente())) idxSelecionado = i + 1;
+        }
+        final List<ClienteModel> clientesRef = todosClientes;
+        cmbCliente.setSelectedIndex(idxSelecionado);
+
+        // ── Layout ────────────────────────────────────────────────────────────
+        JPanel grid = new JPanel(new GridLayout(3, 2, 14, 10));
+        grid.setOpaque(false);
+        grid.add(criarGrupoDialog("Placa *", txtPlaca));
+        grid.add(criarGrupoDialog("Cor *", txtCor));
+        grid.add(criarGrupoDialog("Chassi (17 caracteres) *", txtChassi));
+        grid.add(criarGrupoComboDialog("Cliente proprietário *", cmbCliente));
+        grid.add(criarGrupoDialog("Marca (somente leitura)", txtMarca));
+        grid.add(criarGrupoDialog("Modelo (somente leitura)", txtModelo));
+
+        // ── Rodapé ────────────────────────────────────────────────────────────
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rodape.setOpaque(false);
+
+        JButton btnExcluir = new JButton("Excluir") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getForeground());
+                g2.setStroke(new java.awt.BasicStroke(1.5f));
+                g2.draw(new java.awt.geom.RoundRectangle2D.Float(1, 1, getWidth()-2, getHeight()-2, 8, 8));
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2,
+                    (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                g2.dispose();
+            }
+        };
+        btnExcluir.setOpaque(false); btnExcluir.setContentAreaFilled(false);
+        btnExcluir.setBorderPainted(false); btnExcluir.setFocusPainted(false);
+        btnExcluir.setForeground(new Color(0xCC2222));
+        btnExcluir.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnExcluir.setPreferredSize(new Dimension(100, 34));
+        btnExcluir.addActionListener(e -> {
+            int conf = JOptionPane.showConfirmDialog(dialog,
+                "Deseja desativar o veículo " + formatarPlaca(veiculo.getPlaca()) + "?\n"
+                + "O registro não será apagado permanentemente.",
+                "Confirmar desativação", JOptionPane.YES_NO_OPTION);
+            if (conf == JOptionPane.YES_OPTION) {
+                try {
+                    vc.delete(veiculo.getId());
+                    dialog.dispose();
+                    carregarVeiculos();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Erro ao desativar: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        JButton btnCancelar = criarBotaoNavy("Cancelar", 100, 34);
+        btnCancelar.addActionListener(e -> dialog.dispose());
+
+        JButton btnSalvar = new JButton("Salvar") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? MainFrame.COR_GOLD.darker() : MainFrame.COR_GOLD);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2,
+                    (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                g2.dispose();
+            }
+        };
+        btnSalvar.setOpaque(true); btnSalvar.setContentAreaFilled(false);
+        btnSalvar.setBorderPainted(false); btnSalvar.setFocusPainted(false);
+        btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnSalvar.setPreferredSize(new Dimension(100, 34));
+        btnSalvar.addActionListener(e -> {
+            String placa  = txtPlaca.getText().replace("-", "").toUpperCase().trim();
+            String cor    = txtCor.getText().trim();
+            String chassi = txtChassi.getText().trim();
+            int idxCliente = cmbCliente.getSelectedIndex();
+
+            if (placa.isEmpty() || cor.isEmpty() || chassi.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Preencha todos os campos obrigatórios (*).",
+                    "Atenção", JOptionPane.WARNING_MESSAGE); return;
+            }
+            if (chassi.length() != 17) {
+                JOptionPane.showMessageDialog(dialog, "Chassi deve ter exatamente 17 caracteres.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE); return;
+            }
+            if (idxCliente <= 0) {
+                JOptionPane.showMessageDialog(dialog, "Selecione um cliente proprietário válido.",
+                    "Atenção", JOptionPane.WARNING_MESSAGE); return;
+            }
+
+            try {
+                veiculo.setPlaca(placa);
+                veiculo.setCor(cor);
+                veiculo.setChassi(chassi);
+                veiculo.setIdCliente(clientesRef.get(idxCliente - 1).getId());
+                vc.update(veiculo);
+                JOptionPane.showMessageDialog(dialog, "Veículo atualizado com sucesso!",
+                    "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                dialog.dispose();
+                carregarVeiculos();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Erro ao salvar: " + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        rodape.add(btnExcluir);
+        rodape.add(btnCancelar);
+        rodape.add(btnSalvar);
+
+        JPanel form = new JPanel();
+        form.setBackground(MainFrame.COR_CREAM);
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBorder(new EmptyBorder(20, 24, 20, 24));
+        form.add(grid);
+        form.add(Box.createVerticalStrut(16));
+        form.add(rodape);
+
+        dialog.add(form);
+        dialog.setVisible(true);
+    }
+    // ── Diálogo "Histórico do Veículo" ────────────────────────────────────────
+    private void abrirHistoricoVeiculo(VeiculoModel v) {
+
+        // Proprietário atual (via idCliente do veículo)
+        String proprietarioAtual = "-";
+        List<ClienteModel> todosClientes = new ArrayList<>();
+        try {
+            todosClientes = ContextoAplicacao.getBean(ClienteController.class).findAll();
+            proprietarioAtual = todosClientes.stream()
+                .filter(c -> c.getId().equals(v.getIdCliente()))
+                .map(ClienteModel::getNomeCompleto)
+                .findFirst().orElse("-");
+        } catch (Exception ignored) {}
+
+        // Histórico de proprietários: começa com o atual + histórico do banco
+        List<String> nomesProprietarios = new ArrayList<>();
+        nomesProprietarios.add(proprietarioAtual + " (atual)");
+
+        try {
+            IHistoricoVeiculoRepository histRepo =
+                ContextoAplicacao.getBean(IHistoricoVeiculoRepository.class);
+
+            // ── NOVO: injeta no BD se o par proprietário/veículo ainda não existe ──
+            if (!histRepo.existsByIdPessoaAndIdVeiculo(v.getIdCliente(), v.getId())) {
+                histRepo.save(v.getIdCliente(), v.getId(), LocalDate.now(), null);
+            }
+
+            List<Long> idsPessoa = histRepo.findIdPessoaByIdVeiculo(v.getId());
+
+            final List<ClienteModel> clientesRef = todosClientes;
+            for (Long idP : idsPessoa) {
+                if (idP.equals(v.getIdCliente())) continue;
+
+                String nome = clientesRef.stream()
+                    .filter(c -> c.getId().equals(idP))
+                    .map(ClienteModel::getNomeCompleto)
+                    .findFirst()
+                    .orElse("Pessoa ID " + idP);
+                nomesProprietarios.add(nome + " (anterior)");
+            }
+        } catch (Exception ex) {
+            nomesProprietarios.add("(erro ao carregar histórico: " + ex.getMessage() + ")");
+        }
+
+        // OS vinculadas ao veículo
+        List<OrdemServicoModel> ordens = new ArrayList<>();
+        try {
+            ordens = ContextoAplicacao.getBean(IOrdemServicoRepository.class)
+                         .findAllByIdVeiculo(v.getId());
+        } catch (Exception ignored) {}
+        final List<OrdemServicoModel> ordensFinais = ordens;
+
+        // ── Monta o JDialog ───────────────────────────────────────────────────
+        JDialog dialog = new JDialog(
+            SwingUtilities.getWindowAncestor(this),
+            "Histórico do Veículo",
+            java.awt.Dialog.ModalityType.APPLICATION_MODAL
+        );
+        dialog.setSize(620, 520);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+
+        // Header
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(MainFrame.COR_NAVY);
+        header.setBorder(new EmptyBorder(14, 20, 14, 20));
+
+        JLabel lblPlaca = new JLabel(formatarPlaca(v.getPlaca()));
+        lblPlaca.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblPlaca.setForeground(MainFrame.COR_GOLD);
+
+        JLabel lblSub = new JLabel("Histórico completo do veículo");
+        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblSub.setForeground(new Color(0xccddff));
+
+        JPanel headerTexto = new JPanel();
+        headerTexto.setOpaque(false);
+        headerTexto.setLayout(new BoxLayout(headerTexto, BoxLayout.Y_AXIS));
+        headerTexto.add(lblPlaca);
+        headerTexto.add(lblSub);
+        header.add(headerTexto, BorderLayout.WEST);
+
+        // Body
+        JPanel body = new JPanel();
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBackground(MainFrame.COR_CREAM);
+        body.setBorder(new EmptyBorder(16, 20, 16, 20));
+
+        // ── Seção: Dados do veículo ───────────────────────────────────────────
+        String dataCadastro = v.getDataHoraCriacao() != null
+            ? v.getDataHoraCriacao().format(FMT_DATETIME) : "—";
+
+        body.add(criarTituloSecao("Dados do Veículo"));
+        body.add(Box.createVerticalStrut(6));
+        body.add(criarLinhaInfo("Placa",             formatarPlaca(v.getPlaca())));
+        body.add(criarLinhaInfo("Cor",               v.getCor()));
+        body.add(criarLinhaInfo("Chassi",            v.getChassi()));
+        body.add(criarLinhaInfo("Cadastrado em",     dataCadastro));
+        body.add(criarLinhaInfo("Proprietário atual", proprietarioAtual));
+        body.add(Box.createVerticalStrut(14));
+
+        // ── Seção: Histórico de proprietários ─────────────────────────────────
+        body.add(criarTituloSecao("Histórico de Proprietários"));
+        body.add(Box.createVerticalStrut(6));
+        for (int i = 0; i < nomesProprietarios.size(); i++) {
+            String label = "Proprietário " + (i + 1);
+            body.add(criarLinhaInfo(label, nomesProprietarios.get(i)));
+        }
+        body.add(Box.createVerticalStrut(14));
+
+        // ── Seção: Ordens de serviço ──────────────────────────────────────────
+        body.add(criarTituloSecao("Ordens de Serviço"));
+        body.add(Box.createVerticalStrut(6));
+
+        if (ordensFinais.isEmpty()) {
+            body.add(criarLinhaVazia("Nenhuma OS vinculada a este veículo."));
+        } else {
+            for (OrdemServicoModel os : ordensFinais) {
+                String dataAb = os.getDataAbertura() != null
+                    ? os.getDataAbertura().format(FMT_DATA) : "—";
+                String dataFe = os.getDataFechamento() != null
+                    ? os.getDataFechamento().format(FMT_DATA) : "Em aberto";
+                String valor = os.getValorTotal() != null
+                    ? FMT_MOEDA.format(os.getValorTotal()) : "—";
+
+                JPanel rowOS = new JPanel(new BorderLayout(10, 0));
+                rowOS.setOpaque(false);
+                rowOS.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+                rowOS.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                JLabel lblOS = new JLabel(
+                    "OS #" + os.getId()
+                    + "  |  Abertura: " + dataAb
+                    + "  |  Fechamento: " + dataFe
+                    + "  |  " + valor
+                );
+                lblOS.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                lblOS.setForeground(new Color(0x333333));
+
+                JLabel badge = new JLabel(os.getStatus().name());
+                badge.setFont(new Font("Segoe UI", Font.BOLD, 10));
+                badge.setForeground(Color.WHITE);
+                badge.setOpaque(true);
+                badge.setBorder(new EmptyBorder(2, 8, 2, 8));
+                badge.setBackground(corStatus(os.getStatus()));
+
+                rowOS.add(lblOS,  BorderLayout.CENTER);
+                rowOS.add(badge,  BorderLayout.EAST);
+                body.add(rowOS);
+                body.add(Box.createVerticalStrut(4));
+            }
+        }
+
+        JScrollPane scrollBody = new JScrollPane(body);
+        scrollBody.setBorder(BorderFactory.createEmptyBorder());
+        scrollBody.getViewport().setBackground(MainFrame.COR_CREAM);
+        scrollBody.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        // Footer
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 16, 10));
+        footer.setBackground(MainFrame.COR_CREAM);
+        footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, MainFrame.COR_BORDER));
+        JButton btnFechar = criarBotaoNavy("Fechar", 100, 34);
+        btnFechar.addActionListener(e -> dialog.dispose());
+        footer.add(btnFechar);
+
+        dialog.add(header,     BorderLayout.NORTH);
+        dialog.add(scrollBody, BorderLayout.CENTER);
+        dialog.add(footer,     BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+
+    // ── Formata placa com máscara visual ─────────────────────────────────────
+    private String formatarPlaca(String placa) {
+        if (placa == null || placa.length() < 7) return placa != null ? placa : "—";
+        String p = placa.toUpperCase().replace("-", "").trim();
+        if (p.length() == 7)
+            return p.substring(0, 3) + "-" + p.substring(3);
+        return placa;
+    }
+
+    // ── Helpers visuais do diálogo ────────────────────────────────────────────
+    private JPanel criarTituloSecao(String texto) {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setOpaque(false);
+        p.setAlignmentX(Component.LEFT_ALIGNMENT);
+        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        JLabel lbl = new JLabel(texto);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lbl.setForeground(MainFrame.COR_NAVY);
+        JSeparator sep = new JSeparator();
+        sep.setForeground(MainFrame.COR_BORDER);
+        p.add(lbl, BorderLayout.WEST);
+        p.add(sep, BorderLayout.SOUTH);
+        return p;
+    }
+
+    private JPanel criarLinhaInfo(String label, String valor) {
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 2));
+        row.setOpaque(false);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+        JLabel lblLabel = new JLabel(label + ":  ");
+        lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblLabel.setForeground(new Color(0x555555));
+        lblLabel.setPreferredSize(new Dimension(160, 20));
+        JLabel lblValor = new JLabel(valor);
+        lblValor.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblValor.setForeground(new Color(0x222222));
+        row.add(lblLabel);
+        row.add(lblValor);
+        return row;
+    }
+
+    private JPanel criarLinhaVazia(String msg) {
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 2));
+        row.setOpaque(false);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+        JLabel lbl = new JLabel(msg);
+        lbl.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        lbl.setForeground(new Color(0x888888));
+        row.add(lbl);
+        return row;
+    }
+
+    private Color corStatus(OrdemServicoModel.StatusOrdemServico status) {
+        return switch (status) {
+            case ORCAMENTO  -> new Color(0x7B6FAB);
+            case EXECUCAO   -> new Color(0x2E7D9E);
+            case PAGAMENTO  -> new Color(0xC08A1E);
+            case FINALIZADO -> new Color(0x3A7A4A);
+        };
+    }
+
+    // ── Helpers de botão ──────────────────────────────────────────────────────
+>>>>>>> Stashed changes
     private JButton criarBotaoNavy(String texto, int w, int h) {
         JButton btn = new JButton(texto) {
             @Override protected void paintComponent(Graphics g) {
@@ -271,8 +718,123 @@ public class PanelListaVeiculos extends JPanel {
         return btn;
     }
 
+<<<<<<< Updated upstream
     static class EditarRenderer extends DefaultTableCellRenderer {
         @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+=======
+    // ── Helpers de campo do dialog ────────────────────────────────────────────
+    private JTextField criarCampoDialog() {
+        JTextField f = new JTextField();
+        f.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        f.setBackground(Color.WHITE);
+        f.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1),
+            new EmptyBorder(6, 10, 6, 10)));
+        f.setPreferredSize(new Dimension(0, 34));
+        return f;
+    }
+
+    private JPanel criarGrupoDialog(String label, JTextField campo) {
+        JPanel g = new JPanel();
+        g.setOpaque(false);
+        g.setLayout(new BoxLayout(g, BoxLayout.Y_AXIS));
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lbl.setForeground(new Color(0x444444));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        campo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        campo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        g.add(lbl);
+        g.add(Box.createVerticalStrut(4));
+        g.add(campo);
+        return g;
+    }
+
+    private JPanel criarGrupoComboDialog(String label, JComboBox<String> combo) {
+        JPanel g = new JPanel();
+        g.setOpaque(false);
+        g.setLayout(new BoxLayout(g, BoxLayout.Y_AXIS));
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lbl.setForeground(new Color(0x444444));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        combo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        combo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        g.add(lbl);
+        g.add(Box.createVerticalStrut(4));
+        g.add(combo);
+        return g;
+    }
+
+    // ── Máscaras do dialog ────────────────────────────────────────────────────
+    private void aplicarMascaraPlacaDialog(JTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+            private void formatar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        String raw = campo.getText().replace("-","").toUpperCase().replaceAll("[^A-Z0-9]","");
+                        if (raw.length() > 7) raw = raw.substring(0, 7);
+                        boolean mercosul = raw.length() >= 5 && Character.isLetter(raw.charAt(4));
+                        String fmt = (!mercosul && raw.length() > 3)
+                            ? raw.substring(0,3) + "-" + raw.substring(3)
+                            : raw;
+                        campo.setText(fmt);
+                    } finally { atualizando = false; }
+                });
+            }
+            @Override public void insertUpdate(DocumentEvent e) { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e) { formatar(); }
+            @Override public void changedUpdate(DocumentEvent e) {}
+        });
+    }
+
+    private void aplicarCapitalizacaoDialog(JTextField campo) {
+        campo.getDocument().addDocumentListener(new DocumentListener() {
+            private boolean atualizando = false;
+            private void formatar() {
+                if (atualizando) return;
+                atualizando = true;
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        String t = campo.getText();
+                        if (!t.isEmpty()) {
+                            String cap = Character.toUpperCase(t.charAt(0)) + t.substring(1);
+                            if (!cap.equals(t)) {
+                                int c = campo.getCaretPosition();
+                                campo.setText(cap);
+                                campo.setCaretPosition(Math.min(c, cap.length()));
+                            }
+                        }
+                    } finally { atualizando = false; }
+                });
+            }
+            @Override public void insertUpdate(DocumentEvent e) { formatar(); }
+            @Override public void removeUpdate(DocumentEvent e) {}
+            @Override public void changedUpdate(DocumentEvent e) {}
+        });
+    }
+
+    private void aplicarLimiteChassiDialog(JTextField campo) {
+        campo.setDocument(new javax.swing.text.PlainDocument() {
+            @Override public void insertString(int offs, String str, javax.swing.text.AttributeSet a)
+                    throws javax.swing.text.BadLocationException {
+                if (str == null) return;
+                String f = str.toUpperCase().replaceAll("[^A-Z0-9]", "");
+                int espaco = 17 - getLength();
+                if (espaco <= 0) return;
+                if (f.length() > espaco) f = f.substring(0, espaco);
+                super.insertString(offs, f, a);
+            }
+        });
+    }
+    
+    static class VerRenderer extends DefaultTableCellRenderer {
+        @Override public Component getTableCellRendererComponent(
+                JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+>>>>>>> Stashed changes
             JLabel lbl = new JLabel("Ver", SwingConstants.CENTER);
             lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
             lbl.setForeground(MainFrame.COR_NAVY);
@@ -281,4 +843,20 @@ public class PanelListaVeiculos extends JPanel {
             return lbl;
         }
     }
+<<<<<<< Updated upstream
 }
+=======
+    
+    static class EditarRenderer extends DefaultTableCellRenderer {
+    @Override public Component getTableCellRendererComponent(
+            JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+        JLabel lbl = new JLabel("Editar", SwingConstants.CENTER);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        lbl.setForeground(MainFrame.COR_NAVY);
+        lbl.setOpaque(true);
+        lbl.setBackground(sel ? t.getSelectionBackground() : Color.WHITE);
+        return lbl;
+    }
+}
+}
+>>>>>>> Stashed changes
