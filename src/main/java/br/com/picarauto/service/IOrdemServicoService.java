@@ -58,4 +58,9 @@ public interface IOrdemServicoService extends IGenericService<OrdemServicoModel,
     // NOVO: expõe busca por placa exata via TabelaHashOS — O(1)
     OrdemServicoModel buscarPorPlacaExata(String placa);
     
+    // Busca TODAS as OS de uma placa (histórico completo) — percorre a fila
+    List<OrdemServicoModel> buscarTodasPorPlaca(String placa);
+
+    // Busca TODAS as OS de uma data — percorre a fila
+    List<OrdemServicoModel> buscarTodasPorData(java.time.LocalDate data);
 }
