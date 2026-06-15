@@ -26,7 +26,6 @@ import java.util.Locale;
 import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.OrdemServicoController;
 import br.com.picarauto.model.OrdemServicoModel;
-// NOVO: imports para Template Method (busca binária por data) e TabelaHashOS (busca por placa)
 import br.com.picarauto.util.OrdenadorPorData;
 import br.com.picarauto.util.OrdenadorOS;
 
@@ -45,7 +44,6 @@ public class PanelListaOS extends JPanel {
     private static final NumberFormat FMT_MOEDA =
         NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
 
-    // NOVO: formato de data para a busca binária
     private static final DateTimeFormatter FMT_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public PanelListaOS(MainFrame frame) {
@@ -173,7 +171,6 @@ public class PanelListaOS extends JPanel {
             }
         });
 
-        // [FIX] navega direto para composição, igual ao botão da sidebar
         JButton btnNova = criarBotaoNavy("Nova OS", 110, 34);
         btnNova.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_COMPOSICAO));
 
@@ -187,59 +184,14 @@ public class PanelListaOS extends JPanel {
         linha1.add(txtBusca, BorderLayout.CENTER);
         linha1.add(direita, BorderLayout.EAST);
 
-        // ── Linha 2 — busca por data e por placa ──
+        // ── Linha 2: busca por data (Template Method) e por placa (TabelaHashOS) ──
         JTextField txtData = new JTextField();
         txtData.setPreferredSize(new Dimension(130, 32));
         txtData.setFont(MainFrame.FONT_NORMAL);
         txtData.setBackground(Color.WHITE);
-        txtData.setToolTipText("dd/mm/aaaa — apenas números");
-        txtData.setForeground(Color.GRAY);
+        txtData.setToolTipText("dd/mm/aaaa");
         txtData.setText("dd/mm/aaaa");
-        // DocumentFilter: só aceita dígitos, insere barras automaticamente
-        // dd -> dd/ -> dd/mm -> dd/mm/ -> dd/mm/aaaa (máx 10 chars com barras)
-        ((javax.swing.text.AbstractDocument) txtData.getDocument())
-            .setDocumentFilter(new javax.swing.text.DocumentFilter() {
-                @Override
-                public void replace(FilterBypass fb, int off, int len,
-                        String ins, javax.swing.text.AttributeSet a)
-                        throws javax.swing.text.BadLocationException {
-                    // Placeholder: limpa ao começar a digitar
-                    String atual = fb.getDocument().getText(0, fb.getDocument().getLength());
-                    if ("dd/mm/aaaa".equals(atual)) {
-                        fb.remove(0, atual.length());
-                        atual = "";
-                        off = 0; len = 0;
-                    }
-                    if (ins == null) ins = "";
-                    // Extrai só dígitos do que já tem + do que está sendo inserido
-                    String digits = (atual + ins).replaceAll("\\D", "");
-                    if (digits.length() > 8) digits = digits.substring(0, 8);
-                    // Reconstrói com barras progressivamente
-                    String novo = "";
-                    for (int i = 0; i < digits.length(); i++) {
-                        if (i == 2 || i == 4) novo += "/";
-                        novo += digits.charAt(i);
-                    }
-                    fb.replace(0, fb.getDocument().getLength(), novo, a);
-                    txtData.setForeground(novo.isEmpty() ? Color.GRAY : new Color(0x333333));
-                }
-                @Override
-                public void remove(FilterBypass fb, int off, int len)
-                        throws javax.swing.text.BadLocationException {
-                    String atual = fb.getDocument().getText(0, fb.getDocument().getLength());
-                    if ("dd/mm/aaaa".equals(atual)) return;
-                    // Remove dígito: pega dígitos atuais sem o último e reconstrói
-                    String digits = atual.replaceAll("\\D", "");
-                    if (!digits.isEmpty()) digits = digits.substring(0, digits.length() - 1);
-                    String novo = "";
-                    for (int i = 0; i < digits.length(); i++) {
-                        if (i == 2 || i == 4) novo += "/";
-                        novo += digits.charAt(i);
-                    }
-                    fb.replace(0, fb.getDocument().getLength(), novo, null);
-                    if (novo.isEmpty()) txtData.setForeground(Color.GRAY);
-                }
-            });
+        txtData.setForeground(Color.GRAY);
         txtData.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override public void focusGained(java.awt.event.FocusEvent e) {
                 if ("dd/mm/aaaa".equals(txtData.getText())) {
@@ -263,45 +215,9 @@ public class PanelListaOS extends JPanel {
         txtPlaca.setPreferredSize(new Dimension(120, 32));
         txtPlaca.setFont(MainFrame.FONT_NORMAL);
         txtPlaca.setBackground(Color.WHITE);
-        txtPlaca.setToolTipText("Ex: ABC-1234 ou ABC-1D23");
-        txtPlaca.setForeground(Color.GRAY);
+        txtPlaca.setToolTipText("Placa exata (ex: ABC1D23)");
         txtPlaca.setText("Placa exata...");
-        // DocumentFilter: uppercase, só alfanumérico, traço automático após 3ª letra
-        // Suporta padrão cinza ABC-1234 e Mercosul ABC-1D23 (máx 8 chars com traço)
-        ((javax.swing.text.AbstractDocument) txtPlaca.getDocument())
-            .setDocumentFilter(new javax.swing.text.DocumentFilter() {
-                @Override
-                public void replace(FilterBypass fb, int off, int len,
-                        String ins, javax.swing.text.AttributeSet a)
-                        throws javax.swing.text.BadLocationException {
-                    String atual = fb.getDocument().getText(0, fb.getDocument().getLength());
-                    if ("Placa exata...".equals(atual)) {
-                        fb.remove(0, atual.length());
-                        off = 0; len = 0;
-                    }
-                    if (ins == null) ins = "";
-                    String chars = (atual.replace("-", "") + ins.toUpperCase()).replaceAll("[^A-Z0-9]", "");
-                    if (chars.length() > 7) chars = chars.substring(0, 7);
-                    String novo = chars.length() > 3
-                        ? chars.substring(0, 3) + "-" + chars.substring(3)
-                        : chars;
-                    fb.replace(0, fb.getDocument().getLength(), novo, a);
-                    txtPlaca.setForeground(novo.isEmpty() ? Color.GRAY : new Color(0x333333));
-                }
-                @Override
-                public void remove(FilterBypass fb, int off, int len)
-                        throws javax.swing.text.BadLocationException {
-                    String atual = fb.getDocument().getText(0, fb.getDocument().getLength());
-                    if ("Placa exata...".equals(atual)) return;
-                    String chars = atual.replace("-", "");
-                    if (!chars.isEmpty()) chars = chars.substring(0, chars.length() - 1);
-                    String novo = chars.length() > 3
-                        ? chars.substring(0, 3) + "-" + chars.substring(3)
-                        : chars;
-                    fb.replace(0, fb.getDocument().getLength(), novo, null);
-                    if (novo.isEmpty()) txtPlaca.setForeground(Color.GRAY);
-                }
-            });
+        txtPlaca.setForeground(Color.GRAY);
         txtPlaca.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override public void focusGained(java.awt.event.FocusEvent e) {
                 if ("Placa exata...".equals(txtPlaca.getText())) {
@@ -321,9 +237,6 @@ public class PanelListaOS extends JPanel {
         JButton btnBuscarPlaca = criarBotaoNavy("Buscar por placa", 145, 32);
         btnBuscarPlaca.addActionListener(e -> buscarPorPlaca(txtPlaca.getText().trim()));
 
-        JButton btnLimpar = criarBotaoNavy("Limpar filtro", 120, 32);
-        btnLimpar.addActionListener(e -> carregarOS());
-
         JPanel linha2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         linha2.setOpaque(false);
         linha2.add(new JLabel("Data:") {{ setFont(MainFrame.FONT_NORMAL); setForeground(new Color(0x444444)); }});
@@ -333,9 +246,6 @@ public class PanelListaOS extends JPanel {
         linha2.add(new JLabel("Placa:") {{ setFont(MainFrame.FONT_NORMAL); setForeground(new Color(0x444444)); }});
         linha2.add(txtPlaca);
         linha2.add(btnBuscarPlaca);
-        linha2.add(Box.createHorizontalStrut(16));
-        linha2.add(btnLimpar);
-        // ── FIM DA LINHA 2 ──
 
         JPanel barra = new JPanel(new BorderLayout(0, 8));
         barra.setOpaque(false);
@@ -377,6 +287,7 @@ public class PanelListaOS extends JPanel {
         tabela.getColumnModel().getColumn(4).setCellRenderer(new StatusPillRenderer());
         tabela.getColumnModel().getColumn(6).setCellRenderer(new AcaoRenderer());
 
+        // ALTERADO: coluna 6 agora abre o dialog de edição em vez de navegar para composição
         tabela.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
                 int viewRow = tabela.rowAtPoint(e.getPoint());
@@ -384,8 +295,8 @@ public class PanelListaOS extends JPanel {
                 if (viewRow < 0 || viewCol != 6) return;
                 int modelRow = tabela.convertRowIndexToModel(viewRow);
                 if (osAtuais == null || modelRow >= osAtuais.size()) return;
-                OrdemServicoModel os = osAtuais.get(modelRow);
-                mostrarResumoOS(os);
+                OrdemServicoModel osSelecionada = osAtuais.get(modelRow);
+                editarOS(osSelecionada); // NOVO: abre dialog de edição
             }
         });
 
@@ -515,7 +426,7 @@ public class PanelListaOS extends JPanel {
                 String valor   = os.getValorTotal() != null
                     ? FMT_MOEDA.format(os.getValorTotal())
                     : "-";
-                modelo.addRow(new Object[]{ numOS, cliente, veiculo, data, status, valor, "" });
+                modelo.addRow(new Object[]{ numOS, cliente, veiculo, data, status, valor });
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
@@ -524,21 +435,208 @@ public class PanelListaOS extends JPanel {
         }
     }
 
-    // ===================== Busca por data — exibe TODAS as OS da data na tabela =====================
+    // ===================== NOVO: edição de OS =====================
 
     /**
-     * Ordena a FilaOS por data via OrdenadorPorData (Template Method) e usa Busca Binária
-     * para localizar a primeira OS; depois varre as adjacentes para pegar TODAS da mesma data.
-     *
-     * Complexidade: O(n log n) ordenar + O(log n) localizar + O(k) coletar k resultados.
+     * Abre um JDialog modal com os campos editáveis da OS:
+     * status, data de fechamento, observações e valor total.
+     * Chama controller.update() ao confirmar, garantindo persistência no banco.
      */
-    // ===================== Busca por data — exibe TODAS as OS da data na tabela =====================
+    private void editarOS(OrdemServicoModel os) {
+        // Status
+        JComboBox<String> cmbStatus = new JComboBox<>(new String[]{
+            "ORCAMENTO", "EXECUCAO", "PAGAMENTO", "FINALIZADO"
+        });
+        cmbStatus.setFont(MainFrame.FONT_NORMAL);
+        if (os.getStatus() != null) {
+            cmbStatus.setSelectedItem(os.getStatus().name());
+        }
 
-    /**
-     * Ordena a FilaOS por data via OrdenadorPorData (Template Method) e usa Busca Binária
-     * para localizar a primeira OS; depois coleta todas com a mesma data.
-     * Exibe os resultados diretamente na tabela.
-     */
+        // NOVO: Data de fechamento
+        JTextField txtDataFechamento = new JTextField();
+        txtDataFechamento.setFont(MainFrame.FONT_NORMAL);
+        txtDataFechamento.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD0C9B8)),
+            BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+
+        String dataFechAtual = os.getDataFechamento() != null
+            ? os.getDataFechamento().format(FMT_DATA) : "";
+        if (dataFechAtual.isEmpty()) {
+            txtDataFechamento.setText("dd/mm/aaaa");
+            txtDataFechamento.setForeground(Color.GRAY);
+        } else {
+            txtDataFechamento.setText(dataFechAtual);
+            txtDataFechamento.setForeground(new Color(0x333333));
+        }
+        txtDataFechamento.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) {
+                if ("dd/mm/aaaa".equals(txtDataFechamento.getText())) {
+                    txtDataFechamento.setText("");
+                    txtDataFechamento.setForeground(new Color(0x333333));
+                }
+            }
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                if (txtDataFechamento.getText().isBlank()) {
+                    txtDataFechamento.setText("dd/mm/aaaa");
+                    txtDataFechamento.setForeground(Color.GRAY);
+                }
+            }
+        });
+
+        // NOVO: ao selecionar FINALIZADO, preenche automaticamente com a data de hoje (se vazio)
+        cmbStatus.addActionListener(ev -> {
+            if ("FINALIZADO".equals(cmbStatus.getSelectedItem())
+                    && ("dd/mm/aaaa".equals(txtDataFechamento.getText())
+                        || txtDataFechamento.getText().isBlank())) {
+                txtDataFechamento.setText(LocalDate.now().format(FMT_DATA));
+                txtDataFechamento.setForeground(new Color(0x333333));
+            }
+        });
+
+        // Observações
+        JTextArea txtObs = new JTextArea(os.getObservacoes() != null ? os.getObservacoes() : "", 4, 30);
+        txtObs.setFont(MainFrame.FONT_NORMAL);
+        txtObs.setLineWrap(true);
+        txtObs.setWrapStyleWord(true);
+        txtObs.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD0C9B8)),
+            BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        JScrollPane scrollObs = new JScrollPane(txtObs);
+        scrollObs.setBorder(BorderFactory.createLineBorder(new Color(0xD0C9B8)));
+
+        // Valor total
+        JTextField txtValor = new JTextField(
+            os.getValorTotal() != null
+                ? String.format("%.2f", os.getValorTotal()).replace(".", ",")
+                : "0,00", 12);
+        txtValor.setFont(MainFrame.FONT_NORMAL);
+        txtValor.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD0C9B8)),
+            BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+
+        // Montagem do formulário
+        JPanel form = new JPanel(new GridLayout(0, 1, 0, 8));
+        form.setBorder(new EmptyBorder(4, 0, 4, 0));
+        form.setBackground(MainFrame.COR_CREAM);
+
+        form.add(labelCinza("Status:"));
+        form.add(cmbStatus);
+        form.add(labelCinza("Data de Fechamento:"));
+        form.add(txtDataFechamento);
+        form.add(labelCinza("Observações:"));
+        form.add(scrollObs);
+        form.add(labelCinza("Valor total (R$):"));
+        form.add(txtValor);
+
+        // Botões do dialog
+        JButton btnSalvar   = criarBotaoNavy("Salvar", 100, 34);
+        JButton btnCancelar = criarBotaoOutline("Cancelar", 100, 34);
+
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        rodape.setOpaque(false);
+        rodape.add(btnCancelar);
+        rodape.add(btnSalvar);
+
+        JPanel conteudo = new JPanel(new BorderLayout(0, 12));
+        conteudo.setBackground(MainFrame.COR_CREAM);
+        conteudo.setBorder(new EmptyBorder(16, 16, 16, 16));
+        conteudo.add(form,    BorderLayout.CENTER);
+        conteudo.add(rodape,  BorderLayout.SOUTH);
+
+        JDialog dialog = new JDialog(
+            SwingUtilities.getWindowAncestor(this),
+            "Editar OS #" + String.format("%04d", os.getId()),
+            java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(420, 420); // ALTERADO: aumentado para acomodar o novo campo
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+        dialog.add(conteudo);
+
+        btnCancelar.addActionListener(ev -> dialog.dispose());
+
+        btnSalvar.addActionListener(ev -> {
+            try {
+                String statusSel = (String) cmbStatus.getSelectedItem();
+                String dataFechTexto = txtDataFechamento.getText().trim();
+
+                // NOVO: validação da data de fechamento
+                if ("FINALIZADO".equals(statusSel)) {
+                    if (dataFechTexto.isBlank() || "dd/mm/aaaa".equals(dataFechTexto)) {
+                        JOptionPane.showMessageDialog(dialog,
+                            "Informe a data de fechamento (dd/mm/aaaa) para OS finalizada.",
+                            "Campo obrigatório", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    try {
+                        os.setDataFechamento(LocalDate.parse(dataFechTexto, FMT_DATA));
+                    } catch (DateTimeParseException dtpe) {
+                        JOptionPane.showMessageDialog(dialog,
+                            "Data de fechamento inválida. Use o formato dd/mm/aaaa.",
+                            "Formato inválido", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                } else {
+                    if (!dataFechTexto.isBlank() && !"dd/mm/aaaa".equals(dataFechTexto)) {
+                        try {
+                            os.setDataFechamento(LocalDate.parse(dataFechTexto, FMT_DATA));
+                        } catch (DateTimeParseException dtpe) {
+                            JOptionPane.showMessageDialog(dialog,
+                                "Data de fechamento inválida. Use o formato dd/mm/aaaa.",
+                                "Formato inválido", JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
+                    } else {
+                        os.setDataFechamento(null);
+                    }
+                }
+
+                // Aplica os campos editados no objeto OS
+                os.setStatus(OrdemServicoModel.StatusOrdemServico.valueOf(statusSel));
+                os.setObservacoes(txtObs.getText().trim());
+
+                String valorTexto = txtValor.getText().trim().replace(",", ".");
+                try {
+                    double valor = Double.parseDouble(valorTexto);
+                    os.setValorTotal(valor > 0 ? valor : null);
+                } catch (NumberFormatException nfe) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Valor total inválido. Use o formato 0,00.",
+                        "Erro de validação", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                // Persiste no banco via controller.update()
+                OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
+                controller.update(os);
+
+                dialog.dispose();
+                carregarOS(); // recarrega a tabela
+                JOptionPane.showMessageDialog(this,
+                    "OS #" + String.format("%04d", os.getId()) + " atualizada com sucesso!",
+                    "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Erro ao atualizar OS: " + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        dialog.setVisible(true);
+    }
+
+    /** Label auxiliar cinza para o formulário de edição. */
+    private JLabel labelCinza(String texto) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lbl.setForeground(new Color(0x444444));
+        return lbl;
+    }
+
+    // ===================== FIM: edição de OS =====================
+
+    // ===================== busca binária por data (Template Method) =====================
+
     private void buscarPorData(String textoData) {
         if (textoData.isBlank() || "dd/mm/aaaa".equals(textoData)) {
             JOptionPane.showMessageDialog(this,
@@ -559,17 +657,31 @@ public class PanelListaOS extends JPanel {
 
         try {
             OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
-            List<OrdemServicoModel> resultados = controller.buscarTodasPorData(data);
 
-            if (resultados.isEmpty()) {
+            OrdenadorPorData ordenador = new OrdenadorPorData();
+            List<OrdemServicoModel> ordenadas = ordenador.ordenar(controller.getFilaEspera());
+            OrdemServicoModel resultado = ordenador.buscarBinariaPorData(ordenadas, data);
+
+            if (resultado == null) {
                 JOptionPane.showMessageDialog(this,
                     "Nenhuma OS encontrada com abertura em " + textoData + ".",
                     "Não encontrado", JOptionPane.INFORMATION_MESSAGE);
-                return;
+            } else {
+                String msg = String.format(
+                    "OS encontrada (Busca Binária):%n%n" +
+                    "Nº OS:    #%04d%n" +
+                    "Status:   %s%n" +
+                    "Veículo:  %s%n" +
+                    "Abertura: %s%n" +
+                    "Total:    %s",
+                    resultado.getId(),
+                    resultado.getStatus() != null ? resultado.getStatus().name() : "-",
+                    resultado.getPlacaVeiculo() != null ? formatarPlaca(resultado.getPlacaVeiculo()) : "-",
+                    resultado.getDataAbertura() != null ? resultado.getDataAbertura().format(FMT_DATA) : "-",
+                    resultado.getValorTotal() != null ? FMT_MOEDA.format(resultado.getValorTotal()) : "-"
+                );
+                JOptionPane.showMessageDialog(this, msg, "Resultado", JOptionPane.INFORMATION_MESSAGE);
             }
-
-            exibirResultadosNaTabela(resultados);
-
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                 "Erro na busca por data: " + ex.getMessage(),
@@ -577,11 +689,8 @@ public class PanelListaOS extends JPanel {
         }
     }
 
-    // ===================== Busca por placa — exibe TODAS as OS da placa na tabela =====================
+    // ===================== busca por placa exata (TabelaHashOS) =====================
 
-    /**
-     * Busca todas as OS de uma placa percorrendo a FilaOS e exibe na tabela.
-     */
     private void buscarPorPlaca(String placa) {
         if (placa.isBlank() || "Placa exata...".equals(placa)) {
             JOptionPane.showMessageDialog(this,
@@ -592,17 +701,28 @@ public class PanelListaOS extends JPanel {
 
         try {
             OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
-            List<OrdemServicoModel> resultados = controller.buscarTodasPorPlaca(placa);
+            OrdemServicoModel resultado = controller.buscarPorPlacaExata(placa);
 
-            if (resultados.isEmpty()) {
+            if (resultado == null) {
                 JOptionPane.showMessageDialog(this,
-                    "Nenhuma OS encontrada para a placa \"" + placa.toUpperCase().replace("-", "") + "\".",
+                    "Nenhuma OS encontrada para a placa \"" + placa.toUpperCase() + "\".",
                     "Não encontrado", JOptionPane.INFORMATION_MESSAGE);
-                return;
+            } else {
+                String msg = String.format(
+                    "OS encontrada (Tabela Hash — O(1)):%n%n" +
+                    "Nº OS:    #%04d%n" +
+                    "Status:   %s%n" +
+                    "Veículo:  %s%n" +
+                    "Abertura: %s%n" +
+                    "Total:    %s",
+                    resultado.getId(),
+                    resultado.getStatus() != null ? resultado.getStatus().name() : "-",
+                    resultado.getPlacaVeiculo() != null ? formatarPlaca(resultado.getPlacaVeiculo()) : "-",
+                    resultado.getDataAbertura() != null ? resultado.getDataAbertura().format(FMT_DATA) : "-",
+                    resultado.getValorTotal() != null ? FMT_MOEDA.format(resultado.getValorTotal()) : "-"
+                );
+                JOptionPane.showMessageDialog(this, msg, "Resultado", JOptionPane.INFORMATION_MESSAGE);
             }
-
-            exibirResultadosNaTabela(resultados);
-
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                 "Erro na busca por placa: " + ex.getMessage(),
@@ -610,33 +730,7 @@ public class PanelListaOS extends JPanel {
         }
     }
 
-    /**
-     * Substitui o conteúdo da tabela pelos resultados de busca.
-     * Reutiliza o mesmo pipeline de formatação de carregarOS().
-     */
-    private void exibirResultadosNaTabela(List<OrdemServicoModel> resultados) {
-        osAtuais = resultados;
-        modelo.setRowCount(0);
-        for (OrdemServicoModel os : resultados) {
-            String numOS   = "#" + String.format("%04d", os.getId());
-            String cliente = os.getNomeCliente() != null
-                ? capitalizarNome(os.getNomeCliente()) : "-";
-            String veiculo = os.getPlacaVeiculo() != null
-                ? formatarPlaca(os.getPlacaVeiculo()) : "-";
-            String dataStr = os.getDataAbertura() != null
-                ? os.getDataAbertura().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-";
-            String status  = os.getStatus() != null ? os.getStatus().name() : "-";
-            String valor   = os.getValorTotal() != null
-                ? FMT_MOEDA.format(os.getValorTotal()) : "-";
-            modelo.addRow(new Object[]{ numOS, cliente, veiculo, dataStr, status, valor, "" });
-        }
-        // Repinta a tabela imediatamente
-        tabela.revalidate();
-        tabela.repaint();
-    }
-
-    // ===================== FIM DOS BLOCOS =====================
-
+    // ===================== helpers =====================
 
     private static String formatarPlaca(String placa) {
         if (placa == null || placa.length() < 7) return placa != null ? placa : "—";
@@ -678,6 +772,32 @@ public class PanelListaOS extends JPanel {
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(w, h));
+        return btn;
+    }
+
+    private JButton criarBotaoOutline(String texto, int w, int h) {
+        JButton btn = new JButton(texto) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(MainFrame.COR_NAVY);
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 8, 8));
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(),
+                    (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btn.setOpaque(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setForeground(MainFrame.COR_NAVY);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(w, h));
         return btn;
@@ -726,10 +846,11 @@ public class PanelListaOS extends JPanel {
         }
     }
 
+    // ALTERADO: texto de "Ver OS" para "Editar"
     static class AcaoRenderer extends DefaultTableCellRenderer {
         @Override public Component getTableCellRendererComponent(
                 JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            JLabel lbl = new JLabel("Ver OS", SwingConstants.CENTER);
+            JLabel lbl = new JLabel("Editar", SwingConstants.CENTER);
             lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
             lbl.setForeground(MainFrame.COR_NAVY);
             lbl.setOpaque(true);
