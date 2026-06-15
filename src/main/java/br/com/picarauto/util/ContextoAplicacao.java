@@ -5,6 +5,17 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
+/**
+ * Ponto central de acesso aos beans do Spring para as views Swing.
+ *
+ * Padrão de Projeto: Singleton
+ * As telas Swing não recebem injeção de dependência automática do Spring.
+ * Esta classe armazena o ApplicationContext numa referência estática e
+ * expõe getBean() para que qualquer view obtenha os controllers sem
+ * instanciá-los manualmente.
+ *
+ * @author Cassiano
+ */
 @Component
 public class ContextoAplicacao implements ApplicationContextAware {
 

@@ -5,6 +5,12 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
+ * Fila encadeada manual de Ordens de Serviço.
+ *
+ * Padrão de Projeto: Iterator
+ * Implementa {@link Iterable} para expor os elementos via for-each sem
+ * revelar os nós internos (classe {@code No}). A travessia é feita pela
+ * classe interna {@link FilaOSIterator}.
  *
  * @author Caio4breu
  */
