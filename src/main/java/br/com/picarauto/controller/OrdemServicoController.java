@@ -44,4 +44,14 @@ public class OrdemServicoController extends GenericController<OrdemServicoModel,
     public OrdemServicoModel buscarPorPlacaExata(String placa) {
         return service.buscarPorPlacaExata(placa);
     }
+
+    /** Retorna TODAS as OS de uma placa (histórico completo). */
+    public java.util.List<br.com.picarauto.model.OrdemServicoModel> buscarTodasPorPlaca(String placa) {
+        return service.buscarTodasPorPlaca(placa);
+    }
+
+    /** Retorna TODAS as OS de uma data. */
+    public java.util.List<br.com.picarauto.model.OrdemServicoModel> buscarTodasPorData(java.time.LocalDate data) {
+        return service.buscarTodasPorData(data);
+    }
 }
