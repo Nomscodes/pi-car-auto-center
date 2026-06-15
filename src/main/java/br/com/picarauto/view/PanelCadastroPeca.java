@@ -22,12 +22,17 @@ import java.util.List;
 import java.util.Locale;
 
 import br.com.picarauto.util.ContextoAplicacao;
+import br.com.picarauto.adapter.IPecaExcelAdapter;
+import br.com.picarauto.adapter.PecaExcelAdapter;
 import br.com.picarauto.controller.PecaController;
 import br.com.picarauto.controller.FornecedorController;
 import br.com.picarauto.model.PecaModel;
 import br.com.picarauto.model.FornecedorModel;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
 
 public class PanelCadastroPeca extends JPanel {
 
@@ -134,8 +139,12 @@ public class PanelCadastroPeca extends JPanel {
         JButton btnNovaPeca = criarBotaoNavy("Nova peça", 110, 34);
         btnNovaPeca.addActionListener(e -> abrirFormPeca(null));
 
+        JButton btnImportar = criarBotaoOutline("Importar Excel", 130, 34);
+        btnImportar.addActionListener(e -> importarExcel());
+
         JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         direita.setOpaque(false);
+        direita.add(btnImportar);
         direita.add(btnNovaPeca);
 
         JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
@@ -645,6 +654,109 @@ public class PanelCadastroPeca extends JPanel {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(w, h)); return btn;
     }
+
+
+    // ===================== IMPORTAÇÃO VIA EXCEL =====================
+
+    /**
+     * Abre um seletor de arquivo .xlsx, pede ao atendente que escolha o fornecedor
+     * a ser vinculado a todas as peças da planilha, executa o adapter e insere
+     * cada PecaModel via PecaController, reportando ao final quantas foram
+     * importadas com sucesso e quantas falharam.
+     */
+    private void importarExcel() {
+        // 1. Verificar se há fornecedores disponíveis
+        if (fornecedoresDisponiveis == null || fornecedoresDisponiveis.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "Nenhum fornecedor cadastrado.\nCadastre ao menos um fornecedor antes de importar peças.",
+                "Sem fornecedores", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 2. Selecionar o arquivo .xlsx
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Selecione a planilha de peças (.xlsx)");
+        chooser.setFileFilter(new FileNameExtensionFilter("Planilha Excel (*.xlsx)", "xlsx"));
+        chooser.setAcceptAllFileFilterUsed(false);
+        int opcao = chooser.showOpenDialog(this);
+        if (opcao != JFileChooser.APPROVE_OPTION) return;
+        File arquivo = chooser.getSelectedFile();
+
+        // 3. Selecionar o fornecedor que será vinculado a todas as peças importadas
+        String[] nomesFornecedores = fornecedoresDisponiveis.stream()
+            .map(FornecedorModel::getNomeFornecedor)
+            .toArray(String[]::new);
+
+        JComboBox<String> cmbForn = new JComboBox<>(nomesFornecedores);
+        cmbForn.setFont(MainFrame.FONT_NORMAL);
+        JPanel painelForn = new JPanel(new BorderLayout(0, 6));
+        painelForn.add(new JLabel("Selecione o fornecedor para as peças importadas:"), BorderLayout.NORTH);
+        painelForn.add(cmbForn, BorderLayout.CENTER);
+
+        int confirmacao = JOptionPane.showConfirmDialog(
+            this, painelForn, "Fornecedor da importação",
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (confirmacao != JOptionPane.OK_OPTION) return;
+
+        int indiceFornecedor = cmbForn.getSelectedIndex();
+        if (indiceFornecedor < 0) return;
+        Long idFornecedor = fornecedoresDisponiveis.get(indiceFornecedor).getId();
+
+        // 4. Ler o arquivo via adapter
+        List<PecaModel> pecasLidas;
+        try {
+            IPecaExcelAdapter adapter = new PecaExcelAdapter();
+            pecasLidas = adapter.importar(arquivo);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao ler a planilha:\n" + ex.getMessage(),
+                "Erro na importação", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (pecasLidas.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "A planilha não contém linhas válidas para importação.\n"
+                    + "Verifique se o formato está correto (cabeçalho na linha 1).",
+                "Planilha vazia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 5. Persistir cada peça via controller
+        PecaController controller = ContextoAplicacao.getBean(PecaController.class);
+        int sucessos = 0;
+        int falhas = 0;
+        StringBuilder detalhes = new StringBuilder();
+
+        for (PecaModel p : pecasLidas) {
+            p.setIdFornecedor(idFornecedor);
+            try {
+                controller.insert(p);
+                sucessos++;
+            } catch (Exception ex) {
+                falhas++;
+                String codigo = p.getCodigoNacional() != null ? String.valueOf(p.getCodigoNacional()) : "?";
+                detalhes.append("• Código ").append(codigo).append(": ").append(ex.getMessage()).append("\n");
+            }
+        }
+
+        // 6. Recarregar tabela e exibir resumo
+        carregarPecas();
+
+        StringBuilder msg = new StringBuilder();
+        msg.append("Importação concluída.\n\n");
+        msg.append("✅ Importadas com sucesso: ").append(sucessos).append("\n");
+        msg.append("❌ Falhas: ").append(falhas);
+        if (falhas > 0) {
+            msg.append("\n\nDetalhes dos erros:\n").append(detalhes);
+        }
+
+        JOptionPane.showMessageDialog(this, msg.toString(),
+            "Resultado da importação",
+            falhas == 0 ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE);
+    }
+
+    // ===================== FIM DA IMPORTAÇÃO VIA EXCEL =====================
 
     static class EditarRenderer extends DefaultTableCellRenderer {
         @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
