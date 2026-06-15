@@ -1,8 +1,8 @@
 package br.com.picarauto.view;
 
 /**
- * Dashboard principal — 3 cards de métricas + OS recentes + serviços mais executados.
- * Layout: topbar (NORTH) + conteúdo cream (CENTER) + sidebar navy (EAST).
+ * Dashboard principal â€" 3 cards de mÃ©tricas + OS recentes + OS por status.
+ * Layout: topbar (NORTH) + conteÃºdo cream (CENTER) + sidebar navy (EAST).
  *
  * @author Cassiano
  */
@@ -10,6 +10,15 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import br.com.picarauto.controller.OrdemServicoController;
+import br.com.picarauto.model.OrdemServicoModel;
+import br.com.picarauto.model.OrdemServicoModel.StatusOrdemServico;
+import br.com.picarauto.util.ContextoAplicacao;
 
 public class PanelDashboard extends JPanel {
 
@@ -33,14 +42,14 @@ public class PanelDashboard extends JPanel {
         add(inner, BorderLayout.CENTER);
     }
 
-    // ── Topbar ────────────────────────────────────────────────────────────────
+    // â"€â"€ Topbar â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     private JPanel criarTopbar() {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setBackground(MainFrame.COR_NAVY);
         bar.setPreferredSize(new Dimension(0, 48));
         bar.setBorder(new EmptyBorder(0, 20, 0, 20));
 
-        JLabel lblTitulo = new JLabel("AV CAR AUTO CENTER  —  Dashboard");
+        JLabel lblTitulo = new JLabel("AV CAR AUTO CENTER  \u2014  Dashboard");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblTitulo.setForeground(Color.WHITE);
 
@@ -79,7 +88,7 @@ public class PanelDashboard extends JPanel {
         return p;
     }
 
-    // ── Conteudo ──────────────────────────────────────────────────────────────
+    // â"€â"€ Conteudo â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     private JScrollPane criarScrollConteudo() {
         JPanel conteudo = new JPanel(new BorderLayout());
         conteudo.setBackground(MainFrame.COR_CREAM);
@@ -101,9 +110,50 @@ public class PanelDashboard extends JPanel {
         p.setOpaque(false);
         p.setBorder(new EmptyBorder(0, 0, 20, 0));
 
-        p.add(criarCardMetrica("OS do mês",    "127",       "ordens abertas"));
-        p.add(criarCardMetrica("Faturamento",  "R$ 48.920", "mês atual"));
-        p.add(criarCardMetrica("Em andamento", "14",         "em execução agora"));
+        // Carrega dados do banco se o contexto estiver pronto
+        String osMes = "—";
+        String faturamento = "—";
+        String emAndamento = "—";
+
+        if (ContextoAplicacao.isReady()) {
+            try {
+                OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
+                List<OrdemServicoModel> todas = controller.findAllEnriquecido();
+
+                LocalDate agora = LocalDate.now();
+                int mes = agora.getMonthValue();
+                int ano = agora.getYear();
+
+                long countMes = todas.stream()
+                        .filter(os -> os.getDataAbertura() != null
+                                && os.getDataAbertura().getMonthValue() == mes
+                                && os.getDataAbertura().getYear() == ano)
+                        .count();
+
+                double totalMes = todas.stream()
+                        .filter(os -> os.getDataAbertura() != null
+                                && os.getDataAbertura().getMonthValue() == mes
+                                && os.getDataAbertura().getYear() == ano
+                                && os.getValorTotal() != null)
+                        .mapToDouble(OrdemServicoModel::getValorTotal)
+                        .sum();
+
+                long countExecucao = todas.stream()
+                        .filter(os -> StatusOrdemServico.EXECUCAO.equals(os.getStatus()))
+                        .count();
+
+                osMes = String.valueOf(countMes);
+                faturamento = String.format("R$ %,.0f", totalMes);
+                emAndamento = String.valueOf(countExecucao);
+
+            } catch (Exception e) {
+                // mantém "—" em caso de erro
+            }
+        }
+
+        p.add(criarCardMetrica("OS do mês",    osMes,       "ordens abertas"));
+        p.add(criarCardMetrica("Faturamento",  faturamento, "mês atual"));
+        p.add(criarCardMetrica("Em andamento", emAndamento, "em execução agora"));
         return p;
     }
 
@@ -151,7 +201,7 @@ public class PanelDashboard extends JPanel {
         p.setOpaque(false);
 
         p.add(criarCardOSRecentes());
-        p.add(criarCardServicos());
+        p.add(criarCardOSPorStatus());
         return p;
     }
 
@@ -159,20 +209,41 @@ public class PanelDashboard extends JPanel {
     private JPanel criarCardOSRecentes() {
         JPanel card = criarCardBase("OS Recentes");
 
-        String[][] dados = {
-            {"#0042", "Marcos Silva",  "Onix 2022",  "Concluída"},
-            {"#0041", "Ana Pereira",   "HB20 2021",  "Andamento"},
-            {"#0040", "Roberto Leal",  "Gol 2019",   "Aberta"},
-            {"#0039", "Carla Moura",   "Pulse 2023", "Concluída"},
-            {"#0038", "Fábio Nunes",  "Kwid 2020",  "Aberta"},
-        };
+        if (ContextoAplicacao.isReady()) {
+            try {
+                OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
+                List<OrdemServicoModel> recentes = controller.findAllEnriquecido().stream()
+                        .filter(os -> os.getDataAbertura() != null)
+                        .sorted(Comparator.comparing(OrdemServicoModel::getDataAbertura).reversed())
+                        .limit(5)
+                        .collect(Collectors.toList());
 
-        boolean primeiro = true;
-        for (String[] r : dados) {
-            if (!primeiro) card.add(criarSeparador());
-            card.add(criarLinhaOS(r[0], r[1], r[2], r[3]));
-            primeiro = false;
+                boolean primeiro = true;
+                for (OrdemServicoModel os : recentes) {
+                    if (!primeiro) card.add(criarSeparador());
+                    String num = "#" + String.format("%04d", os.getId());
+                    String cliente = os.getNomeCliente() != null ? os.getNomeCliente() : "—";
+                    String veiculo = os.getPlacaVeiculo() != null ? os.getPlacaVeiculo() : "—";
+                    String status = os.getStatus() != null ? os.getStatus().name() : "—";
+                    card.add(criarLinhaOS(num, cliente, veiculo, status));
+                    primeiro = false;
+                }
+
+                if (recentes.isEmpty()) {
+                    JLabel lblVazio = new JLabel("Nenhuma OS cadastrada.");
+                    lblVazio.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+                    lblVazio.setForeground(MainFrame.COR_MUTED);
+                    card.add(lblVazio);
+                }
+
+            } catch (Exception e) {
+                JLabel lblErro = new JLabel("Erro ao carregar OS.");
+                lblErro.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+                lblErro.setForeground(MainFrame.COR_MUTED);
+                card.add(lblErro);
+            }
         }
+
         return card;
     }
 
@@ -180,6 +251,7 @@ public class PanelDashboard extends JPanel {
         JPanel linha = new JPanel(new BorderLayout(8, 0));
         linha.setOpaque(false);
         linha.setBorder(new EmptyBorder(8, 0, 8, 0));
+        linha.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
 
         JPanel esq = new JPanel(new BorderLayout(0, 2));
         esq.setOpaque(false);
@@ -203,11 +275,19 @@ public class PanelDashboard extends JPanel {
     static JLabel criarStatusPill(String status) {
         Color bg, fg;
         switch (status) {
-            case "Concluída": bg = new Color(0xE6F1FB); fg = new Color(0x185FA5); break;
-            case "Andamento":  bg = new Color(0xFAEEDA); fg = new Color(0x854F0B); break;
-            default:           bg = new Color(0xE1F5EE); fg = new Color(0x0F6E56); break;
+            case "FINALIZADO": bg = new Color(0xE6F1FB); fg = new Color(0x185FA5); break;
+            case "EXECUCAO":   bg = new Color(0xFAEEDA); fg = new Color(0x854F0B); break;
+            case "PAGAMENTO":  bg = new Color(0xF0E6FA); fg = new Color(0x6A0FAF); break;
+            default:           bg = new Color(0xE1F5EE); fg = new Color(0x0F6E56); break; // ORCAMENTO
         }
-        JLabel lbl = new JLabel(status, SwingConstants.CENTER) {
+        String label;
+        switch (status) {
+            case "FINALIZADO": label = "Concluída";  break;
+            case "EXECUCAO":   label = "Andamento";  break;
+            case "PAGAMENTO":  label = "Pagamento";  break;
+            default:           label = "Aberta";     break;
+        }
+        JLabel lbl = new JLabel(label, SwingConstants.CENTER) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -225,26 +305,41 @@ public class PanelDashboard extends JPanel {
         return lbl;
     }
 
-    // Serviços mais executados
-    private JPanel criarCardServicos() {
-        JPanel card = criarCardBase("Serviços Mais Executados");
+    // OS por Status
+    private JPanel criarCardOSPorStatus() {
+        JPanel card = criarCardBase("OS por Status");
 
-        String[][] servicos = {
-            {"Troca de Óleo",               "87"},
-            {"Alinhamento/Balanceamento",   "62"},
-            {"Revisão Geral",               "41"},
-            {"Freios",                     "38"},
-            {"Filtro de Ar",               "29"},
-        };
+        long countOrcamento = 0, countExecucao = 0, countPagamento = 0, countFinalizado = 0;
 
-        for (String[] s : servicos) {
-            card.add(criarLinhaServico(s[0], Integer.parseInt(s[1]), 87));
-            card.add(Box.createVerticalStrut(4));
+        if (ContextoAplicacao.isReady()) {
+            try {
+                OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
+                List<OrdemServicoModel> todas = controller.findAllEnriquecido();
+
+                countOrcamento  = todas.stream().filter(os -> StatusOrdemServico.ORCAMENTO.equals(os.getStatus())).count();
+                countExecucao   = todas.stream().filter(os -> StatusOrdemServico.EXECUCAO.equals(os.getStatus())).count();
+                countPagamento  = todas.stream().filter(os -> StatusOrdemServico.PAGAMENTO.equals(os.getStatus())).count();
+                countFinalizado = todas.stream().filter(os -> StatusOrdemServico.FINALIZADO.equals(os.getStatus())).count();
+
+            } catch (Exception e) {
+                // mantém zeros em caso de erro
+            }
         }
+
+        long total = countOrcamento + countExecucao + countPagamento + countFinalizado;
+
+        card.add(criarLinhaStatus("Orçamento",  countOrcamento,  total, new Color(0x0F6E56), new Color(0xE1F5EE)));
+        card.add(Box.createVerticalStrut(8));
+        card.add(criarLinhaStatus("Execução",   countExecucao,   total, new Color(0x854F0B), new Color(0xFAEEDA)));
+        card.add(Box.createVerticalStrut(8));
+        card.add(criarLinhaStatus("Pagamento",  countPagamento,  total, new Color(0x6A0FAF), new Color(0xF0E6FA)));
+        card.add(Box.createVerticalStrut(8));
+        card.add(criarLinhaStatus("Finalizado", countFinalizado, total, new Color(0x185FA5), new Color(0xE6F1FB)));
+
         return card;
     }
 
-    private JPanel criarLinhaServico(String nome, int qtd, int max) {
+    private JPanel criarLinhaStatus(String nome, long qtd, long total, Color corBarra, Color corFundo) {
         JPanel p = new JPanel(new BorderLayout(8, 0));
         p.setOpaque(false);
         p.setBorder(new EmptyBorder(4, 0, 4, 0));
@@ -252,17 +347,24 @@ public class PanelDashboard extends JPanel {
         JLabel lblNome = new JLabel(nome);
         lblNome.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblNome.setForeground(new Color(0x444444));
-        lblNome.setPreferredSize(new Dimension(165, 14));
+        lblNome.setPreferredSize(new Dimension(75, 14));
+
+        final long qtdFinal = qtd;
+        final long totalFinal = total;
+        final Color corBarraFinal = corBarra;
+        final Color corFundoFinal = corFundo;
 
         JPanel barra = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(MainFrame.COR_CREAM_ALT);
+                g2.setColor(corFundoFinal);
                 g2.fillRoundRect(0, 4, getWidth(), 8, 4, 4);
-                int w = (int) (getWidth() * qtd / (double) max);
-                g2.setColor(MainFrame.COR_NAVY);
-                g2.fillRoundRect(0, 4, w, 8, 4, 4);
+                if (totalFinal > 0) {
+                    int w = (int) (getWidth() * qtdFinal / (double) totalFinal);
+                    g2.setColor(corBarraFinal);
+                    g2.fillRoundRect(0, 4, w, 8, 4, 4);
+                }
                 g2.dispose();
             }
         };
@@ -280,7 +382,7 @@ public class PanelDashboard extends JPanel {
         return p;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // â"€â"€ Helpers â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     private JPanel criarCardBase(String titulo) {
         JPanel card = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
