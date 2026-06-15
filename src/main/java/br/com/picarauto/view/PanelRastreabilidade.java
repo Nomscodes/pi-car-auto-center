@@ -22,6 +22,13 @@ import br.com.picarauto.controller.PecaController;
 import br.com.picarauto.model.FornecedorModel;
 import br.com.picarauto.model.PecaModel;
 
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
+import java.util.ArrayList;
+
+import br.com.picarauto.adapter.IRelatorioPdfAdapter;
+import br.com.picarauto.adapter.RelatorioPdfAdapter;
+
 public class PanelRastreabilidade extends JPanel {
 
     private final MainFrame frame;
@@ -194,10 +201,8 @@ public class PanelRastreabilidade extends JPanel {
         btnPDF.setFocusPainted(false);
         btnPDF.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnPDF.setPreferredSize(new Dimension(120, 36));
-        // TODO: integrar geração de PDF quando disponível
-        btnPDF.addActionListener(e -> JOptionPane.showMessageDialog(this,
-            "Funcionalidade de geração de PDF será implementada em breve.",
-            "Em breve", JOptionPane.INFORMATION_MESSAGE));
+        // integrado via RelatorioPdfAdapter
+        btnPDF.addActionListener(e -> gerarPdf());
 
         rodape.add(lblInfo, BorderLayout.WEST);
         rodape.add(btnPDF,  BorderLayout.EAST);
@@ -263,6 +268,52 @@ public class PanelRastreabilidade extends JPanel {
         }
     }
 
+    private void gerarPdf() {
+        if (modelo.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Não há dados para gerar o relatório.",
+                "Sem dados", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String[] colunas = abaFornecedor ? COLUNAS_FORN : COLUNAS_PECA;
+        List<String[]> linhas = new ArrayList<>();
+        for (int linha = 0; linha < modelo.getRowCount(); linha++) {
+            String[] valores = new String[colunas.length];
+            for (int coluna = 0; coluna < colunas.length; coluna++) {
+                Object valor = modelo.getValueAt(linha, coluna);
+                valores[coluna] = valor != null ? valor.toString() : "-";
+            }
+            linhas.add(valores);
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Salvar relatório de " + (abaFornecedor ? "Fornecedores" : "Peças"));
+        chooser.setFileFilter(new FileNameExtensionFilter("Documento PDF (*.pdf)", "pdf"));
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setSelectedFile(new File(abaFornecedor ? "relatorio_fornecedores.pdf" : "relatorio_pecas.pdf"));
+        int opcao = chooser.showSaveDialog(this);
+        if (opcao != JFileChooser.APPROVE_OPTION) return;
+
+        File arquivo = chooser.getSelectedFile();
+        if (!arquivo.getName().toLowerCase().endsWith(".pdf")) {
+            arquivo = new File(arquivo.getParentFile(), arquivo.getName() + ".pdf");
+        }
+
+        try {
+            String titulo = "AV CAR AUTO CENTER — Relatório de " + (abaFornecedor ? "Fornecedores" : "Peças");
+            IRelatorioPdfAdapter adapter = new RelatorioPdfAdapter();
+            File gerado = adapter.gerar(titulo, colunas, linhas, arquivo);
+
+            JOptionPane.showMessageDialog(this,
+                "Relatório gerado com sucesso em:\n" + gerado.getAbsolutePath(),
+                "PDF gerado", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao gerar o PDF:\n" + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
     private JButton criarBotaoAba(String texto) {
         JButton btn = new JButton(texto) {
             @Override protected void paintComponent(Graphics g) {

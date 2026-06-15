@@ -177,4 +177,38 @@ public class OrdemServicoService extends GenericService<OrdemServicoModel, IOrde
 
         return lista;
     }
+
+    /**
+     * Busca TODAS as OS de uma placa percorrendo a FilaOS.
+     * Necessário porque TabelaHashOS guarda apenas a OS mais recente por placa.
+     */
+    @Override
+    public List<OrdemServicoModel> buscarTodasPorPlaca(String placa) {
+        if (placa == null || placa.isBlank()) return List.of();
+        String normalizada = placa.toUpperCase().replace("-", "").trim();
+        List<OrdemServicoModel> resultado = new java.util.ArrayList<>();
+        for (OrdemServicoModel os : filaEspera) {
+            if (os.getPlacaVeiculo() != null &&
+                os.getPlacaVeiculo().toUpperCase().replace("-", "").trim().equals(normalizada)) {
+                resultado.add(os);
+            }
+        }
+        return resultado;
+    }
+
+    /**
+     * Busca TODAS as OS de uma data percorrendo a FilaOS.
+     */
+    @Override
+    public List<OrdemServicoModel> buscarTodasPorData(java.time.LocalDate data) {
+        if (data == null) return List.of();
+        List<OrdemServicoModel> resultado = new java.util.ArrayList<>();
+        for (OrdemServicoModel os : filaEspera) {
+            if (data.equals(os.getDataAbertura())) {
+                resultado.add(os);
+            }
+        }
+        return resultado;
+    }
+
 }
