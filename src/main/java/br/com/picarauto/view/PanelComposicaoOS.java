@@ -24,6 +24,8 @@ import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.OrdemServicoController;
 import br.com.picarauto.controller.ClienteController;
 import br.com.picarauto.controller.ColaboradorController;
+import br.com.picarauto.controller.ItemPedidoServicoExternoController;
+import br.com.picarauto.controller.ItemServicoInternoController;
 import br.com.picarauto.controller.VeiculoController;
 import br.com.picarauto.controller.MarcaController;
 import br.com.picarauto.controller.ModeloController;
@@ -33,6 +35,8 @@ import br.com.picarauto.controller.ServicoExternoController;
 import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.model.ClienteModel;
 import br.com.picarauto.model.ColaboradorModel;
+import br.com.picarauto.model.ItemPedidoServicoExternoModel;
+import br.com.picarauto.model.ItemServicoInternoModel;
 import br.com.picarauto.model.VeiculoModel;
 import br.com.picarauto.model.MarcaModel;
 import br.com.picarauto.model.ModeloModel;
@@ -50,6 +54,8 @@ public class PanelComposicaoOS extends JPanel {
 
     private List<ClienteModel>        clientesDisponiveis      = new ArrayList<>();
     private List<ColaboradorModel>    colaboradoresDisponiveis = new ArrayList<>();
+    private List<ItemServicoInternoModel> itensServicoInterno = new ArrayList<>();
+    private List<ItemPedidoServicoExternoModel> itensServicoExterno = new ArrayList<>();
     private List<VeiculoModel>        veiculosDisponiveis      = new ArrayList<>();
     private List<PecaModel>           pecasDisponiveis         = new ArrayList<>();
     private List<ServicoInternoModel> servicosInternos         = new ArrayList<>();
@@ -536,7 +542,21 @@ public class PanelComposicaoOS extends JPanel {
             os.setNomeCliente(cliente.getNomeCompleto());
 
             OrdemServicoController osc = ContextoAplicacao.getBean(OrdemServicoController.class);
-            osc.insert(os);
+            OrdemServicoModel osSalva = osc.insert(os);
+
+            ItemServicoInternoController itemIntCtrl =
+                ContextoAplicacao.getBean(ItemServicoInternoController.class);
+            for (ItemServicoInternoModel item : itensServicoInterno) {
+                item.setIdOS(osSalva.getId());
+                itemIntCtrl.insert(item);
+            }
+
+            ItemPedidoServicoExternoController itemExtCtrl =
+                ContextoAplicacao.getBean(ItemPedidoServicoExternoController.class);
+            for (ItemPedidoServicoExternoModel item : itensServicoExterno) {
+                item.setIdOS(osSalva.getId());
+                itemExtCtrl.insert(item);
+            }
 
             JOptionPane.showMessageDialog(this, "OS salva com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             frame.mostrarTela(MainFrame.TELA_LISTA_OS);
@@ -597,16 +617,40 @@ public class PanelComposicaoOS extends JPanel {
             int idx = cmbServico.getSelectedIndex();
             String nome;
             String tipo;
+            double valorDouble = parseMoeda(txtValor.getText());
+
             if (idx < servicosInternos.size()) {
-                nome = "[INT] " + servicosInternos.get(idx).getDescricao();
+                ServicoInternoModel catalogo = servicosInternos.get(idx);
+
+                ItemServicoInternoController ctrl =
+                    ContextoAplicacao.getBean(ItemServicoInternoController.class);
+
+                ItemServicoInternoModel item = ctrl.novoItem(); // Factory Method
+                item.setValorItem(valorDouble);
+                item.setGarantia(0);
+                item.setObservacoes(catalogo.getDescricao());
+
+                itensServicoInterno.add(item);
+                nome = "[INT] " + catalogo.getDescricao();
                 tipo = "Interno";
+
             } else {
                 int idxExt = idx - servicosInternos.size();
-                nome = "[EXT] " + servicosExternos.get(idxExt).getDescricao();
+                ServicoExternoModel catalogo = servicosExternos.get(idxExt);
+
+                ItemPedidoServicoExternoController ctrl =
+                    ContextoAplicacao.getBean(ItemPedidoServicoExternoController.class);
+
+                ItemPedidoServicoExternoModel item = ctrl.novoItem(); // Factory Method
+                item.setValorItem(valorDouble);
+                item.setGarantia(0);
+                item.setObservacoes(catalogo.getDescricao());
+
+                itensServicoExterno.add(item);
+                nome = "[EXT] " + catalogo.getDescricao();
                 tipo = "Externo";
             }
 
-            double valorDouble = parseMoeda(txtValor.getText());
             String valorStr = FMT_MOEDA.format(valorDouble);
             modeloServicos.addRow(new Object[]{ nome, tipo, valorStr });
             recalcularTotal();
