@@ -11,5 +11,4 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface IItemPedidoServicoExternoRepository extends IGenericRepository<ItemPedidoServicoExternoModel> {
     List<ItemPedidoServicoExternoModel> findAllByIdServicoExterno(Long idServicoExterno);
-    List<ItemPedidoServicoExternoModel> findAllByIdOS(Long idOS);
-}
+}   
