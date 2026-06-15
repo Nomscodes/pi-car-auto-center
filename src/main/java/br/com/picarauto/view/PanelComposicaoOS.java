@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════
+// ╔═══════════════════════════════════════════════════════╗
 // PanelComposicaoOS.java
-// ═══════════════════════════════════════════════
+// ╚═══════════════════════════════════════════════════════╝
 package br.com.picarauto.view;
 
 /**
@@ -97,7 +97,7 @@ public class PanelComposicaoOS extends JPanel {
         bar.setPreferredSize(new Dimension(0, 48));
         bar.setBorder(new EmptyBorder(0, 20, 0, 20));
 
-        JLabel lbl = new JLabel("AV CAR AUTO CENTER  —  Nova Ordem de Serviço");
+        JLabel lbl = new JLabel("AV CAR AUTO CENTER  \u2014  Nova Ordem de Servi\u00e7o");
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lbl.setForeground(Color.WHITE);
 
@@ -121,17 +121,17 @@ public class PanelComposicaoOS extends JPanel {
         p.add(criarCardDados());
         p.add(Box.createVerticalStrut(20));
 
-        p.add(criarLabelSecao("Serviços"));
+        p.add(criarLabelSecao("Servi\u00e7os"));
         p.add(Box.createVerticalStrut(10));
         p.add(criarCardServicos());
         p.add(Box.createVerticalStrut(20));
 
-        p.add(criarLabelSecao("Peças Utilizadas"));
+        p.add(criarLabelSecao("Pe\u00e7as Utilizadas"));
         p.add(Box.createVerticalStrut(10));
         p.add(criarCardPecas());
         p.add(Box.createVerticalStrut(20));
 
-        p.add(criarLabelSecao("Observações"));
+        p.add(criarLabelSecao("Observa\u00e7\u00f5es"));
         p.add(Box.createVerticalStrut(10));
         p.add(criarCardObservacoes());
         p.add(Box.createVerticalStrut(24));
@@ -270,7 +270,6 @@ public class PanelComposicaoOS extends JPanel {
         txtData  = criarCampo();
         txtData.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
-        // Ao trocar marca → carrega modelos do banco e reseta placa/modelo
         cmbMarca.addActionListener(e -> {
             int idx = cmbMarca.getSelectedIndex();
             cmbModelo.removeAllItems();
@@ -283,7 +282,6 @@ public class PanelComposicaoOS extends JPanel {
             }
         });
 
-        // Ao trocar placa → resolve marca e modelo do veículo selecionado
         cmbPlaca.addActionListener(e -> {
             int idxPlaca = cmbPlaca.getSelectedIndex();
             if (idxPlaca <= 0 || veiculosDisponiveis.isEmpty() || idxPlaca > veiculosDisponiveis.size()) return;
@@ -307,7 +305,7 @@ public class PanelComposicaoOS extends JPanel {
         row2.add(criarGrupoCombo("Modelo", cmbModelo));
 
         JPanel row3 = criarGridRow(3);
-        row3.add(criarGrupoCombo("Placa do veículo", cmbPlaca));
+        row3.add(criarGrupoCombo("Placa do ve\u00edculo", cmbPlaca));
         row3.add(criarGrupoCampo("Data Abertura",    txtData));
         row3.add(criarGrupoCombo("Status",           cmbStatus));
 
@@ -319,9 +317,6 @@ public class PanelComposicaoOS extends JPanel {
         return card;
     }
 
-    /**
-     * Dado um veículo, busca sua marca e modelo no banco e seleciona nos combos.
-     */
     private void atualizarMarcaModeloPorVeiculo(VeiculoModel veiculo) {
         try {
             ModeloController mc = ContextoAplicacao.getBean(ModeloController.class);
@@ -330,16 +325,13 @@ public class PanelComposicaoOS extends JPanel {
                 .findFirst().orElse(null);
             if (modelo == null) return;
 
-            // Seleciona a marca no combo sem disparar carregarModelosDaMarca novamente
             for (int i = 0; i < marcasDisponiveis.size(); i++) {
                 if (marcasDisponiveis.get(i).getId().equals(modelo.getIdMarca())) {
-                    // Temporariamente remove listener, define índice e re-adiciona
                     cmbMarca.setSelectedIndex(i + 1);
                     break;
                 }
             }
 
-            // Carrega modelos da marca e seleciona o modelo correto
             carregarModelosDaMarca(modelo.getIdMarca());
             for (int i = 0; i < modelosDisponiveis.size(); i++) {
                 if (modelosDisponiveis.get(i).getId().equals(modelo.getId())) {
@@ -348,7 +340,7 @@ public class PanelComposicaoOS extends JPanel {
                 }
             }
         } catch (Exception ex) {
-            // silencia: campos de marca/modelo ficam como estão
+            // silencia
         }
     }
 
@@ -373,7 +365,7 @@ public class PanelComposicaoOS extends JPanel {
         JPanel card = criarCardBase();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        modeloServicos = new DefaultTableModel(new String[]{"Serviço", "Tipo", "Valor"}, 0) {
+        modeloServicos = new DefaultTableModel(new String[]{"Servi\u00e7o", "Tipo", "Valor"}, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
 
@@ -388,8 +380,27 @@ public class PanelComposicaoOS extends JPanel {
         toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
         toolbar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
 
-        JButton btnAdd = criarBotaoNavy("+ Adicionar serviço", 160, 32);
+        JTable tabelaServicos = criarTabela(modeloServicos);
+        scrollServ = new JScrollPane(tabelaServicos);
+        scrollServ.setBorder(null);
+        scrollServ.getViewport().setBackground(Color.WHITE);
+
+        JButton btnExcluirServ = criarBotaoOutline("Excluir", 90, 32);
+        btnExcluirServ.addActionListener(e -> {
+            int row = tabelaServicos.getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(this, "Selecione um servi\u00e7o para excluir.", "Aten\u00e7\u00e3o", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            modeloServicos.removeRow(row);
+            recalcularTotal();
+        });
+
+        JButton btnAdd = criarBotaoNavy("+ Adicionar servi\u00e7o", 160, 32);
         btnAdd.addActionListener(e -> adicionarServico());
+        toolbar.add(Box.createHorizontalGlue());
+        toolbar.add(btnExcluirServ);
+        toolbar.add(Box.createHorizontalStrut(8));
         toolbar.add(btnAdd);
 
         card.add(scrollServ);
@@ -401,23 +412,40 @@ public class PanelComposicaoOS extends JPanel {
         JPanel card = criarCardBase();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        modeloPecas = new DefaultTableModel(new String[]{"Peça", "Qtd", "Valor Unit.", "Total"}, 0) {
+        modeloPecas = new DefaultTableModel(new String[]{"Pe\u00e7a", "Qtd", "Valor Unit.", "Total"}, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
 
-        JScrollPane scrollPec = new JScrollPane(criarTabela(modeloPecas));
+        JTable tabelaPecas = criarTabela(modeloPecas);
+        JScrollPane scrollPec = new JScrollPane(tabelaPecas);
         scrollPec.setBorder(null);
         scrollPec.getViewport().setBackground(Color.WHITE);
         scrollPec.setAlignmentX(Component.LEFT_ALIGNMENT);
         scrollPec.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
 
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+        JPanel toolbar = new JPanel();
+        toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
         toolbar.setOpaque(false);
         toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
         toolbar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        toolbar.setBorder(new EmptyBorder(8, 8, 8, 8));
 
-        JButton btnAdd = criarBotaoNavy("+ Adicionar peça", 150, 32);
+        JButton btnExcluirPec = criarBotaoOutline("Excluir", 90, 32);
+        btnExcluirPec.addActionListener(e -> {
+            int row = tabelaPecas.getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(this, "Selecione uma pe\u00e7a para excluir.", "Aten\u00e7\u00e3o", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            modeloPecas.removeRow(row);
+            recalcularTotal();
+        });
+
+        JButton btnAdd = criarBotaoNavy("+ Adicionar pe\u00e7a", 150, 32);
         btnAdd.addActionListener(e -> adicionarPeca());
+        toolbar.add(Box.createHorizontalGlue());
+        toolbar.add(btnExcluirPec);
+        toolbar.add(Box.createHorizontalStrut(8));
         toolbar.add(btnAdd);
 
         card.add(scrollPec);
@@ -470,10 +498,36 @@ public class PanelComposicaoOS extends JPanel {
         JButton btnCancelar = criarBotaoOutline("Cancelar", 110, 38);
         btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_OS));
 
+        // Padrão Decorator — gera resumo da OS em camadas
+        JButton btnResumo = criarBotaoNavy("Ver Resumo", 130, 38);
+        btnResumo.addActionListener(e -> {
+            OrdemServicoModel osResumo = new OrdemServicoModel();
+            osResumo.setStatus(OrdemServicoModel.StatusOrdemServico.valueOf(
+                (String) cmbStatus.getSelectedItem()));
+            osResumo.setObservacoes(txtObs != null ? txtObs.getText().trim() : "");
+            osResumo.setDataAbertura(java.time.LocalDate.now());
+            String totalStr = lblTotal.getText().replaceAll("[^\\d,]", "").replace(",", ".");
+            try { osResumo.setValorTotal(Double.parseDouble(totalStr)); }
+            catch (NumberFormatException ignored) { osResumo.setValorTotal(0.0); }
+            if (cmbPlaca.getSelectedIndex() > 0)
+                osResumo.setPlacaVeiculo(cmbPlaca.getSelectedItem().toString());
+
+            br.com.picarauto.decorator.IResumoOS resumo =
+                new br.com.picarauto.decorator.ResumoOSBase(osResumo);
+            String texto = resumo.gerar();
+
+            JTextArea area = new JTextArea(texto, 12, 40);
+            area.setEditable(false);
+            area.setFont(new Font("Courier New", Font.PLAIN, 12));
+            JOptionPane.showMessageDialog(this,
+                new JScrollPane(area), "Resumo da OS", JOptionPane.INFORMATION_MESSAGE);
+        });
+
         JButton btnSalvar = criarBotaoGold("Salvar OS", 140, 38);
         btnSalvar.addActionListener(e -> salvarOS());
 
         btnPanel.add(btnCancelar);
+        btnPanel.add(btnResumo);
         btnPanel.add(btnSalvar);
 
         p.add(totalPanel, BorderLayout.WEST);
@@ -485,16 +539,15 @@ public class PanelComposicaoOS extends JPanel {
         try {
             int idxCliente = cmbCliente.getSelectedIndex();
             if (idxCliente <= 0 || clientesDisponiveis.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Selecione um cliente.", "Atenção", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Selecione um cliente.", "Aten\u00e7\u00e3o", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             ClienteModel cliente = clientesDisponiveis.get(idxCliente - 1);
 
             if (cmbPlaca.getSelectedIndex() <= 0) {
-                JOptionPane.showMessageDialog(this, "Selecione a placa do veículo.", "Atenção", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Selecione a placa do ve\u00edculo.", "Aten\u00e7\u00e3o", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            // Normaliza: remove máscara antes de comparar/salvar
             String placaDigitada = cmbPlaca.getSelectedItem().toString().replace("-", "").toUpperCase().trim();
 
             VeiculoController vc = ContextoAplicacao.getBean(VeiculoController.class);
@@ -509,8 +562,8 @@ public class PanelComposicaoOS extends JPanel {
 
             if (veiculoEncontrado == null) {
                 JOptionPane.showMessageDialog(this,
-                    "Veículo com a placa informada não encontrado no cadastro.",
-                    "Atenção", JOptionPane.WARNING_MESSAGE);
+                    "Ve\u00edculo com a placa informada n\u00e3o encontrado no cadastro.",
+                    "Aten\u00e7\u00e3o", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -537,7 +590,6 @@ public class PanelComposicaoOS extends JPanel {
             }
             os.setValorTotal(total > 0 ? total : null);
 
-            // Salva placa SEM máscara (sem traço) no banco
             os.setPlacaVeiculo(veiculoEncontrado.getPlaca());
             os.setNomeCliente(cliente.getNomeCompleto());
 
@@ -562,7 +614,7 @@ public class PanelComposicaoOS extends JPanel {
             frame.mostrarTela(MainFrame.TELA_LISTA_OS);
 
         } catch (FieldValidationException | RuleValidationException valEx) {
-            JOptionPane.showMessageDialog(this, valEx.getMessage(), "Erro de validação", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, valEx.getMessage(), "Erro de valida\u00e7\u00e3o", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erro ao salvar OS: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
@@ -570,15 +622,10 @@ public class PanelComposicaoOS extends JPanel {
 
     // ── Ações ─────────────────────────────────────────────────────────────────
 
-    /**
-     * Dialog de adicionar serviço:
-     * - Somente serviços cadastrados (sem "digitar manualmente")
-     * - Valor com máscara monetária R$ 1.000,00
-     */
     private void adicionarServico() {
         List<String> nomes = new ArrayList<>();
         if (servicosInternos.isEmpty() && servicosExternos.isEmpty()) {
-            nomes.add("Nenhum serviço cadastrado");
+            nomes.add("Nenhum servi\u00e7o cadastrado");
         }
         for (ServicoInternoModel s : servicosInternos) nomes.add("[INT] " + s.getDescricao());
         for (ServicoExternoModel s : servicosExternos) nomes.add("[EXT] " + s.getDescricao());
@@ -589,7 +636,6 @@ public class PanelComposicaoOS extends JPanel {
         JTextField txtValor = new JTextField("0,00", 10);
         aplicarMascaraMonetaria(txtValor);
 
-        // Ao selecionar serviço, preenche o valor automaticamente
         cmbServico.addActionListener(e -> {
             int idx = cmbServico.getSelectedIndex();
             if (servicosInternos.isEmpty() && servicosExternos.isEmpty()) return;
@@ -601,15 +647,14 @@ public class PanelComposicaoOS extends JPanel {
                 if (idxExt < servicosExternos.size())
                     valor = servicosExternos.get(idxExt).getValorCobrado();
             }
-            // Formata e exibe no campo de valor
             txtValor.setText(String.format("%.2f", valor).replace(".", ","));
         });
 
         JPanel form = new JPanel(new GridLayout(2, 2, 8, 8));
-        form.add(new JLabel("Selecione o serviço:")); form.add(cmbServico);
-        form.add(new JLabel("Valor (R$):"));          form.add(txtValor);
+        form.add(new JLabel("Selecione o servi\u00e7o:")); form.add(cmbServico);
+        form.add(new JLabel("Valor (R$):"));               form.add(txtValor);
 
-        if (JOptionPane.showConfirmDialog(this, form, "Adicionar Serviço",
+        if (JOptionPane.showConfirmDialog(this, form, "Adicionar Servi\u00e7o",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
 
             if (servicosInternos.isEmpty() && servicosExternos.isEmpty()) return;
@@ -657,25 +702,17 @@ public class PanelComposicaoOS extends JPanel {
         }
     }
 
-    /**
-     * Dialog de adicionar peça:
-     * - DropDown com peças cadastradas no banco
-     * - Valor com máscara monetária
-     * - Quantidade somente inteiros
-     */
     private void adicionarPeca() {
-        // ── Combo de peças cadastradas ──
         List<String> nomesPecas = new ArrayList<>();
         if (pecasDisponiveis.isEmpty()) {
-            nomesPecas.add("Nenhuma peça cadastrada");
+            nomesPecas.add("Nenhuma pe\u00e7a cadastrada");
         }
         for (PecaModel p : pecasDisponiveis)
-            nomesPecas.add(p.getMarca() + " — " + p.getModelo() + " (" + p.getAnoVeiculo() + ")");
+            nomesPecas.add(p.getMarca() + " \u2014 " + p.getModelo() + " (" + p.getAnoVeiculo() + ")");
 
         JComboBox<String> cmbPeca = new JComboBox<>(nomesPecas.toArray(new String[0]));
         cmbPeca.setFont(MainFrame.FONT_NORMAL);
 
-        // ── Campo quantidade — somente inteiros ──
         JTextField txtQtd = new JTextField("1", 5);
         ((AbstractDocument) txtQtd.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
@@ -690,11 +727,9 @@ public class PanelComposicaoOS extends JPanel {
             }
         });
 
-        // ── Campo valor com máscara monetária ──
         JTextField txtValor = new JTextField("0,00", 10);
         aplicarMascaraMonetaria(txtValor);
 
-        // Ao selecionar peça, preenche preço unitário automaticamente
         cmbPeca.addActionListener(e -> {
             int idx = cmbPeca.getSelectedIndex();
             if (!pecasDisponiveis.isEmpty() && idx < pecasDisponiveis.size()) {
@@ -704,11 +739,11 @@ public class PanelComposicaoOS extends JPanel {
         });
 
         JPanel form = new JPanel(new GridLayout(3, 2, 8, 8));
-        form.add(new JLabel("Selecione a peça:")); form.add(cmbPeca);
-        form.add(new JLabel("Quantidade:"));       form.add(txtQtd);
-        form.add(new JLabel("Valor Unit. (R$):")); form.add(txtValor);
+        form.add(new JLabel("Selecione a pe\u00e7a:")); form.add(cmbPeca);
+        form.add(new JLabel("Quantidade:"));            form.add(txtQtd);
+        form.add(new JLabel("Valor Unit. (R$):"));      form.add(txtValor);
 
-        if (JOptionPane.showConfirmDialog(this, form, "Adicionar Peça",
+        if (JOptionPane.showConfirmDialog(this, form, "Adicionar Pe\u00e7a",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
 
             if (pecasDisponiveis.isEmpty()) return;
@@ -728,13 +763,7 @@ public class PanelComposicaoOS extends JPanel {
 
     // ── Helpers de valor ──────────────────────────────────────────────────────
 
-    /**
-     * Aplica máscara de moeda pt-BR num JTextField.
-     * Aceita somente dígitos; formata ao sair do campo como 1.000,00.
-     */
     private void aplicarMascaraMonetaria(JTextField campo) {
-        // Permite apenas dígitos e vírgula durante a digitação;
-        // ao perder foco, formata no padrão 1.000,00
         ((AbstractDocument) campo.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
             public void insertString(FilterBypass fb, int off, String str, AttributeSet a)
@@ -750,16 +779,13 @@ public class PanelComposicaoOS extends JPanel {
         campo.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override public void focusLost(java.awt.event.FocusEvent e) {
                 double v = parseMoeda(campo.getText());
-                // Formata: 1000.50 → "1.000,50"
                 campo.setText(String.format("%,.2f", v).replace(".", "#").replace(",", ".").replace("#", ","));
             }
         });
     }
 
-    /** Converte "1.000,50" ou "1000,50" ou "1000.50" → double */
     private double parseMoeda(String texto) {
         if (texto == null || texto.isBlank()) return 0;
-        // Remove tudo que não é dígito ou vírgula; troca vírgula por ponto
         String limpo = texto.replaceAll("[^\\d,]", "").replace(",", ".");
         try { return Double.parseDouble(limpo); }
         catch (NumberFormatException ignored) { return 0; }
@@ -778,15 +804,13 @@ public class PanelComposicaoOS extends JPanel {
 
     // ── Helpers de máscara ────────────────────────────────────────────────────
 
-    /** ABC1234 ou ABC1D23 → ABC-1234 / ABC-1D23 */
     private static String formatarPlaca(String placa) {
-        if (placa == null || placa.length() < 7) return placa != null ? placa : "—";
+        if (placa == null || placa.length() < 7) return placa != null ? placa : "\u2014";
         String p = placa.toUpperCase().replace("-", "").trim();
         if (p.length() == 7) return p.substring(0, 3) + "-" + p.substring(3);
         return placa;
     }
 
-    /** "JOÃO DA SILVA" → "João da Silva" */
     private static String capitalizarNome(String nome) {
         if (nome == null || nome.isBlank()) return nome;
         String[] partes = nome.trim().toLowerCase().split("\\s+");
@@ -801,6 +825,7 @@ public class PanelComposicaoOS extends JPanel {
     }
 
     // ── Helpers de UI ─────────────────────────────────────────────────────────
+
     private JLabel criarLabelSecao(String texto) {
         JLabel lbl = new JLabel(texto);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -984,7 +1009,7 @@ public class PanelComposicaoOS extends JPanel {
     }
 
     private JButton criarBotaoVoltar() {
-        JButton btn = new JButton("← Voltar") {
+        JButton btn = new JButton("\u2190 Voltar") {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
