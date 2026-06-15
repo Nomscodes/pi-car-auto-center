@@ -14,6 +14,9 @@ import br.com.picarauto.repository.IClienteRepository;
 import br.com.picarauto.repository.IOrdemServicoRepository;
 import br.com.picarauto.repository.IVeiculoRepository;
 import br.com.picarauto.util.FilaOS;
+import jakarta.annotation.PostConstruct;
+import br.com.picarauto.util.ArvoreOS;
+import br.com.picarauto.util.TabelaHashOS;
 import br.com.picarauto.util.OrdenadorOS;
 import br.com.picarauto.util.OrdenadorPorId;
 import br.com.picarauto.util.OrdenadorPorNomeCliente;
@@ -28,6 +31,11 @@ public class OrdemServicoService extends GenericService<OrdemServicoModel, IOrde
         implements IOrdemServicoService {
 
     private final FilaOS filaEspera = new FilaOS();
+    
+    private final ArvoreOS     indiceArvore = new ArvoreOS();
+    private final TabelaHashOS indiceHash   = new TabelaHashOS();
+
+    // Instâncias únicas — os ordenadores são stateless, não precisam ser recriados a cada chamada.
 
     // Instâncias únicas — os ordenadores são stateless, não precisam ser recriados a cada chamada.
     private final OrdenadorOS ordenadorPorId = new OrdenadorPorId();
@@ -46,6 +54,23 @@ public class OrdemServicoService extends GenericService<OrdemServicoModel, IOrde
         this.clienteRepository = clienteRepository;
     }
 
+    /**
+     * Sincroniza FilaOS, ArvoreOS e TabelaHashOS com o banco na inicialização.
+     * Usa @PostConstruct porque no construtor os repositórios ainda não foram injetados.
+     */
+    @PostConstruct
+    public void sincronizarEstruturasComBanco() {
+        List<OrdemServicoModel> ativas = findAllActiveEnriquecido();
+
+        ativas.stream()
+              .sorted(java.util.Comparator.comparingLong(os -> os.getId() != null ? os.getId() : 0L))
+              .forEach(os -> {
+                  filaEspera.enfileirar(os);
+                  indiceArvore.inserir(os);
+                  indiceHash.inserir(os);
+              });
+    }
+    
     @Override
     protected void beforeInsert(OrdemServicoModel entity) {
         if (entity.getDataAbertura() == null) {
@@ -57,11 +82,35 @@ public class OrdemServicoService extends GenericService<OrdemServicoModel, IOrde
     @Override
     protected void afterInsert(OrdemServicoModel savedEntity, OrdemServicoModel old) {
         filaEspera.enfileirar(savedEntity);
+        indiceArvore.inserir(savedEntity);
+        indiceHash.inserir(savedEntity);
     }
 
     // Consulta da fila
     public FilaOS getFilaEspera() {
         return filaEspera;
+    }
+    
+    public ArvoreOS getIndiceArvore() {
+        return indiceArvore;
+    }
+
+    public TabelaHashOS getIndiceHash() {
+        return indiceHash;
+    }
+
+    /**
+     * Busca uma OS por id usando ArvoreOS — O(log n).
+     */
+    public OrdemServicoModel buscarPorId(Long id) {
+        return indiceArvore.buscar(id);
+    }
+
+    /**
+     * Busca a OS mais recente de uma placa usando TabelaHashOS — O(1).
+     */
+    public OrdemServicoModel buscarPorPlacaExata(String placa) {
+        return indiceHash.buscar(placa);
     }
 
     // Processamento FIFO

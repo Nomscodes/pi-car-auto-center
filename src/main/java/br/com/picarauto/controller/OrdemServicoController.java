@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.service.IOrdemServicoService;
+import br.com.picarauto.util.FilaOS;
 
 @Component
 public class OrdemServicoController extends GenericController<OrdemServicoModel, IOrdemServicoService> {
@@ -24,5 +25,13 @@ public class OrdemServicoController extends GenericController<OrdemServicoModel,
      */
     public List<OrdemServicoModel> findAllEnriquecido() {
         return service.findAllActiveEnriquecido();
+    }
+    
+    /**
+     * Expõe a FilaOS para os ordenadores do Template Method.
+     * Usada pela view na busca binária por data (OrdenadorPorData).
+     */
+    public FilaOS getFilaEspera() {
+        return service.getFilaEspera();
     }
 }

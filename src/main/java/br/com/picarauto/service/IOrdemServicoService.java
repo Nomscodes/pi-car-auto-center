@@ -6,6 +6,7 @@ import java.util.Map;
 import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.repository.IOrdemServicoRepository;
 import br.com.picarauto.validation.IOrdemServicoValidation;
+import br.com.picarauto.util.FilaOS;
 
 /**
  *
@@ -45,4 +46,9 @@ public interface IOrdemServicoService extends IGenericService<OrdemServicoModel,
      * na View — não usa a FilaOS.
      */
     List<OrdemServicoModel> findAllActiveEnriquecido();
+    /**
+     * Retorna a FilaOS em memória.
+     * Usada pelo Template Method (OrdenadorPorData) na busca binária por data.
+     */
+    FilaOS getFilaEspera();
 }
