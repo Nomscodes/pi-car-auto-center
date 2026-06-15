@@ -17,19 +17,18 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
 
 import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.OrdemServicoController;
 import br.com.picarauto.model.OrdemServicoModel;
-// NOVO: imports do padrão Decorator e repositórios necessários para o resumo
-import br.com.picarauto.decorator.IResumoOS;
-import br.com.picarauto.decorator.ResumoOSBase;
-import br.com.picarauto.decorator.ResumoComPecas;
-import br.com.picarauto.decorator.ResumoComServicosInternos;
-import br.com.picarauto.repository.IItemPedidoPecaRepository;
-import br.com.picarauto.repository.IItemServicoInternoRepository;
+// NOVO: imports para Template Method (busca binária por data) e TabelaHashOS (busca por placa)
+import br.com.picarauto.util.OrdenadorPorData;
+import br.com.picarauto.util.OrdenadorOS;
 
 public class PanelListaOS extends JPanel {
 
@@ -45,6 +44,9 @@ public class PanelListaOS extends JPanel {
 
     private static final NumberFormat FMT_MOEDA =
         NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
+
+    // NOVO: formato de data para a busca binária
+    private static final DateTimeFormatter FMT_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public PanelListaOS(MainFrame frame) {
         this.frame = frame;
@@ -116,6 +118,7 @@ public class PanelListaOS extends JPanel {
     }
 
     private JPanel criarBarraFerr() {
+        // ── Linha 1: busca por texto + ordenação + Nova OS ──────────────────
         txtBusca = new JTextField();
         txtBusca.setPreferredSize(new Dimension(0, 36));
         txtBusca.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
@@ -174,22 +177,86 @@ public class PanelListaOS extends JPanel {
         JButton btnNova = criarBotaoNavy("Nova OS", 110, 34);
         btnNova.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_COMPOSICAO));
 
-        // NOVO: botão que monta a cadeia de decoradores e exibe o resumo da OS selecionada
-        JButton btnResumo = criarBotaoNavy("Gerar Resumo", 130, 34);
-        btnResumo.addActionListener(e -> gerarResumoOS());
-
         JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         direita.setOpaque(false);
         direita.add(cmbOrdem);
-        direita.add(btnResumo); // NOVO
         direita.add(btnNova);
 
-        JPanel painelBusca = new JPanel(new BorderLayout(12, 0));
-        painelBusca.setBackground(new Color(0xF5F0E6));
-        painelBusca.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
-        painelBusca.add(txtBusca, BorderLayout.CENTER);
-        painelBusca.add(direita, BorderLayout.EAST);
-        return painelBusca;
+        JPanel linha1 = new JPanel(new BorderLayout(12, 0));
+        linha1.setBackground(new Color(0xF5F0E6));
+        linha1.add(txtBusca, BorderLayout.CENTER);
+        linha1.add(direita, BorderLayout.EAST);
+
+        // ── NOVO: Linha 2 — busca por data (Template Method) e por placa (TabelaHashOS) ──
+        JTextField txtData = new JTextField();
+        txtData.setPreferredSize(new Dimension(130, 32));
+        txtData.setFont(MainFrame.FONT_NORMAL);
+        txtData.setBackground(Color.WHITE);
+        txtData.setToolTipText("dd/mm/aaaa");
+        txtData.setText("dd/mm/aaaa");
+        txtData.setForeground(Color.GRAY);
+        txtData.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) {
+                if ("dd/mm/aaaa".equals(txtData.getText())) {
+                    txtData.setText(""); txtData.setForeground(new Color(0x333333));
+                }
+            }
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                if (txtData.getText().isBlank()) {
+                    txtData.setText("dd/mm/aaaa"); txtData.setForeground(Color.GRAY);
+                }
+            }
+        });
+        txtData.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD0C9B8)),
+            BorderFactory.createEmptyBorder(4, 10, 4, 10)));
+
+        JButton btnBuscarData = criarBotaoNavy("Buscar por data", 140, 32);
+        btnBuscarData.addActionListener(e -> buscarPorData(txtData.getText().trim()));
+
+        JTextField txtPlaca = new JTextField();
+        txtPlaca.setPreferredSize(new Dimension(120, 32));
+        txtPlaca.setFont(MainFrame.FONT_NORMAL);
+        txtPlaca.setBackground(Color.WHITE);
+        txtPlaca.setToolTipText("Placa exata (ex: ABC1D23)");
+        txtPlaca.setText("Placa exata...");
+        txtPlaca.setForeground(Color.GRAY);
+        txtPlaca.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) {
+                if ("Placa exata...".equals(txtPlaca.getText())) {
+                    txtPlaca.setText(""); txtPlaca.setForeground(new Color(0x333333));
+                }
+            }
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                if (txtPlaca.getText().isBlank()) {
+                    txtPlaca.setText("Placa exata..."); txtPlaca.setForeground(Color.GRAY);
+                }
+            }
+        });
+        txtPlaca.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD0C9B8)),
+            BorderFactory.createEmptyBorder(4, 10, 4, 10)));
+
+        JButton btnBuscarPlaca = criarBotaoNavy("Buscar por placa", 145, 32);
+        btnBuscarPlaca.addActionListener(e -> buscarPorPlaca(txtPlaca.getText().trim()));
+
+        JPanel linha2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        linha2.setOpaque(false);
+        linha2.add(new JLabel("Data:") {{ setFont(MainFrame.FONT_NORMAL); setForeground(new Color(0x444444)); }});
+        linha2.add(txtData);
+        linha2.add(btnBuscarData);
+        linha2.add(Box.createHorizontalStrut(16));
+        linha2.add(new JLabel("Placa:") {{ setFont(MainFrame.FONT_NORMAL); setForeground(new Color(0x444444)); }});
+        linha2.add(txtPlaca);
+        linha2.add(btnBuscarPlaca);
+        // ── FIM DA LINHA 2 ──
+
+        JPanel barra = new JPanel(new BorderLayout(0, 8));
+        barra.setOpaque(false);
+        barra.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        barra.add(linha1, BorderLayout.NORTH);
+        barra.add(linha2, BorderLayout.SOUTH);
+        return barra;
     }
 
     private JScrollPane criarScrollTabela() {
@@ -255,7 +322,7 @@ public class PanelListaOS extends JPanel {
                 String veiculo = os.getPlacaVeiculo() != null
                     ? formatarPlaca(os.getPlacaVeiculo()) : "-";
                 String data    = os.getDataAbertura() != null
-                    ? os.getDataAbertura().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    ? os.getDataAbertura().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                     : "-";
                 String status  = os.getStatus() != null ? os.getStatus().name() : "-";
                 String valor   = os.getValorTotal() != null
@@ -270,85 +337,117 @@ public class PanelListaOS extends JPanel {
         }
     }
 
-    // ===================== NOVO: Gerar Resumo via Decorator =====================
+    // ===================== NOVO: busca binária por data (Template Method) =====================
 
     /**
-     * Monta a cadeia de decoradores para a OS selecionada na tabela e
-     * exibe o resultado em um JDialog com JTextArea.
+     * Ordena a FilaOS por data via OrdenadorPorData (Insertion Sort — Template Method)
+     * e aplica Busca Binária para encontrar a OS com a data informada.
      *
-     * Padrão de Projeto: Decorator
-     * Composição: ResumoOSBase → ResumoComServicosInternos → ResumoComPecas
+     * Complexidade: O(n log n) para ordenar + O(log n) para buscar.
      */
-    private void gerarResumoOS() {
-        int viewRow = tabela.getSelectedRow();
-        if (viewRow < 0) {
+    private void buscarPorData(String textoData) {
+        if (textoData.isBlank() || "dd/mm/aaaa".equals(textoData)) {
             JOptionPane.showMessageDialog(this,
-                "Selecione uma OS na tabela antes de gerar o resumo.",
-                "Nenhuma OS selecionada", JOptionPane.WARNING_MESSAGE);
+                "Informe uma data no formato dd/mm/aaaa.",
+                "Campo vazio", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        int modelRow = tabela.convertRowIndexToModel(viewRow);
-        if (osAtuais == null || modelRow >= osAtuais.size()) return;
-
-        OrdemServicoModel os = osAtuais.get(modelRow);
+        LocalDate data;
+        try {
+            data = LocalDate.parse(textoData, FMT_DATA);
+        } catch (DateTimeParseException ex) {
+            JOptionPane.showMessageDialog(this,
+                "Data inválida. Use o formato dd/mm/aaaa.",
+                "Formato inválido", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
         try {
-            IItemPedidoPecaRepository repoPeca =
-                ContextoAplicacao.getBean(IItemPedidoPecaRepository.class);
-            IItemServicoInternoRepository repoServico =
-                ContextoAplicacao.getBean(IItemServicoInternoRepository.class);
+            OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
 
-            // Padrão Decorator: composição da cadeia de resumo
-            IResumoOS resumo = new ResumoOSBase(os);
-            resumo = new ResumoComServicosInternos(resumo, os, repoServico);
-            resumo = new ResumoComPecas(resumo, os, repoPeca);
+            // Template Method: OrdenadorPorData implementa comparar() com critério de data;
+            // o algoritmo de Insertion Sort fica em OrdenadorOS.ordenar() — classe pai.
+            OrdenadorPorData ordenador = new OrdenadorPorData();
+            List<OrdemServicoModel> ordenadas = ordenador.ordenar(controller.getFilaEspera());
 
-            String texto = resumo.gerar();
+            // Busca Binária — só funciona porque a lista já está ordenada por data
+            OrdemServicoModel resultado = ordenador.buscarBinariaPorData(ordenadas, data);
 
-            // Exibe o resultado em um JDialog com JTextArea
-            JTextArea area = new JTextArea(texto);
-            area.setFont(new Font("Monospaced", Font.PLAIN, 12));
-            area.setEditable(false);
-            area.setBackground(new Color(0xF5F0E6));
-            area.setBorder(new EmptyBorder(12, 14, 12, 14));
-
-            JScrollPane scroll = new JScrollPane(area);
-            scroll.setPreferredSize(new Dimension(480, 340));
-            scroll.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER));
-
-            JButton btnFechar = criarBotaoNavy("Fechar", 100, 34);
-
-            JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-            rodape.setOpaque(false);
-            rodape.add(btnFechar);
-
-            JPanel conteudo = new JPanel(new BorderLayout(0, 12));
-            conteudo.setBackground(MainFrame.COR_CREAM);
-            conteudo.setBorder(new EmptyBorder(16, 16, 16, 16));
-            conteudo.add(scroll, BorderLayout.CENTER);
-            conteudo.add(rodape, BorderLayout.SOUTH);
-
-            JDialog dialog = new JDialog(
-                SwingUtilities.getWindowAncestor(this),
-                "Resumo da OS #" + String.format("%04d", os.getId()),
-                java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-            dialog.setSize(520, 420);
-            dialog.setLocationRelativeTo(this);
-            dialog.setResizable(false);
-            dialog.add(conteudo);
-
-            btnFechar.addActionListener(ev -> dialog.dispose());
-            dialog.setVisible(true);
-
+            if (resultado == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Nenhuma OS encontrada com abertura em " + textoData + ".",
+                    "Não encontrado", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                String msg = String.format(
+                    "OS encontrada (Busca Binária):%n%n" +
+                    "Nº OS:    #%04d%n" +
+                    "Status:   %s%n" +
+                    "Veículo:  %s%n" +
+                    "Abertura: %s%n" +
+                    "Total:    %s",
+                    resultado.getId(),
+                    resultado.getStatus() != null ? resultado.getStatus().name() : "-",
+                    resultado.getPlacaVeiculo() != null ? formatarPlaca(resultado.getPlacaVeiculo()) : "-",
+                    resultado.getDataAbertura() != null ? resultado.getDataAbertura().format(FMT_DATA) : "-",
+                    resultado.getValorTotal() != null ? FMT_MOEDA.format(resultado.getValorTotal()) : "-"
+                );
+                JOptionPane.showMessageDialog(this, msg, "Resultado", JOptionPane.INFORMATION_MESSAGE);
+            }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
-                "Erro ao gerar resumo: " + ex.getMessage(),
+                "Erro na busca por data: " + ex.getMessage(),
                 "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // ===================== FIM DO BLOCO NOVO =====================
+    // ===================== NOVO: busca por placa exata (TabelaHashOS) =====================
+
+    /**
+     * Consulta a TabelaHashOS via controller em O(1) pela placa informada.
+     */
+    private void buscarPorPlaca(String placa) {
+        if (placa.isBlank() || "Placa exata...".equals(placa)) {
+            JOptionPane.showMessageDialog(this,
+                "Informe a placa exata para busca.",
+                "Campo vazio", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
+
+            // TabelaHashOS — acesso O(1) pela placa normalizada
+            OrdemServicoModel resultado = controller.buscarPorPlacaExata(placa);
+
+            if (resultado == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Nenhuma OS encontrada para a placa \"" + placa.toUpperCase() + "\".",
+                    "Não encontrado", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                String msg = String.format(
+                    "OS encontrada (Tabela Hash — O(1)):%n%n" +
+                    "Nº OS:    #%04d%n" +
+                    "Status:   %s%n" +
+                    "Veículo:  %s%n" +
+                    "Abertura: %s%n" +
+                    "Total:    %s",
+                    resultado.getId(),
+                    resultado.getStatus() != null ? resultado.getStatus().name() : "-",
+                    resultado.getPlacaVeiculo() != null ? formatarPlaca(resultado.getPlacaVeiculo()) : "-",
+                    resultado.getDataAbertura() != null ? resultado.getDataAbertura().format(FMT_DATA) : "-",
+                    resultado.getValorTotal() != null ? FMT_MOEDA.format(resultado.getValorTotal()) : "-"
+                );
+                JOptionPane.showMessageDialog(this, msg, "Resultado", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Erro na busca por placa: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // ===================== FIM DOS BLOCOS NOVOS =====================
 
     private static String formatarPlaca(String placa) {
         if (placa == null || placa.length() < 7) return placa != null ? placa : "—";
