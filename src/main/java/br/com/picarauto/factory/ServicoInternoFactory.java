@@ -17,6 +17,6 @@ public class ServicoInternoFactory implements IServicoItemFactory {
 
     @Override
     public IItemServicoOS criar() {
-        return new ItemServicoInternoModel();
+            return new ItemServicoInternoModel();
     }
 }
