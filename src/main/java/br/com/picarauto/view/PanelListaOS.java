@@ -187,14 +187,59 @@ public class PanelListaOS extends JPanel {
         linha1.add(txtBusca, BorderLayout.CENTER);
         linha1.add(direita, BorderLayout.EAST);
 
-        // ── NOVO: Linha 2 — busca por data (Template Method) e por placa (TabelaHashOS) ──
+        // ── Linha 2 — busca por data e por placa ──
         JTextField txtData = new JTextField();
         txtData.setPreferredSize(new Dimension(130, 32));
         txtData.setFont(MainFrame.FONT_NORMAL);
         txtData.setBackground(Color.WHITE);
-        txtData.setToolTipText("dd/mm/aaaa");
-        txtData.setText("dd/mm/aaaa");
+        txtData.setToolTipText("dd/mm/aaaa — apenas números");
         txtData.setForeground(Color.GRAY);
+        txtData.setText("dd/mm/aaaa");
+        // DocumentFilter: só aceita dígitos, insere barras automaticamente
+        // dd -> dd/ -> dd/mm -> dd/mm/ -> dd/mm/aaaa (máx 10 chars com barras)
+        ((javax.swing.text.AbstractDocument) txtData.getDocument())
+            .setDocumentFilter(new javax.swing.text.DocumentFilter() {
+                @Override
+                public void replace(FilterBypass fb, int off, int len,
+                        String ins, javax.swing.text.AttributeSet a)
+                        throws javax.swing.text.BadLocationException {
+                    // Placeholder: limpa ao começar a digitar
+                    String atual = fb.getDocument().getText(0, fb.getDocument().getLength());
+                    if ("dd/mm/aaaa".equals(atual)) {
+                        fb.remove(0, atual.length());
+                        atual = "";
+                        off = 0; len = 0;
+                    }
+                    if (ins == null) ins = "";
+                    // Extrai só dígitos do que já tem + do que está sendo inserido
+                    String digits = (atual + ins).replaceAll("\\D", "");
+                    if (digits.length() > 8) digits = digits.substring(0, 8);
+                    // Reconstrói com barras progressivamente
+                    String novo = "";
+                    for (int i = 0; i < digits.length(); i++) {
+                        if (i == 2 || i == 4) novo += "/";
+                        novo += digits.charAt(i);
+                    }
+                    fb.replace(0, fb.getDocument().getLength(), novo, a);
+                    txtData.setForeground(novo.isEmpty() ? Color.GRAY : new Color(0x333333));
+                }
+                @Override
+                public void remove(FilterBypass fb, int off, int len)
+                        throws javax.swing.text.BadLocationException {
+                    String atual = fb.getDocument().getText(0, fb.getDocument().getLength());
+                    if ("dd/mm/aaaa".equals(atual)) return;
+                    // Remove dígito: pega dígitos atuais sem o último e reconstrói
+                    String digits = atual.replaceAll("\\D", "");
+                    if (!digits.isEmpty()) digits = digits.substring(0, digits.length() - 1);
+                    String novo = "";
+                    for (int i = 0; i < digits.length(); i++) {
+                        if (i == 2 || i == 4) novo += "/";
+                        novo += digits.charAt(i);
+                    }
+                    fb.replace(0, fb.getDocument().getLength(), novo, null);
+                    if (novo.isEmpty()) txtData.setForeground(Color.GRAY);
+                }
+            });
         txtData.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override public void focusGained(java.awt.event.FocusEvent e) {
                 if ("dd/mm/aaaa".equals(txtData.getText())) {
@@ -218,9 +263,45 @@ public class PanelListaOS extends JPanel {
         txtPlaca.setPreferredSize(new Dimension(120, 32));
         txtPlaca.setFont(MainFrame.FONT_NORMAL);
         txtPlaca.setBackground(Color.WHITE);
-        txtPlaca.setToolTipText("Placa exata (ex: ABC1D23)");
-        txtPlaca.setText("Placa exata...");
+        txtPlaca.setToolTipText("Ex: ABC-1234 ou ABC-1D23");
         txtPlaca.setForeground(Color.GRAY);
+        txtPlaca.setText("Placa exata...");
+        // DocumentFilter: uppercase, só alfanumérico, traço automático após 3ª letra
+        // Suporta padrão cinza ABC-1234 e Mercosul ABC-1D23 (máx 8 chars com traço)
+        ((javax.swing.text.AbstractDocument) txtPlaca.getDocument())
+            .setDocumentFilter(new javax.swing.text.DocumentFilter() {
+                @Override
+                public void replace(FilterBypass fb, int off, int len,
+                        String ins, javax.swing.text.AttributeSet a)
+                        throws javax.swing.text.BadLocationException {
+                    String atual = fb.getDocument().getText(0, fb.getDocument().getLength());
+                    if ("Placa exata...".equals(atual)) {
+                        fb.remove(0, atual.length());
+                        off = 0; len = 0;
+                    }
+                    if (ins == null) ins = "";
+                    String chars = (atual.replace("-", "") + ins.toUpperCase()).replaceAll("[^A-Z0-9]", "");
+                    if (chars.length() > 7) chars = chars.substring(0, 7);
+                    String novo = chars.length() > 3
+                        ? chars.substring(0, 3) + "-" + chars.substring(3)
+                        : chars;
+                    fb.replace(0, fb.getDocument().getLength(), novo, a);
+                    txtPlaca.setForeground(novo.isEmpty() ? Color.GRAY : new Color(0x333333));
+                }
+                @Override
+                public void remove(FilterBypass fb, int off, int len)
+                        throws javax.swing.text.BadLocationException {
+                    String atual = fb.getDocument().getText(0, fb.getDocument().getLength());
+                    if ("Placa exata...".equals(atual)) return;
+                    String chars = atual.replace("-", "");
+                    if (!chars.isEmpty()) chars = chars.substring(0, chars.length() - 1);
+                    String novo = chars.length() > 3
+                        ? chars.substring(0, 3) + "-" + chars.substring(3)
+                        : chars;
+                    fb.replace(0, fb.getDocument().getLength(), novo, null);
+                    if (novo.isEmpty()) txtPlaca.setForeground(Color.GRAY);
+                }
+            });
         txtPlaca.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override public void focusGained(java.awt.event.FocusEvent e) {
                 if ("Placa exata...".equals(txtPlaca.getText())) {
@@ -240,6 +321,9 @@ public class PanelListaOS extends JPanel {
         JButton btnBuscarPlaca = criarBotaoNavy("Buscar por placa", 145, 32);
         btnBuscarPlaca.addActionListener(e -> buscarPorPlaca(txtPlaca.getText().trim()));
 
+        JButton btnLimpar = criarBotaoNavy("Limpar filtro", 120, 32);
+        btnLimpar.addActionListener(e -> carregarOS());
+
         JPanel linha2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         linha2.setOpaque(false);
         linha2.add(new JLabel("Data:") {{ setFont(MainFrame.FONT_NORMAL); setForeground(new Color(0x444444)); }});
@@ -249,6 +333,8 @@ public class PanelListaOS extends JPanel {
         linha2.add(new JLabel("Placa:") {{ setFont(MainFrame.FONT_NORMAL); setForeground(new Color(0x444444)); }});
         linha2.add(txtPlaca);
         linha2.add(btnBuscarPlaca);
+        linha2.add(Box.createHorizontalStrut(16));
+        linha2.add(btnLimpar);
         // ── FIM DA LINHA 2 ──
 
         JPanel barra = new JPanel(new BorderLayout(0, 8));
@@ -298,8 +384,8 @@ public class PanelListaOS extends JPanel {
                 if (viewRow < 0 || viewCol != 6) return;
                 int modelRow = tabela.convertRowIndexToModel(viewRow);
                 if (osAtuais == null || modelRow >= osAtuais.size()) return;
-                OrdemServicoModel osSelecionada = osAtuais.get(modelRow);
-                frame.mostrarTela(MainFrame.TELA_COMPOSICAO);
+                OrdemServicoModel os = osAtuais.get(modelRow);
+                mostrarResumoOS(os);
             }
         });
 
@@ -307,6 +393,107 @@ public class PanelListaOS extends JPanel {
         scroll.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER, 1));
         scroll.getViewport().setBackground(Color.WHITE);
         return scroll;
+    }
+
+    /**
+     * Exibe um resumo da OS selecionada num painel estilizado dentro de um JDialog.
+     */
+    private void mostrarResumoOS(OrdemServicoModel os) {
+        // ── Monta os dados ──────────────────────────────────────────────────
+        String numOS    = "#" + String.format("%04d", os.getId());
+        String cliente  = os.getNomeCliente()  != null ? capitalizarNome(os.getNomeCliente()) : "—";
+        String placa    = os.getPlacaVeiculo() != null ? formatarPlaca(os.getPlacaVeiculo())  : "—";
+        String data     = os.getDataAbertura() != null
+            ? os.getDataAbertura().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "—";
+        String statusRaw = os.getStatus() != null ? os.getStatus().name() : "—";
+        String statusLabel = switch (statusRaw) {
+            case "ORCAMENTO"  -> "Orçamento";
+            case "EXECUCAO"   -> "Execução";
+            case "PAGAMENTO"  -> "Pagamento";
+            case "FINALIZADO" -> "Finalizado";
+            default           -> statusRaw;
+        };
+        String valor    = os.getValorTotal() != null ? FMT_MOEDA.format(os.getValorTotal()) : "R$ 0,00";
+        String obs      = (os.getObservacoes() != null && !os.getObservacoes().isBlank())
+            ? os.getObservacoes() : "Sem observações.";
+
+        // ── Painel de resumo ────────────────────────────────────────────────
+        JPanel painel = new JPanel();
+        painel.setLayout(new BoxLayout(painel, BoxLayout.Y_AXIS));
+        painel.setBackground(Color.WHITE);
+        painel.setBorder(BorderFactory.createEmptyBorder(16, 24, 16, 24));
+
+        // Cabeçalho azul com nº da OS
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(MainFrame.COR_NAVY);
+        header.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
+        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        JLabel lblNum = new JLabel("Ordem de Serviço  " + numOS);
+        lblNum.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblNum.setForeground(Color.WHITE);
+        JLabel lblStatus = new JLabel(statusLabel);
+        lblStatus.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblStatus.setForeground(MainFrame.COR_GOLD);
+        header.add(lblNum,    BorderLayout.WEST);
+        header.add(lblStatus, BorderLayout.EAST);
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
+        painel.add(header);
+        painel.add(Box.createVerticalStrut(14));
+
+        // Grid de campos
+        String[][] campos = {
+            {"Cliente",        cliente},
+            {"Placa",          placa},
+            {"Data abertura",  data},
+            {"Valor total",    valor},
+        };
+        JPanel grid = new JPanel(new java.awt.GridLayout(campos.length, 2, 8, 8));
+        grid.setBackground(Color.WHITE);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        for (String[] par : campos) {
+            JLabel rotulo = new JLabel(par[0] + ":");
+            rotulo.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            rotulo.setForeground(new Color(0x555555));
+            JLabel valor2 = new JLabel(par[1]);
+            valor2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            valor2.setForeground(MainFrame.COR_NAVY);
+            grid.add(rotulo);
+            grid.add(valor2);
+        }
+        painel.add(grid);
+        painel.add(Box.createVerticalStrut(12));
+
+        // Observações
+        JLabel lblObsRotulo = new JLabel("Observações:");
+        lblObsRotulo.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblObsRotulo.setForeground(new Color(0x555555));
+        lblObsRotulo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        painel.add(lblObsRotulo);
+        painel.add(Box.createVerticalStrut(4));
+
+        JTextArea areaObs = new JTextArea(obs);
+        areaObs.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        areaObs.setForeground(new Color(0x333333));
+        areaObs.setBackground(new Color(0xF5F0E6));
+        areaObs.setEditable(false);
+        areaObs.setLineWrap(true);
+        areaObs.setWrapStyleWord(true);
+        areaObs.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+        areaObs.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JScrollPane scrollObs = new JScrollPane(areaObs);
+        scrollObs.setBorder(BorderFactory.createLineBorder(MainFrame.COR_BORDER));
+        scrollObs.setPreferredSize(new Dimension(420, 70));
+        scrollObs.setAlignmentX(Component.LEFT_ALIGNMENT);
+        painel.add(scrollObs);
+
+        // ── Exibe o dialog ──────────────────────────────────────────────────
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Resumo da OS", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setContentPane(painel);
+        dialog.pack();
+        dialog.setMinimumSize(new Dimension(480, 0));
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+        dialog.setVisible(true);
     }
 
     public void carregarOS() {
@@ -328,7 +515,7 @@ public class PanelListaOS extends JPanel {
                 String valor   = os.getValorTotal() != null
                     ? FMT_MOEDA.format(os.getValorTotal())
                     : "-";
-                modelo.addRow(new Object[]{ numOS, cliente, veiculo, data, status, valor });
+                modelo.addRow(new Object[]{ numOS, cliente, veiculo, data, status, valor, "" });
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
@@ -337,13 +524,20 @@ public class PanelListaOS extends JPanel {
         }
     }
 
-    // ===================== NOVO: busca binária por data (Template Method) =====================
+    // ===================== Busca por data — exibe TODAS as OS da data na tabela =====================
 
     /**
-     * Ordena a FilaOS por data via OrdenadorPorData (Insertion Sort — Template Method)
-     * e aplica Busca Binária para encontrar a OS com a data informada.
+     * Ordena a FilaOS por data via OrdenadorPorData (Template Method) e usa Busca Binária
+     * para localizar a primeira OS; depois varre as adjacentes para pegar TODAS da mesma data.
      *
-     * Complexidade: O(n log n) para ordenar + O(log n) para buscar.
+     * Complexidade: O(n log n) ordenar + O(log n) localizar + O(k) coletar k resultados.
+     */
+    // ===================== Busca por data — exibe TODAS as OS da data na tabela =====================
+
+    /**
+     * Ordena a FilaOS por data via OrdenadorPorData (Template Method) e usa Busca Binária
+     * para localizar a primeira OS; depois coleta todas com a mesma data.
+     * Exibe os resultados diretamente na tabela.
      */
     private void buscarPorData(String textoData) {
         if (textoData.isBlank() || "dd/mm/aaaa".equals(textoData)) {
@@ -365,35 +559,17 @@ public class PanelListaOS extends JPanel {
 
         try {
             OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
+            List<OrdemServicoModel> resultados = controller.buscarTodasPorData(data);
 
-            // Template Method: OrdenadorPorData implementa comparar() com critério de data;
-            // o algoritmo de Insertion Sort fica em OrdenadorOS.ordenar() — classe pai.
-            OrdenadorPorData ordenador = new OrdenadorPorData();
-            List<OrdemServicoModel> ordenadas = ordenador.ordenar(controller.getFilaEspera());
-
-            // Busca Binária — só funciona porque a lista já está ordenada por data
-            OrdemServicoModel resultado = ordenador.buscarBinariaPorData(ordenadas, data);
-
-            if (resultado == null) {
+            if (resultados.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
                     "Nenhuma OS encontrada com abertura em " + textoData + ".",
                     "Não encontrado", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                String msg = String.format(
-                    "OS encontrada (Busca Binária):%n%n" +
-                    "Nº OS:    #%04d%n" +
-                    "Status:   %s%n" +
-                    "Veículo:  %s%n" +
-                    "Abertura: %s%n" +
-                    "Total:    %s",
-                    resultado.getId(),
-                    resultado.getStatus() != null ? resultado.getStatus().name() : "-",
-                    resultado.getPlacaVeiculo() != null ? formatarPlaca(resultado.getPlacaVeiculo()) : "-",
-                    resultado.getDataAbertura() != null ? resultado.getDataAbertura().format(FMT_DATA) : "-",
-                    resultado.getValorTotal() != null ? FMT_MOEDA.format(resultado.getValorTotal()) : "-"
-                );
-                JOptionPane.showMessageDialog(this, msg, "Resultado", JOptionPane.INFORMATION_MESSAGE);
+                return;
             }
+
+            exibirResultadosNaTabela(resultados);
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                 "Erro na busca por data: " + ex.getMessage(),
@@ -401,10 +577,10 @@ public class PanelListaOS extends JPanel {
         }
     }
 
-    // ===================== NOVO: busca por placa exata (TabelaHashOS) =====================
+    // ===================== Busca por placa — exibe TODAS as OS da placa na tabela =====================
 
     /**
-     * Consulta a TabelaHashOS via controller em O(1) pela placa informada.
+     * Busca todas as OS de uma placa percorrendo a FilaOS e exibe na tabela.
      */
     private void buscarPorPlaca(String placa) {
         if (placa.isBlank() || "Placa exata...".equals(placa)) {
@@ -416,30 +592,17 @@ public class PanelListaOS extends JPanel {
 
         try {
             OrdemServicoController controller = ContextoAplicacao.getBean(OrdemServicoController.class);
+            List<OrdemServicoModel> resultados = controller.buscarTodasPorPlaca(placa);
 
-            // TabelaHashOS — acesso O(1) pela placa normalizada
-            OrdemServicoModel resultado = controller.buscarPorPlacaExata(placa);
-
-            if (resultado == null) {
+            if (resultados.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
-                    "Nenhuma OS encontrada para a placa \"" + placa.toUpperCase() + "\".",
+                    "Nenhuma OS encontrada para a placa \"" + placa.toUpperCase().replace("-", "") + "\".",
                     "Não encontrado", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                String msg = String.format(
-                    "OS encontrada (Tabela Hash — O(1)):%n%n" +
-                    "Nº OS:    #%04d%n" +
-                    "Status:   %s%n" +
-                    "Veículo:  %s%n" +
-                    "Abertura: %s%n" +
-                    "Total:    %s",
-                    resultado.getId(),
-                    resultado.getStatus() != null ? resultado.getStatus().name() : "-",
-                    resultado.getPlacaVeiculo() != null ? formatarPlaca(resultado.getPlacaVeiculo()) : "-",
-                    resultado.getDataAbertura() != null ? resultado.getDataAbertura().format(FMT_DATA) : "-",
-                    resultado.getValorTotal() != null ? FMT_MOEDA.format(resultado.getValorTotal()) : "-"
-                );
-                JOptionPane.showMessageDialog(this, msg, "Resultado", JOptionPane.INFORMATION_MESSAGE);
+                return;
             }
+
+            exibirResultadosNaTabela(resultados);
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                 "Erro na busca por placa: " + ex.getMessage(),
@@ -447,7 +610,33 @@ public class PanelListaOS extends JPanel {
         }
     }
 
-    // ===================== FIM DOS BLOCOS NOVOS =====================
+    /**
+     * Substitui o conteúdo da tabela pelos resultados de busca.
+     * Reutiliza o mesmo pipeline de formatação de carregarOS().
+     */
+    private void exibirResultadosNaTabela(List<OrdemServicoModel> resultados) {
+        osAtuais = resultados;
+        modelo.setRowCount(0);
+        for (OrdemServicoModel os : resultados) {
+            String numOS   = "#" + String.format("%04d", os.getId());
+            String cliente = os.getNomeCliente() != null
+                ? capitalizarNome(os.getNomeCliente()) : "-";
+            String veiculo = os.getPlacaVeiculo() != null
+                ? formatarPlaca(os.getPlacaVeiculo()) : "-";
+            String dataStr = os.getDataAbertura() != null
+                ? os.getDataAbertura().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-";
+            String status  = os.getStatus() != null ? os.getStatus().name() : "-";
+            String valor   = os.getValorTotal() != null
+                ? FMT_MOEDA.format(os.getValorTotal()) : "-";
+            modelo.addRow(new Object[]{ numOS, cliente, veiculo, dataStr, status, valor, "" });
+        }
+        // Repinta a tabela imediatamente
+        tabela.revalidate();
+        tabela.repaint();
+    }
+
+    // ===================== FIM DOS BLOCOS =====================
+
 
     private static String formatarPlaca(String placa) {
         if (placa == null || placa.length() < 7) return placa != null ? placa : "—";
