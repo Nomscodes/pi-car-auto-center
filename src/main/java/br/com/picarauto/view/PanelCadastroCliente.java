@@ -163,6 +163,7 @@ public class PanelCadastroCliente extends JPanel {
             }
         });
 
+        // BOTÃO TELA CADASTRO CLIENTE DE ABRIR DIALOG NOVO CLIENTE
         JButton btnNovo = criarBotaoNavy("Novo cliente", 130, 34);
         // Abre o dialog diretamente — sem navegar para lugar nenhum
         btnNovo.addActionListener(e -> abrirFormCliente(null));
@@ -365,7 +366,9 @@ public class PanelCadastroCliente extends JPanel {
             ((CardLayout) camposCard.getLayout()).show(camposCard, "PJ");
 
         // ── Toggle PF/PJ ──────────────────────────────────────────────────────
+        // BOTÃO DIALOG CADASTRO CLIENTE DE SELECIONAR TIPO PESSOA FÍSICA
         JButton btnPF = criarBotaoToggle("Pessoa Física",   modoEmpresa);
+        // BOTÃO DIALOG CADASTRO CLIENTE DE SELECIONAR TIPO PESSOA JURÍDICA
         JButton btnPJ = criarBotaoToggle("Pessoa Jurídica", modoEmpresa);
 
         btnPF.addActionListener(e -> {
@@ -394,6 +397,7 @@ public class PanelCadastroCliente extends JPanel {
 
         // Botão excluir — soft delete (seta ativo = false), só na edição
         if (editando) {
+            // BOTÃO DIALOG CADASTRO CLIENTE DE EXCLUIR CLIENTE
             JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
             btnExcluir.setForeground(new Color(0xCC2222));
             btnExcluir.addActionListener(e -> {
@@ -417,9 +421,11 @@ public class PanelCadastroCliente extends JPanel {
             rodape.add(btnExcluir);
         }
 
+        // BOTÃO DIALOG CADASTRO CLIENTE DE CANCELAR
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
+        // BOTÃO DIALOG CADASTRO CLIENTE DE SALVAR CLIENTE NO BANCO
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             try {

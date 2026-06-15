@@ -149,6 +149,7 @@ public class PanelListaClientes extends JPanel {
             @Override public void changedUpdate(DocumentEvent e) { aplicarFiltros(); }
         });
 
+        // BOTÃO TELA LISTA CLIENTES DE ABRIR CADASTRO DE NOVO CLIENTE
         JButton btnNovo = criarBotaoNavy("Novo cliente", 120, 34);
         // Navega para a tela de cadastro de cliente em vez de abrir o dialog local
         // (o dialog não tem todos os campos obrigatórios para salvar no banco)
@@ -393,7 +394,9 @@ public class PanelListaClientes extends JPanel {
         camposCard.add(gridPF, "PF");
         camposCard.add(gridPJ, "PJ");
 
+        // BOTÃO DIALOG NOVO CLIENTE DE SELECIONAR TIPO PESSOA FÍSICA
         JButton btnPF = criarBotaoToggleDlg("Pessoa Física",   modoEmpresa);
+        // BOTÃO DIALOG NOVO CLIENTE DE SELECIONAR TIPO PESSOA JURÍDICA
         JButton btnPJ = criarBotaoToggleDlg("Pessoa Jurídica", modoEmpresa);
         btnPF.addActionListener(e -> { modoEmpresa[0] = false; ((CardLayout)camposCard.getLayout()).show(camposCard,"PF"); btnPF.repaint(); btnPJ.repaint(); });
         btnPJ.addActionListener(e -> { modoEmpresa[0] = true;  ((CardLayout)camposCard.getLayout()).show(camposCard,"PJ"); btnPF.repaint(); btnPJ.repaint(); });
@@ -404,9 +407,11 @@ public class PanelListaClientes extends JPanel {
         togglePanel.add(btnPF);
         togglePanel.add(btnPJ);
 
+        // BOTÃO DIALOG NOVO CLIENTE DE CANCELAR CADASTRO
         JButton btnCanc = criarBotaoOutlineDlg("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
+        // BOTÃO DIALOG NOVO CLIENTE DE SALVAR CLIENTE NO BANCO
         JButton btnSalv = criarBotaoGoldDlg("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             if (!modoEmpresa[0]) {

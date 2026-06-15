@@ -149,6 +149,7 @@ public class PanelCadastroColaborador extends JPanel {
             @Override public void changedUpdate(DocumentEvent e) { aplicarFiltros(); }
         });
 
+        // BOTÃO TELA CADASTRO COLABORADOR DE ABRIR DIALOG NOVO COLABORADOR
         JButton btnNovo = criarBotaoNavy("Novo colaborador", 150, 34);
         btnNovo.addActionListener(e -> abrirFormColaborador(null));
 
@@ -364,6 +365,7 @@ public class PanelCadastroColaborador extends JPanel {
 
         // Botão excluir — só aparece na edição
         if (editando) {
+            // BOTÃO DIALOG CADASTRO COLABORADOR DE EXCLUIR COLABORADOR
             JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
             btnExcluir.setForeground(new Color(0xCC2222));
             btnExcluir.addActionListener(e -> {
@@ -386,9 +388,11 @@ public class PanelCadastroColaborador extends JPanel {
             rodape.add(btnExcluir);
         }
 
+        // BOTÃO DIALOG CADASTRO COLABORADOR DE CANCELAR
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
+        // BOTÃO DIALOG CADASTRO COLABORADOR DE SALVAR COLABORADOR NO BANCO
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             // Validação básica na view

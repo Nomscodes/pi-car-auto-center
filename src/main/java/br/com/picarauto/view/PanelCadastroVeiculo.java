@@ -69,6 +69,7 @@ public class PanelCadastroVeiculo extends JPanel {
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lbl.setForeground(Color.WHITE);
 
+        // BOTÃO TELA CADASTRO VEÍCULO DE VOLTAR PARA LISTA DE CLIENTES
         JButton btnVoltar = criarBotaoVoltar();
         btnVoltar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_CLIENTES));
 
@@ -323,9 +324,11 @@ public class PanelCadastroVeiculo extends JPanel {
         p.setOpaque(false);
         p.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // BOTÃO TELA CADASTRO VEÍCULO DE CANCELAR E VOLTAR PARA LISTA DE CLIENTES
         JButton btnCancelar = criarBotaoOutline("Cancelar", 110, 36);
         btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_CLIENTES));
 
+        // BOTÃO TELA CADASTRO VEÍCULO DE SALVAR VEÍCULO NO BANCO
         JButton btnSalvar = criarBotaoGold("Salvar veículo", 140, 36);
         btnSalvar.addActionListener(e -> salvarVeiculo());
 

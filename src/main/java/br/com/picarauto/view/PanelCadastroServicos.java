@@ -103,7 +103,9 @@ public class PanelCadastroServicos extends JPanel {
         abas.setOpaque(false);
         btnAbaInternos = criarBotaoAba("Internos");
         btnAbaExternos = criarBotaoAba("Externos");
+        // BOTÃO TELA CADASTRO SERVIÇOS DE ALTERNAR PARA ABA SERVIÇOS INTERNOS
         btnAbaInternos.addActionListener(e -> { abaInterno = true;  if (br.com.picarauto.util.ContextoAplicacao.isReady()) carregarServicos(); btnAbaInternos.repaint(); btnAbaExternos.repaint(); });
+        // BOTÃO TELA CADASTRO SERVIÇOS DE ALTERNAR PARA ABA SERVIÇOS EXTERNOS
         btnAbaExternos.addActionListener(e -> { abaInterno = false; if (br.com.picarauto.util.ContextoAplicacao.isReady()) carregarServicos(); btnAbaInternos.repaint(); btnAbaExternos.repaint(); });
         abas.add(btnAbaInternos); abas.add(btnAbaExternos);
 
@@ -133,6 +135,7 @@ public class PanelCadastroServicos extends JPanel {
             }
         });
 
+        // BOTÃO TELA CADASTRO SERVIÇOS DE ABRIR DIALOG NOVO SERVIÇO
         JButton btnNovo = criarBotaoNavy("Novo serviço", 130, 34);
         btnNovo.addActionListener(e -> abrirFormServico(null, null));
 
@@ -254,7 +257,9 @@ public class PanelCadastroServicos extends JPanel {
         dialog.setLocationRelativeTo(this);
 
         boolean[] modoExterno = { !isInterno };
+        // BOTÃO DIALOG NOVO SERVIÇO DE SELECIONAR TIPO INTERNO
         JButton btnInt = criarBotaoToggle("Interno", modoExterno);
+        // BOTÃO DIALOG NOVO SERVIÇO DE SELECIONAR TIPO EXTERNO
         JButton btnExt = criarBotaoToggle("Externo", modoExterno);
         btnInt.addActionListener(e -> { modoExterno[0] = false; btnInt.repaint(); btnExt.repaint(); });
         btnExt.addActionListener(e -> { modoExterno[0] = true;  btnInt.repaint(); btnExt.repaint(); });
@@ -292,6 +297,7 @@ public class PanelCadastroServicos extends JPanel {
         rodape.setOpaque(false); rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         if (editando) {
+            // BOTÃO DIALOG NOVO SERVIÇO DE EXCLUIR SERVIÇO
             JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
             btnExcluir.setForeground(new Color(0xCC2222));
             btnExcluir.addActionListener(e -> {
@@ -309,9 +315,11 @@ public class PanelCadastroServicos extends JPanel {
             rodape.add(btnExcluir);
         }
 
+        // BOTÃO DIALOG NOVO SERVIÇO DE CANCELAR
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
+        // BOTÃO DIALOG NOVO SERVIÇO DE SALVAR SERVIÇO NO BANCO
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             String desc = txtDescricao.getText().trim();

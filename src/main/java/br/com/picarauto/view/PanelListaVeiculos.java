@@ -151,6 +151,7 @@ public class PanelListaVeiculos extends JPanel {
             @Override public void changedUpdate(DocumentEvent e) { aplicarFiltros(); }
         });
 
+        // BOTÃO TELA LISTA VEÍCULOS DE NAVEGAR PARA SELEÇÃO DE MARCA
         JButton btnNovo = criarBotaoNavy("Novo veículo", 130, 34);
         btnNovo.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_MARCA));
 
@@ -384,6 +385,7 @@ public class PanelListaVeiculos extends JPanel {
         btnExcluir.setForeground(new Color(0xCC2222));
         btnExcluir.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnExcluir.setPreferredSize(new Dimension(100, 34));
+        // BOTÃO DIALOG LISTA VEÍCULOS DE EXCLUIR VEÍCULO
         btnExcluir.addActionListener(e -> {
             int conf = JOptionPane.showConfirmDialog(dialog,
                 "Deseja desativar o veículo " + formatarPlaca(veiculo.getPlaca()) + "?\n"
@@ -401,6 +403,7 @@ public class PanelListaVeiculos extends JPanel {
             }
         });
 
+        // BOTÃO DIALOG LISTA VEÍCULOS DE CANCELAR EDIÇÃO
         JButton btnCancelar = criarBotaoNavy("Cancelar", 100, 34);
         btnCancelar.addActionListener(e -> dialog.dispose());
 
@@ -422,6 +425,7 @@ public class PanelListaVeiculos extends JPanel {
         btnSalvar.setBorderPainted(false); btnSalvar.setFocusPainted(false);
         btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnSalvar.setPreferredSize(new Dimension(100, 34));
+        // BOTÃO DIALOG LISTA VEÍCULOS DE SALVAR ALTERAÇÕES DO VEÍCULO
         btnSalvar.addActionListener(e -> {
             String placa  = txtPlaca.getText().replace("-", "").toUpperCase().trim();
             String cor    = txtCor.getText().trim();
@@ -635,6 +639,7 @@ public class PanelListaVeiculos extends JPanel {
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 16, 10));
         footer.setBackground(MainFrame.COR_CREAM);
         footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, MainFrame.COR_BORDER));
+        // BOTÃO DIALOG HISTÓRICO VEÍCULO DE FECHAR DIALOG
         JButton btnFechar = criarBotaoNavy("Fechar", 100, 34);
         btnFechar.addActionListener(e -> dialog.dispose());
         footer.add(btnFechar);

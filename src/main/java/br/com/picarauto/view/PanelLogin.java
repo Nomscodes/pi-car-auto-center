@@ -237,6 +237,7 @@ public class PanelLogin extends JPanel {
         return p;
     }
 
+    // BOTÃO TELA LOGIN DE ENTRAR NO SISTEMA
     private JButton criarBotaoEntrar() {
         JButton btn = new JButton("Entrar →") {
             @Override protected void paintComponent(Graphics g) {

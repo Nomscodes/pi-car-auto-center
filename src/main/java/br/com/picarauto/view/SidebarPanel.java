@@ -89,6 +89,7 @@ public class SidebarPanel extends JPanel {
         adicionarUsuario();
     }
 
+    // BOTÃO SIDEBAR DE ABRIR NOVA OS
     private JButton criarBotaoNovaOS() {
         JButton btn = new JButton("+ Nova OS") {
             @Override protected void paintComponent(Graphics g) {
@@ -221,6 +222,7 @@ public class SidebarPanel extends JPanel {
         lblNomeUsuario.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblNomeUsuario.setForeground(new Color(0xaabbcc));
 
+        // BOTÃO SIDEBAR DE DESLOGAR USUÁRIO
         JButton btnDeslogar = criarMiniBotao("\u21a9", "Deslogar");
         btnDeslogar.addActionListener(e -> {
             frame.mostrarTela(MainFrame.TELA_SPLASH);
@@ -229,6 +231,7 @@ public class SidebarPanel extends JPanel {
             t.start();
         });
 
+        // BOTÃO SIDEBAR DE SAIR DO SISTEMA
         JButton btnSair = criarMiniBotao("\u2715", "Sair");
         btnSair.addActionListener(e -> {
             frame.mostrarTela(MainFrame.TELA_SPLASH);

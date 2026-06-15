@@ -128,6 +128,7 @@ public class PanelCadastroFornecedor extends JPanel {
             @Override public void changedUpdate(DocumentEvent e) { aplicarFiltros(); }
         });
 
+        // BOTÃO TELA CADASTRO FORNECEDOR DE ABRIR DIALOG NOVO FORNECEDOR
         JButton btnNovo = criarBotaoNavy("Novo fornecedor", 150, 34);
         btnNovo.addActionListener(e -> abrirFormFornecedor(null));
 
@@ -284,6 +285,7 @@ public class PanelCadastroFornecedor extends JPanel {
         rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         if (editando) {
+            // BOTÃO DIALOG CADASTRO FORNECEDOR DE EXCLUIR FORNECEDOR
             JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
             btnExcluir.setForeground(new Color(0xCC2222));
             btnExcluir.addActionListener(e -> {
@@ -305,9 +307,11 @@ public class PanelCadastroFornecedor extends JPanel {
             rodape.add(btnExcluir);
         }
 
+        // BOTÃO DIALOG CADASTRO FORNECEDOR DE CANCELAR
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
+        // BOTÃO DIALOG CADASTRO FORNECEDOR DE SALVAR FORNECEDOR NO BANCO
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             String razao    = txtRazao.getText().trim();

@@ -101,6 +101,7 @@ public class PanelComposicaoOS extends JPanel {
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lbl.setForeground(Color.WHITE);
 
+        // BOTÃO TELA COMPOSIÇÃO OS DE VOLTAR PARA LISTA DE OS
         JButton btnVoltar = criarBotaoVoltar();
         btnVoltar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_OS));
 
@@ -385,6 +386,7 @@ public class PanelComposicaoOS extends JPanel {
         scrollServ.setBorder(null);
         scrollServ.getViewport().setBackground(Color.WHITE);
 
+        // BOTÃO TELA COMPOSIÇÃO OS DE EXCLUIR SERVIÇO DA TABELA
         JButton btnExcluirServ = criarBotaoOutline("Excluir", 90, 32);
         btnExcluirServ.addActionListener(e -> {
             int row = tabelaServicos.getSelectedRow();
@@ -396,6 +398,7 @@ public class PanelComposicaoOS extends JPanel {
             recalcularTotal();
         });
 
+        // BOTÃO TELA COMPOSIÇÃO OS DE ADICIONAR SERVIÇO
         JButton btnAdd = criarBotaoNavy("+ Adicionar servi\u00e7o", 160, 32);
         btnAdd.addActionListener(e -> adicionarServico());
         toolbar.add(Box.createHorizontalGlue());
@@ -430,6 +433,7 @@ public class PanelComposicaoOS extends JPanel {
         toolbar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
         toolbar.setBorder(new EmptyBorder(8, 8, 8, 8));
 
+        // BOTÃO TELA COMPOSIÇÃO OS DE EXCLUIR PEÇA DA TABELA
         JButton btnExcluirPec = criarBotaoOutline("Excluir", 90, 32);
         btnExcluirPec.addActionListener(e -> {
             int row = tabelaPecas.getSelectedRow();
@@ -441,6 +445,7 @@ public class PanelComposicaoOS extends JPanel {
             recalcularTotal();
         });
 
+        // BOTÃO TELA COMPOSIÇÃO OS DE ADICIONAR PEÇA
         JButton btnAdd = criarBotaoNavy("+ Adicionar pe\u00e7a", 150, 32);
         btnAdd.addActionListener(e -> adicionarPeca());
         toolbar.add(Box.createHorizontalGlue());
@@ -495,9 +500,11 @@ public class PanelComposicaoOS extends JPanel {
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         btnPanel.setOpaque(false);
 
+        // BOTÃO TELA COMPOSIÇÃO OS DE CANCELAR E VOLTAR PARA LISTA DE OS
         JButton btnCancelar = criarBotaoOutline("Cancelar", 110, 38);
         btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_OS));
 
+        // BOTÃO TELA COMPOSIÇÃO OS DE VER RESUMO DA OS (Decorator)
         // Padrão Decorator — gera resumo da OS em camadas
         JButton btnResumo = criarBotaoNavy("Ver Resumo", 130, 38);
         btnResumo.addActionListener(e -> {
@@ -523,6 +530,7 @@ public class PanelComposicaoOS extends JPanel {
                 new JScrollPane(area), "Resumo da OS", JOptionPane.INFORMATION_MESSAGE);
         });
 
+        // BOTÃO TELA COMPOSIÇÃO OS DE SALVAR NOVA OS NO BANCO
         JButton btnSalvar = criarBotaoGold("Salvar OS", 140, 38);
         btnSalvar.addActionListener(e -> salvarOS());
 

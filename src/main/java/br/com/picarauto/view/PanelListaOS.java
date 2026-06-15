@@ -171,6 +171,7 @@ public class PanelListaOS extends JPanel {
             }
         });
 
+        // BOTÃO TELA LISTA OS DE CRIAR NOVA OS
         JButton btnNova = criarBotaoNavy("Nova OS", 110, 34);
         btnNova.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_COMPOSICAO));
 
@@ -208,6 +209,7 @@ public class PanelListaOS extends JPanel {
             BorderFactory.createLineBorder(new Color(0xD0C9B8)),
             BorderFactory.createEmptyBorder(4, 10, 4, 10)));
 
+        // BOTÃO TELA LISTA OS DE BUSCAR OS POR DATA
         JButton btnBuscarData = criarBotaoNavy("Buscar por data", 140, 32);
         btnBuscarData.addActionListener(e -> buscarPorData(txtData.getText().trim()));
 
@@ -234,6 +236,7 @@ public class PanelListaOS extends JPanel {
             BorderFactory.createLineBorder(new Color(0xD0C9B8)),
             BorderFactory.createEmptyBorder(4, 10, 4, 10)));
 
+        // BOTÃO TELA LISTA OS DE BUSCAR OS POR PLACA
         JButton btnBuscarPlaca = criarBotaoNavy("Buscar por placa", 145, 32);
         btnBuscarPlaca.addActionListener(e -> buscarPorPlaca(txtPlaca.getText().trim()));
 
@@ -529,7 +532,9 @@ public class PanelListaOS extends JPanel {
         form.add(txtValor);
 
         // Botões do dialog
+        // BOTÃO DIALOG EDITAR OS DE SALVAR ALTERAÇÕES
         JButton btnSalvar   = criarBotaoNavy("Salvar", 100, 34);
+        // BOTÃO DIALOG EDITAR OS DE CANCELAR EDIÇÃO
         JButton btnCancelar = criarBotaoOutline("Cancelar", 100, 34);
 
         JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));

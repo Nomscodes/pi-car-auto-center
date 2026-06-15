@@ -138,12 +138,14 @@ public class PanelMarcasModelos extends JPanel {
 
         btnAbaMarcas  = criarBotaoAba("Marcas");
         btnAbaModelos = criarBotaoAba("Modelos");
+        // BOTÃO TELA MARCAS MODELOS DE ALTERNAR PARA ABA MARCAS
         btnAbaMarcas.addActionListener(e -> {
             abaMarcas = true;
             recarregarTabela();
             if (cmbOrdenar != null) cmbOrdenar.setSelectedIndex(0);
             btnAbaMarcas.repaint(); btnAbaModelos.repaint();
         });
+        // BOTÃO TELA MARCAS MODELOS DE ALTERNAR PARA ABA MODELOS
         btnAbaModelos.addActionListener(e -> {
             abaMarcas = false;
             recarregarTabela();
@@ -181,7 +183,9 @@ public class PanelMarcasModelos extends JPanel {
             @Override public void changedUpdate(DocumentEvent e) { aplicarFiltros(); }
         });
 
+        // BOTÃO TELA MARCAS MODELOS DE ABRIR DIALOG NOVA MARCA
         JButton btnNovaMarca  = criarBotaoNavy("Nova marca",  120, 34);
+        // BOTÃO TELA MARCAS MODELOS DE ABRIR DIALOG NOVO MODELO
         JButton btnNovoModelo = criarBotaoNavy("Novo modelo", 130, 34);
         btnNovaMarca.addActionListener(e -> abrirFormNovaMarca());
         btnNovoModelo.addActionListener(e -> abrirFormNovoModelo());
@@ -374,9 +378,11 @@ public class PanelMarcasModelos extends JPanel {
         grid.add(criarGrupo("Nome da marca", txtNome));
         grid.add(criarGrupo("Sigla (ex.: GM)", txtSigla));
 
+        // BOTÃO DIALOG NOVA MARCA DE CANCELAR
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
+        // BOTÃO DIALOG NOVA MARCA DE SALVAR MARCA NO BANCO
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             String nome = txtNome.getText().trim();
@@ -505,9 +511,11 @@ public class PanelMarcasModelos extends JPanel {
         gridBot.add(criarGrupo("Ano do modelo * (ex: " + anoMax + ")", txtAno));
         gridBot.add(new JPanel() {{ setOpaque(false); }});
 
+        // BOTÃO DIALOG NOVO MODELO DE CANCELAR
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
+        // BOTÃO DIALOG NOVO MODELO DE SALVAR MODELO NO BANCO
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             String nome   = txtNome.getText().trim();
@@ -610,6 +618,7 @@ public class PanelMarcasModelos extends JPanel {
         grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         grid.add(criarGrupo("Nome da marca *", txtNome));
 
+        // BOTÃO DIALOG EDITAR MARCA DE EXCLUIR MARCA
         JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
         btnExcluir.setForeground(new Color(0xCC3333));
         btnExcluir.addActionListener(e -> {
@@ -629,9 +638,11 @@ public class PanelMarcasModelos extends JPanel {
             }
         });
 
+        // BOTÃO DIALOG EDITAR MARCA DE CANCELAR
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
+        // BOTÃO DIALOG EDITAR MARCA DE SALVAR MARCA NO BANCO
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             String nome = txtNome.getText().trim();
@@ -744,6 +755,7 @@ public class PanelMarcasModelos extends JPanel {
         gridBot.add(criarGrupo("Ano do modelo * (ex: " + anoMax + ")", txtAno));
         gridBot.add(new JPanel() {{ setOpaque(false); }});
 
+        // BOTÃO DIALOG EDITAR MODELO DE EXCLUIR MODELO
         JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
         btnExcluir.setForeground(new Color(0xCC3333));
         btnExcluir.addActionListener(e -> {
@@ -763,9 +775,11 @@ public class PanelMarcasModelos extends JPanel {
             }
         });
 
+        // BOTÃO DIALOG NOVO MODELO DE CANCELAR
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
+        // BOTÃO DIALOG NOVO MODELO DE SALVAR MODELO NO BANCO
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             String nome   = txtNome.getText().trim();

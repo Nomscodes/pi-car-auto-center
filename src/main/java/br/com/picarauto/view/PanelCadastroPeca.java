@@ -136,9 +136,11 @@ public class PanelCadastroPeca extends JPanel {
             @Override public void changedUpdate(DocumentEvent e) { aplicarFiltros(); }
         });
 
+        // BOTÃO TELA CADASTRO PEÇA DE ABRIR DIALOG NOVA PEÇA
         JButton btnNovaPeca = criarBotaoNavy("Nova peça", 110, 34);
         btnNovaPeca.addActionListener(e -> abrirFormPeca(null));
 
+        // BOTÃO TELA CADASTRO PEÇA DE IMPORTAR PEÇAS VIA EXCEL (Adapter)
         JButton btnImportar = criarBotaoOutline("Importar Excel", 130, 34);
         btnImportar.addActionListener(e -> importarExcel());
 
@@ -330,6 +332,7 @@ public class PanelCadastroPeca extends JPanel {
         rodape.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         if (editando) {
+            // BOTÃO DIALOG CADASTRO PEÇA DE EXCLUIR PEÇA
             JButton btnExcluir = criarBotaoOutline("Excluir", 100, 34);
             btnExcluir.setForeground(new Color(0xCC2222));
             btnExcluir.addActionListener(e -> {
@@ -347,9 +350,11 @@ public class PanelCadastroPeca extends JPanel {
             rodape.add(btnExcluir);
         }
 
+        // BOTÃO DIALOG CADASTRO PEÇA DE CANCELAR
         JButton btnCanc = criarBotaoOutline("Cancelar", 100, 34);
         btnCanc.addActionListener(e -> dialog.dispose());
 
+        // BOTÃO DIALOG CADASTRO PEÇA DE SALVAR PEÇA NO BANCO
         JButton btnSalv = criarBotaoGold("Salvar", 100, 34);
         btnSalv.addActionListener(e -> {
             try {

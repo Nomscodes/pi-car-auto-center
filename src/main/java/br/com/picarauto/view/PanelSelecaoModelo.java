@@ -127,6 +127,7 @@ public class PanelSelecaoModelo extends JPanel {
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblTitulo.setForeground(Color.WHITE);
 
+        // BOTÃO TELA SELEÇÃO MODELO DE VOLTAR PARA SELEÇÃO DE MARCA
         JButton btnVoltar = criarBotaoVoltar();
         btnVoltar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_MARCA));
 
@@ -346,6 +347,7 @@ public class PanelSelecaoModelo extends JPanel {
         lblModeloSel.setFont(MainFrame.FONT_NORMAL);
         lblModeloSel.setForeground(new Color(0x888888));
 
+        // BOTÃO TELA SELEÇÃO MODELO DE AVANÇAR PARA CADASTRO DE VEÍCULO
         btnProximo = new JButton("Próximo: dados do veículo") {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
