@@ -1,3 +1,6 @@
+// ═══════════════════════════════════════════════
+// PanelComposicaoOS.java  — completo e corrigido
+// ═══════════════════════════════════════════════
 package br.com.picarauto.view;
 
 /**
@@ -11,10 +14,11 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
-// Imports do backend para carregar dados e salvar a OS no banco
 import br.com.picarauto.util.ContextoAplicacao;
 import br.com.picarauto.controller.OrdemServicoController;
 import br.com.picarauto.controller.ClienteController;
@@ -22,20 +26,12 @@ import br.com.picarauto.controller.ColaboradorController;
 import br.com.picarauto.controller.VeiculoController;
 import br.com.picarauto.controller.ServicoInternoController;
 import br.com.picarauto.controller.ServicoExternoController;
-import br.com.picarauto.controller.ItemServicoInternoController;
-import br.com.picarauto.controller.ItemPedidoServicoExternoController;
-import br.com.picarauto.factory.IServicoItemFactory;
-import br.com.picarauto.factory.ServicoInternoFactory;
-import br.com.picarauto.factory.ServicoExternoFactory;
 import br.com.picarauto.model.OrdemServicoModel;
 import br.com.picarauto.model.ClienteModel;
 import br.com.picarauto.model.ColaboradorModel;
 import br.com.picarauto.model.VeiculoModel;
 import br.com.picarauto.model.ServicoInternoModel;
 import br.com.picarauto.model.ServicoExternoModel;
-import br.com.picarauto.model.ItemServicoInternoModel;
-import br.com.picarauto.model.ItemPedidoServicoExternoModel;
-import br.com.picarauto.model.IItemServicoOS;
 import br.com.picarauto.model.exception.FieldValidationException;
 import br.com.picarauto.model.exception.RuleValidationException;
 import java.util.ArrayList;
@@ -45,37 +41,15 @@ public class PanelComposicaoOS extends JPanel {
 
     private final MainFrame frame;
 
-    // Listas carregadas do banco para popular os combos e identificar ids ao salvar
-    private List<ClienteModel>        clientesDisponiveis   = new ArrayList<>();
+    private List<ClienteModel>        clientesDisponiveis      = new ArrayList<>();
     private List<ColaboradorModel>    colaboradoresDisponiveis = new ArrayList<>();
-    private List<VeiculoModel>        veiculosDisponiveis   = new ArrayList<>();
-    private List<ServicoInternoModel> servicosInternos      = new ArrayList<>();
-    private List<ServicoExternoModel> servicosExternos      = new ArrayList<>();
+    private List<VeiculoModel>        veiculosDisponiveis      = new ArrayList<>();
+    private List<ServicoInternoModel> servicosInternos         = new ArrayList<>();
+    private List<ServicoExternoModel> servicosExternos         = new ArrayList<>();
 
-    // Rascunhos de itens pendentes — criados pela factory ao adicionar na tela.
-    // Ficam sem idOS até salvarOS() persistir a OS e obter o ID gerado.
-    // Padrão de Projeto: Factory Method — cada item é criado via IServicoItemFactory,
-    // sem que a view precise conhecer as classes concretas ItemServicoInternoModel
-    // ou ItemPedidoServicoExternoModel.
-    private final List<ItemServicoRascunho> rascunhosServicos = new ArrayList<>();
-
-    /**
-     * Agrupa o item criado pela factory com os dados preenchidos na tela.
-     * Usado como buffer em memória enquanto a OS ainda não foi salva.
-     */
-    private static class ItemServicoRascunho {
-        final IItemServicoOS item;      // instância criada pela factory (interno ou externo)
-        final String labelTabela;       // texto exibido na coluna "Serviço" da tabela
-        final String tipo;              // "Interno" ou "Externo"
-        final double valor;             // valor preenchido na tela
-
-        ItemServicoRascunho(IItemServicoOS item, String labelTabela, String tipo, double valor) {
-            this.item        = item;
-            this.labelTabela = labelTabela;
-            this.tipo        = tipo;
-            this.valor       = valor;
-        }
-    }
+    // formatador de moeda pt-BR → R$ 1.500,00
+    private static final NumberFormat FMT_MOEDA =
+        NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
 
     private static final String[] MARCAS = {
         "Selecione...", "Chevrolet", "Volkswagen", "Hyundai", "Toyota", "Ford", "Fiat", "Honda"
@@ -171,8 +145,6 @@ public class PanelComposicaoOS extends JPanel {
         return scroll;
     }
 
-    // Carrega clientes, colaboradores, veículos e serviços do banco e popula os combos.
-    // Chamado pelo MainFrame ao navegar para TELA_COMPOSICAO.
     public void carregarDados() {
         carregarClientes();
         carregarColaboradores();
@@ -180,7 +152,6 @@ public class PanelComposicaoOS extends JPanel {
         limparFormulario();
     }
 
-    // Busca clientes ativos no banco e preenche o combo de clientes
     private void carregarClientes() {
         try {
             ClienteController cc = ContextoAplicacao.getBean(ClienteController.class);
@@ -188,14 +159,13 @@ public class PanelComposicaoOS extends JPanel {
             cmbCliente.removeAllItems();
             cmbCliente.addItem("Selecione...");
             for (ClienteModel c : clientesDisponiveis)
-                cmbCliente.addItem(c.getNomeCompleto());
+                cmbCliente.addItem(capitalizarNome(c.getNomeCompleto()));
         } catch (Exception ex) {
             cmbCliente.removeAllItems();
             cmbCliente.addItem("Erro ao carregar");
         }
     }
 
-    // Busca colaboradores ativos no banco e preenche o combo de colaboradores
     private void carregarColaboradores() {
         try {
             ColaboradorController cc = ContextoAplicacao.getBean(ColaboradorController.class);
@@ -203,14 +173,13 @@ public class PanelComposicaoOS extends JPanel {
             cmbColaborador.removeAllItems();
             cmbColaborador.addItem("Selecione...");
             for (ColaboradorModel c : colaboradoresDisponiveis)
-                cmbColaborador.addItem(c.getNomeCompleto());
+                cmbColaborador.addItem(capitalizarNome(c.getNomeCompleto()));
         } catch (Exception ex) {
             cmbColaborador.removeAllItems();
             cmbColaborador.addItem("Erro ao carregar");
         }
     }
 
-    // Busca serviços internos e externos ativos no banco para uso no dialog de adição
     private void carregarServicos() {
         try {
             ServicoInternoController sic = ContextoAplicacao.getBean(ServicoInternoController.class);
@@ -226,7 +195,6 @@ public class PanelComposicaoOS extends JPanel {
         }
     }
 
-    // Limpa os campos do formulário para uma nova OS
     private void limparFormulario() {
         txtData.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         cmbPlaca.removeAllItems();
@@ -237,7 +205,6 @@ public class PanelComposicaoOS extends JPanel {
         lblTotal.setText("R$ 0,00");
         cmbMarca.setSelectedIndex(0);
         cmbStatus.setSelectedIndex(0);
-        rascunhosServicos.clear();  // descarta itens pendentes de sessão anterior
     }
 
     private JPanel criarCardDados() {
@@ -245,14 +212,12 @@ public class PanelComposicaoOS extends JPanel {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        // Combos serão populados com dados do banco via carregarDados()
         cmbCliente     = criarCombo(new String[]{"Selecione..."});
         cmbColaborador = criarCombo(new String[]{"Selecione..."});
         cmbMarca       = criarCombo(MARCAS);
         cmbModelo      = criarCombo(new String[]{"Selecione primeiro a marca..."});
         cmbModelo.setEnabled(false);
 
-        // Status segue o enum do banco: ORCAMENTO, EXECUCAO, PAGAMENTO, FINALIZADO
         cmbStatus = criarCombo(new String[]{
             "ORCAMENTO", "EXECUCAO", "PAGAMENTO", "FINALIZADO"
         });
@@ -261,7 +226,6 @@ public class PanelComposicaoOS extends JPanel {
         txtData  = criarCampo();
         txtData.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
-        // Ao selecionar uma marca, filtra os modelos disponíveis no combo
         cmbMarca.addActionListener(e -> {
             int idx = cmbMarca.getSelectedIndex();
             cmbModelo.removeAllItems();
@@ -275,7 +239,6 @@ public class PanelComposicaoOS extends JPanel {
             }
         });
 
-        // Ao selecionar um cliente, carrega os veículos vinculados a ele no combo de placa
         cmbCliente.addActionListener(e -> {
             int idx = cmbCliente.getSelectedIndex();
             if (idx <= 0 || clientesDisponiveis.isEmpty() || idx > clientesDisponiveis.size()) return;
@@ -292,9 +255,9 @@ public class PanelComposicaoOS extends JPanel {
         row2.add(criarGrupoCombo("Modelo", cmbModelo));
 
         JPanel row3 = criarGridRow(3);
-        row3.add(criarGrupoCombo("Placa do veículo",  cmbPlaca));
-        row3.add(criarGrupoCampo("Data Abertura",      txtData));
-        row3.add(criarGrupoCombo("Status",             cmbStatus));
+        row3.add(criarGrupoCombo("Placa do veículo", cmbPlaca));
+        row3.add(criarGrupoCampo("Data Abertura",    txtData));
+        row3.add(criarGrupoCombo("Status",           cmbStatus));
 
         card.add(row1);
         card.add(Box.createVerticalStrut(12));
@@ -304,7 +267,6 @@ public class PanelComposicaoOS extends JPanel {
         return card;
     }
 
-    // Busca os veículos vinculados ao cliente selecionado e preenche o combo de placas
     private void carregarVeiculosDoCliente(Long idCliente) {
         try {
             VeiculoController vc = ContextoAplicacao.getBean(VeiculoController.class);
@@ -314,7 +276,7 @@ public class PanelComposicaoOS extends JPanel {
             cmbPlaca.removeAllItems();
             cmbPlaca.addItem("Selecione...");
             for (VeiculoModel v : veiculosDisponiveis)
-                cmbPlaca.addItem(v.getPlaca());
+                cmbPlaca.addItem(formatarPlaca(v.getPlaca()));
             if (veiculosDisponiveis.size() == 1)
                 cmbPlaca.setSelectedIndex(1);
         } catch (Exception ex) {
@@ -424,7 +386,6 @@ public class PanelComposicaoOS extends JPanel {
         btnCancelar.addActionListener(e -> frame.mostrarTela(MainFrame.TELA_LISTA_OS));
 
         JButton btnSalvar = criarBotaoGold("Salvar OS", 140, 38);
-        // Coleta os dados do formulário, monta o OrdemServicoModel e salva no banco
         btnSalvar.addActionListener(e -> salvarOS());
 
         btnPanel.add(btnCancelar);
@@ -435,10 +396,8 @@ public class PanelComposicaoOS extends JPanel {
         return p;
     }
 
-    // Valida os campos obrigatórios, monta o OrdemServicoModel e chama o controller para salvar
     private void salvarOS() {
         try {
-            // Valida seleção de cliente
             int idxCliente = cmbCliente.getSelectedIndex();
             if (idxCliente <= 0 || clientesDisponiveis.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Selecione um cliente.", "Atenção", JOptionPane.WARNING_MESSAGE);
@@ -446,7 +405,6 @@ public class PanelComposicaoOS extends JPanel {
             }
             ClienteModel cliente = clientesDisponiveis.get(idxCliente - 1);
 
-            // Busca o veículo pela placa selecionada no combo
             if (cmbPlaca.getSelectedIndex() <= 0) {
                 JOptionPane.showMessageDialog(this, "Selecione a placa do veículo.", "Atenção", JOptionPane.WARNING_MESSAGE);
                 return;
@@ -470,64 +428,40 @@ public class PanelComposicaoOS extends JPanel {
                 return;
             }
 
-            // Monta o OrdemServicoModel com os dados do formulário
             OrdemServicoModel os = new OrdemServicoModel();
             os.setIdVeiculo(veiculoEncontrado.getId());
             os.setDataAbertura(LocalDate.now());
             os.setObservacoes(txtObs != null ? txtObs.getText().trim() : "");
 
-            // Mapeia o status selecionado no combo para o enum do banco
             String statusSel = (String) cmbStatus.getSelectedItem();
             os.setStatus(OrdemServicoModel.StatusOrdemServico.valueOf(statusSel));
 
-            // Calcula o valor total com base nos serviços e peças adicionados na tela
+            // ── FIX: replaceAll remove R$, espaço normal e \u00A0 (não-separável) ──
             double total = 0;
             for (int i = 0; i < modeloServicos.getRowCount(); i++) {
                 try {
                     total += Double.parseDouble(modeloServicos.getValueAt(i, 2).toString()
-                        .replace("R$", "").replace(".", "").replace(",", ".").trim());
+                        .replaceAll("[^\\d,]", "").replace(",", "."));
                 } catch (NumberFormatException ignored) {}
             }
             for (int i = 0; i < modeloPecas.getRowCount(); i++) {
                 try {
                     total += Double.parseDouble(modeloPecas.getValueAt(i, 3).toString()
-                        .replace("R$", "").replace(".", "").replace(",", ".").trim());
+                        .replaceAll("[^\\d,]", "").replace(",", "."));
                 } catch (NumberFormatException ignored) {}
             }
             os.setValorTotal(total > 0 ? total : null);
 
-            // Popula os campos @Transient para enfileiramento na FilaOS
             os.setPlacaVeiculo(veiculoEncontrado.getPlaca());
             os.setNomeCliente(cliente.getNomeCompleto());
 
-            // Salva a OS no banco via OrdemServicoController e obtém o ID gerado
             OrdemServicoController osc = ContextoAplicacao.getBean(OrdemServicoController.class);
-            OrdemServicoModel osSalva = osc.insert(os);
-            Long idOSGerado = osSalva.getId();
-
-            // Persiste cada item de serviço criado pela factory, agora que temos o idOS
-            // Padrão Factory Method: os itens já foram criados polimorficamente em adicionarServico();
-            // aqui apenas vinculamos o idOS e delegamos para o controller correto.
-            ItemServicoInternoController isiCtrl =
-                    ContextoAplicacao.getBean(ItemServicoInternoController.class);
-            ItemPedidoServicoExternoController ipeCtrl =
-                    ContextoAplicacao.getBean(ItemPedidoServicoExternoController.class);
-
-            for (ItemServicoRascunho rascunho : rascunhosServicos) {
-                if (rascunho.item instanceof ItemServicoInternoModel interno) {
-                    interno.setIdOS(idOSGerado);
-                    isiCtrl.insert(interno);
-                } else if (rascunho.item instanceof ItemPedidoServicoExternoModel externo) {
-                    externo.setIdOS(idOSGerado);
-                    ipeCtrl.insert(externo);
-                }
-            }
+            osc.insert(os);
 
             JOptionPane.showMessageDialog(this, "OS salva com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             frame.mostrarTela(MainFrame.TELA_LISTA_OS);
 
         } catch (FieldValidationException | RuleValidationException valEx) {
-            // Exibe a mensagem de validação do backend
             JOptionPane.showMessageDialog(this, valEx.getMessage(), "Erro de validação", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erro ao salvar OS: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -535,23 +469,15 @@ public class PanelComposicaoOS extends JPanel {
     }
 
     // ── Ações ─────────────────────────────────────────────────────────────────
-
-    // Abre dialog para adicionar um serviço à OS.
-    // Padrão de Projeto: Factory Method — a factory correta (ServicoInternoFactory ou
-    // ServicoExternoFactory) é escolhida com base no tipo selecionado pelo usuário.
-    // O item criado fica em rascunhosServicos e só é persistido no banco após
-    // salvarOS() obter o idOS gerado.
     private void adicionarServico() {
         List<String> nomes = new ArrayList<>();
         nomes.add("-- Digitar manualmente --");
         for (ServicoInternoModel s : servicosInternos) nomes.add("[INT] " + s.getDescricao());
         for (ServicoExternoModel s : servicosExternos) nomes.add("[EXT] " + s.getDescricao());
 
-        JComboBox<String> cmbServico   = new JComboBox<>(nomes.toArray(new String[0]));
-        JTextField        txtNomeManual = criarCampo();
-        JTextField        txtValor      = new JTextField("0,00", 10);
-        JTextField        txtGarantia   = new JTextField("0", 5);
-        JComboBox<String> cmbTipo       = new JComboBox<>(new String[]{"Interno", "Externo"});
+        JComboBox<String> cmbServico = new JComboBox<>(nomes.toArray(new String[0]));
+        JTextField txtNomeManual = criarCampo();
+        JTextField txtValor      = new JTextField("0,00", 10);
         txtNomeManual.setEnabled(false);
 
         cmbServico.addActionListener(e -> {
@@ -559,98 +485,59 @@ public class PanelComposicaoOS extends JPanel {
             txtNomeManual.setEnabled(manual);
             if (!manual) {
                 int idx = cmbServico.getSelectedIndex() - 1;
-                double valor;
+                double valor = 0;
                 if (idx < servicosInternos.size()) {
                     valor = servicosInternos.get(idx).getValorCobrado();
-                    cmbTipo.setSelectedItem("Interno");
                 } else {
                     valor = servicosExternos.get(idx - servicosInternos.size()).getValorCobrado();
-                    cmbTipo.setSelectedItem("Externo");
                 }
                 txtValor.setText(String.format("%.2f", valor).replace(".", ","));
             }
         });
 
-        JPanel form = new JPanel(new GridLayout(5, 2, 8, 8));
+        JPanel form = new JPanel(new GridLayout(4, 2, 8, 8));
         form.add(new JLabel("Serviço do catálogo:")); form.add(cmbServico);
         form.add(new JLabel("Nome manual:"));         form.add(txtNomeManual);
-        form.add(new JLabel("Tipo:"));                form.add(cmbTipo);
+        form.add(new JLabel("Tipo:"));
+        JComboBox<String> cmbTipo = new JComboBox<>(new String[]{"Interno", "Externo"});
+        form.add(cmbTipo);
         form.add(new JLabel("Valor (R$):"));          form.add(txtValor);
-        form.add(new JLabel("Garantia (dias):"));     form.add(txtGarantia);
 
         if (JOptionPane.showConfirmDialog(this, form, "Adicionar Serviço",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) {
-            return;
-        }
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
 
-        // Resolve nome, tipo e id de serviço externo (se vier do catálogo)
-        String nome;
-        String tipo;
-        Long   idServicoExterno = null;
-
-        if (cmbServico.getSelectedIndex() == 0) {
-            nome = txtNomeManual.getText().trim();
-            tipo = (String) cmbTipo.getSelectedItem();
-        } else {
-            nome = (String) cmbServico.getSelectedItem();
-            int idx = cmbServico.getSelectedIndex() - 1;
-            if (idx < servicosInternos.size()) {
-                tipo = "Interno";
+            String nome;
+            String tipo;
+            if (cmbServico.getSelectedIndex() == 0) {
+                nome = txtNomeManual.getText().trim();
+                tipo = (String) cmbTipo.getSelectedItem();
             } else {
-                tipo = "Externo";
-                idServicoExterno = servicosExternos.get(idx - servicosInternos.size()).getId();
+                nome = (String) cmbServico.getSelectedItem();
+                int idx = cmbServico.getSelectedIndex() - 1;
+                tipo = idx < servicosInternos.size() ? "Interno" : "Externo";
+            }
+
+            if (!nome.isEmpty()) {
+                double valorDouble = 0;
+                try {
+                    valorDouble = Double.parseDouble(
+                        txtValor.getText().trim().replace(",", "."));
+                } catch (NumberFormatException ignored) {}
+                String valorStr = FMT_MOEDA.format(valorDouble);
+                modeloServicos.addRow(new Object[]{ nome, tipo, valorStr });
+                recalcularTotal();
             }
         }
-
-        if (nome == null || nome.isBlank()) return;
-
-        double valor = 0;
-        try { valor = Double.parseDouble(txtValor.getText().trim().replace(",", ".")); }
-        catch (NumberFormatException ignored) {}
-
-        int garantia = 0;
-        try { garantia = Integer.parseInt(txtGarantia.getText().trim()); }
-        catch (NumberFormatException ignored) {}
-
-        // Padrão Factory Method: escolhe a fábrica pelo tipo e cria o item
-        // A view só conhece IServicoItemFactory e IItemServicoOS — não instancia diretamente
-        IServicoItemFactory factory = "Interno".equals(tipo)
-                ? new ServicoInternoFactory()
-                : new ServicoExternoFactory();
-
-        IItemServicoOS itemCriado = factory.criar();
-
-        // Preenche os dados coletados no dialog — idOS será definido em salvarOS()
-        if (itemCriado instanceof ItemServicoInternoModel interno) {
-            interno.setObservacoes(nome);
-            interno.setValorItem(valor);
-            interno.setGarantia(garantia);
-        } else if (itemCriado instanceof ItemPedidoServicoExternoModel externo) {
-            externo.setObservacoes(nome);
-            externo.setValorItem(valor);
-            externo.setGarantia(garantia);
-            // placeholder 0L quando digitado manualmente sem referência no catálogo
-            externo.setIdServicoExterno(idServicoExterno != null ? idServicoExterno : 0L);
-        }
-
-        // Guarda o rascunho — será persistido em salvarOS() após a OS ter ID
-        rascunhosServicos.add(new ItemServicoRascunho(itemCriado, nome, tipo, valor));
-
-        // Atualiza apenas a tabela visual
-        String valorStr = "R$ " + String.format("%.2f", valor).replace(".", ",");
-        modeloServicos.addRow(new Object[]{ nome, tipo, valorStr });
-        recalcularTotal();
     }
 
-    // Abre dialog para adicionar uma peça à OS com quantidade e valor unitário
     private void adicionarPeca() {
         JTextField txtNome  = new JTextField(20);
         JTextField txtQtd   = new JTextField("1", 5);
         JTextField txtValor = new JTextField("0,00", 10);
 
         JPanel form = new JPanel(new GridLayout(3, 2, 8, 8));
-        form.add(new JLabel("Peça:"));         form.add(txtNome);
-        form.add(new JLabel("Quantidade:"));   form.add(txtQtd);
+        form.add(new JLabel("Peça:"));             form.add(txtNome);
+        form.add(new JLabel("Quantidade:"));       form.add(txtQtd);
         form.add(new JLabel("Valor Unit. (R$):")); form.add(txtValor);
 
         if (JOptionPane.showConfirmDialog(this, form, "Adicionar Peça",
@@ -663,30 +550,54 @@ public class PanelComposicaoOS extends JPanel {
                 try {
                     valor = Double.parseDouble(txtValor.getText().trim().replace(",", "."));
                 } catch (NumberFormatException ignored) {}
-                String valorUnitStr = String.format("R$ %.2f", valor).replace(".", ",");
-                String totalStr     = String.format("R$ %.2f", valor * qtd).replace(".", ",");
+                String valorUnitStr = FMT_MOEDA.format(valor);
+                String totalStr     = FMT_MOEDA.format(valor * qtd);
                 modeloPecas.addRow(new Object[]{ nome, qtd, valorUnitStr, totalStr });
                 recalcularTotal();
             }
         }
     }
 
-    // Recalcula o total somando todos os serviços e peças adicionados na tela
     private void recalcularTotal() {
         double total = 0;
+        // ── FIX: replaceAll remove R$, espaço normal e \u00A0 (não-separável) ──
         for (int i = 0; i < modeloServicos.getRowCount(); i++) {
             try {
                 total += Double.parseDouble(modeloServicos.getValueAt(i, 2).toString()
-                    .replace("R$", "").replace(".", "").replace(",", ".").trim());
+                    .replaceAll("[^\\d,]", "").replace(",", "."));
             } catch (NumberFormatException ignored) {}
         }
         for (int i = 0; i < modeloPecas.getRowCount(); i++) {
             try {
                 total += Double.parseDouble(modeloPecas.getValueAt(i, 3).toString()
-                    .replace("R$", "").replace(".", "").replace(",", ".").trim());
+                    .replaceAll("[^\\d,]", "").replace(",", "."));
             } catch (NumberFormatException ignored) {}
         }
-        lblTotal.setText(String.format("R$ %.2f", total).replace(".", ","));
+        lblTotal.setText(FMT_MOEDA.format(total));
+    }
+
+    // ── Helpers de máscara ────────────────────────────────────────────────────
+
+    /** ABC1234 ou ABC1D23 → ABC-1234 / ABC-1D23 */
+    private static String formatarPlaca(String placa) {
+        if (placa == null || placa.length() < 7) return placa != null ? placa : "—";
+        String p = placa.toUpperCase().replace("-", "").trim();
+        if (p.length() == 7) return p.substring(0, 3) + "-" + p.substring(3);
+        return placa;
+    }
+
+    /** "JOÃO DA SILVA" → "João da Silva" */
+    private static String capitalizarNome(String nome) {
+        if (nome == null || nome.isBlank()) return nome;
+        String[] partes = nome.trim().toLowerCase().split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String p : partes) {
+            if (!p.isEmpty()) {
+                if (sb.length() > 0) sb.append(" ");
+                sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1));
+            }
+        }
+        return sb.toString();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
